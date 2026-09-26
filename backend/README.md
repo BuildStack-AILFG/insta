@@ -42,6 +42,7 @@ Before other people's accounts can connect, request Advanced Access for `instagr
 | **Comment automations** (`/api/comment-automations`) | Keyword / exact / any-comment matching with exclusions, specific / next / all posts, random public-reply variants, private-reply DM with link buttons, once-per-person, follow-up flow, per-comment activity log |
 | **Inbox** (`/api/inbox`) | Conversations, polling, text / link buttons / media-by-URL, notes, assignment, labels, bot ↔ human, 24h window with optional 7-day HUMAN_AGENT tag |
 | **Automation** | Welcome / away / delayed replies, keyword replies, flow engine (quick replies, link buttons, questions with validation, conditions, delays, webhooks, AI, handoff, deals, payment links), event and story-reply triggers |
+| **Scheduler & media** (`/api/posts`, `/api/media`) | Photo / carousel / reel / story publishing, media library uploads (images normalised to Instagram's JPEG rules) served at `/api/files/...`, month calendar with drag-to-reschedule |
 | **AI agent** (`/api/ai`) | Knowledge base (text, FAQ, website crawl), grounded replies via the Anthropic API, confidence-based handoff, lead qualification |
 | **Developer** | API keys + REST API (`/api/v1`: DM by username/contact, contacts, events), signed outbound webhooks, Shopify / WooCommerce / Razorpay / Stripe / generic inbound hooks, Slack notifications |
 | **Team & billing** | Roles, invitations, auto-assignment, analytics, notifications, Razorpay plan billing with GST invoices, sales pipeline, payment links |
@@ -73,7 +74,8 @@ and the idempotent plan seed, then serves on `$PORT`.
 | `JWT_SECRET`, `REFRESH_TOKEN_SECRET` | two different long random strings |
 | `ENCRYPTION_KEY` | a long random string — **required** to store Instagram tokens, AI keys and integration secrets; don't rotate it casually |
 | `ENVIRONMENT` | `production` |
-| `PUBLIC_BASE_URL` | the API's public URL (used for the webhook URL shown in the dashboard) |
+| `PUBLIC_BASE_URL` | the API's public https URL (webhook URL shown in the dashboard, and where Instagram downloads uploaded media) |
+| `MEDIA_DIR` | path on a **persistent volume** for uploaded media (default `media_uploads` inside the app folder, which is lost on redeploy) |
 | `CORS_ORIGINS` / `FRONTEND_URL` | the production frontend origin(s) |
 | `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` | from your Meta app |
 | `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RAZORPAY_*` | optional (see `.env.example`) |

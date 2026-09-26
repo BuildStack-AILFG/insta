@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -39,6 +40,7 @@ os.environ["DATABASE_URL_SYNC"] = DB.replace("postgresql://", "postgresql+psycop
 os.environ.update(JWT_SECRET="test-jwt", REFRESH_TOKEN_SECRET="test-refresh", ENCRYPTION_KEY="test-encryption-key", SCHEDULER_ENABLED="false",
                   PUBLIC_BASE_URL="https://api.test", FRONTEND_URL="https://app.test", INSTAGRAM_WEBHOOK_VERIFY_TOKEN="platform-verify",
                   INSTAGRAM_APP_ID="1234567890", INSTAGRAM_APP_SECRET=APP_SECRET, CORS_ORIGINS="https://app.test")
+os.environ["MEDIA_DIR"] = tempfile.mkdtemp(prefix="gramforgrow-media-")
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402

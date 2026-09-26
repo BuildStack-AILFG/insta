@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     anthropic_api_base: str = "https://api.anthropic.com"
     ai_model: str = "claude-sonnet-5"
 
+    # Media library: uploads are stored here and served at {public_base_url}/api/files/... so Instagram can download them.
+    # Must be a persistent volume in production. A relative path is resolved from the backend folder.
+    media_dir: str = "media_uploads"
+    media_quota_mb: int = 2048  # per workspace
+
     # "Continue with Google" sign-in. The OAuth *Web* client id from Google Cloud Console; the button is hidden when unset.
     google_client_id: str = ""
 

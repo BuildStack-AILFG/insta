@@ -10,6 +10,7 @@ from app.models.instagram_account import InstagramAccount
 from app.models.growth import BioPage, RefLink
 from app.models.integration import ApiKey, Integration, OutboundWebhook
 from app.models.knowledge import KnowledgeChunk, KnowledgeSource
+from app.models.media_asset import MediaAsset
 from app.models.pipeline import Deal, DealActivity, PipelineStage
 from app.models.plan import Plan
 from app.models.platform import PlatformSetting
@@ -42,6 +43,7 @@ __all__ = [
     "Integration",
     "KnowledgeChunk",
     "KnowledgeSource",
+    "MediaAsset",
     "Message",
     "NewsletterSubscriber",
     "OutboundWebhook",

@@ -6,3 +6,6 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# uploaded media (MEDIA_DIR default)
+media_uploads/

@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import session as db_session
 from app.models.instagram_account import InstagramAccount
 from app.models.scheduled_post import ScheduledPost
-from app.services import outbound_webhooks
+from app.services import media_library, outbound_webhooks
 from app.services.instagram.accounts import client_for
 from app.services.instagram.graph import GraphClient, GraphError
 
@@ -53,24 +53,41 @@ def validate(kind: str, media: list[dict], caption: str) -> None:
         raise PublishError("A story needs exactly one image or video.")
     if kind == "carousel" and not 2 <= len(media) <= 10:
         raise PublishError("A carousel needs 2 to 10 images or videos.")
-    if any(not str(m.get("url") or "").startswith("https://") for m in media):
+    if any(not m.get("file") and not str(m.get("url") or "").startswith("https://") for m in media):
         raise PublishError("Every file needs a public https:// link that Instagram can download.")
+    if kind in {"image", "carousel"}:
+        for m in media:
+            w, h = m.get("width"), m.get("height")
+            if m.get("type") == "image" and w and h and not media_library.MIN_FEED_RATIO <= w / h <= media_library.MAX_FEED_RATIO:
+                raise PublishError(f"A {w}×{h} photo won't fit the feed — Instagram needs between 4:5 portrait and 1.91:1 landscape. "
+                                   "Crop it, or post it as a story.")
     if len(caption) > MAX_CAPTION:
         raise PublishError(f"Captions can be at most {MAX_CAPTION} characters.")
     if caption.count("#") > MAX_HASHTAGS:
         raise PublishError(f"Instagram allows at most {MAX_HASHTAGS} hashtags.")
 
 
+def check_files_reachable(media: list[dict]) -> None:
+    """Library files are served by this API, so Instagram can only fetch them through a public https PUBLIC_BASE_URL."""
+    if any(m.get("file") for m in media) and not media_library.publicly_reachable():
+        raise PublishError("Instagram can't download uploaded files yet: set PUBLIC_BASE_URL to this API's public https:// address "
+                           "(an ngrok URL works in development). Scheduling still works — they'll publish once it's set.")
+
+
+def _url(item: dict) -> str:
+    return media_library.file_url(item["file"]) if item.get("file") else item["url"]
+
+
 def _file_param(item: dict) -> dict:
-    return {"video_url": item["url"]} if item.get("type") == "video" else {"image_url": item["url"]}
+    return {"video_url": _url(item)} if item.get("type") == "video" else {"image_url": _url(item)}
 
 
 async def _create_containers(client: GraphClient, post: ScheduledPost) -> None:
     item = post.media[0] if post.media else {}
     if post.kind == "image":
-        post.container_id = await client.create_container(image_url=item["url"], caption=post.caption)
+        post.container_id = await client.create_container(image_url=_url(item), caption=post.caption)
     elif post.kind == "reel":
-        post.container_id = await client.create_container(media_type="REELS", video_url=item["url"], caption=post.caption)
+        post.container_id = await client.create_container(media_type="REELS", video_url=_url(item), caption=post.caption)
     elif post.kind == "story":
         post.container_id = await client.create_container(media_type="STORIES", **_file_param(item))
     else:  # carousel: one child per item now; the parent is created once every child has finished processing
@@ -92,6 +109,11 @@ async def step(db: AsyncSession, post: ScheduledPost, account: InstagramAccount)
     client = client_for(account)
     try:
         if post.status == "scheduled":
+            try:
+                check_files_reachable(post.media or [])
+            except PublishError as exc:
+                await _fail(db, post, exc.message)
+                return post.status
             post.status, post.attempts, post.error = "processing", (post.attempts or 0) + 1, None
             await _create_containers(client, post)
             await db.commit()

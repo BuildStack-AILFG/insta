@@ -67,6 +67,21 @@ Constraints that shape every phase (Meta's Instagram messaging rules):
 - **AI copywriter** (`POST /api/ai/write`) for DMs, public replies and captions.
 - Not possible via the API: welcome DMs for new followers (no follow webhook).
 
+## Phase 6 — Media library and content calendar ✅ (2026-09-26)
+
+- **Media library** (`media_assets`, migration 0011, `/api/media`): upload images and videos from the dashboard. Images
+  are converted to what Instagram accepts (JPEG, upright, at most 1440px wide and 8 MB); MP4 / MOV videos up to 300 MB are
+  stored as uploaded. File types are detected from content, not the browser's claim. There is a per-workspace quota
+  (`MEDIA_QUOTA_MB`, default 2 GB), and files used by upcoming posts can't be deleted.
+- Files are served without login at `/api/files/{unguessable name}` so Instagram can download them. Publishing uploads
+  therefore needs `PUBLIC_BASE_URL` to be public https. Without it, "publish now" explains why, and scheduled posts fail
+  with the same reason when due.
+- The composer takes library files or links. Feed photos are checked against Instagram's 4:5 – 1.91:1 aspect range.
+- **Content calendar**: a month view of every post (`GET /api/posts?start=&end=`). Drag a scheduled post to another day
+  (`POST /api/posts/{id}/reschedule`), or press + on a day to plan one. Any post can be duplicated.
+- Next candidates: multi-account agency view, "Connect via Facebook Page" (competitor and hashtag research), and
+  production readiness.
+
 ---
 
 ## Infrastructure triggers (unchanged from the original design)
@@ -75,4 +90,6 @@ Constraints that shape every phase (Meta's Instagram messaging rules):
   can't keep up on one instance.
 - **Add Celery + Redis** when comment volume makes the in-request background tasks slow Meta's webhook responses
   (Meta expects a 200 within a few seconds), or when private replies approach the 750/hour rate limit and need queuing.
+- **Move media to object storage** (S3 / R2 behind the same `media_library` functions) when running more than one API
+  instance, or when the host has no persistent disk for `MEDIA_DIR`.
 - **Add read replicas / partitioning** only when the messages and instagram_comments tables make dashboard queries slow.

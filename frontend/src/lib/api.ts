@@ -599,19 +599,36 @@ export const admin = {
 // ---- content: scheduled posts & insights -------------------------------------------------------------------------
 
 export type PostKind = "image" | "carousel" | "reel" | "story";
-export type PostMedia = { url: string; type: "image" | "video" };
+/** A public link, or a media-library file (`asset_id`; the server fills in its link and size). */
+export type PostMedia = { url: string; type: "image" | "video"; asset_id?: string; file?: string; width?: number | null; height?: number | null };
 export type PostInput = { account_id: string; kind: PostKind; caption: string; media: PostMedia[]; first_comment: string; scheduled_at?: string | null; publish_now?: boolean };
 export type ScheduledPost = PostInput & {
   id: string; account_username: string | null; scheduled_at: string; status: "scheduled" | "processing" | "published" | "failed" | "cancelled";
   ig_media_id: string | null; permalink: string | null; published_at: string | null; error: string | null; created_at: string | null;
 };
 export const posts = {
-  list: (status?: string) => request<ScheduledPost[]>(`/posts${qs({ status })}`),
+  list: (p?: { status?: string; start?: string; end?: string }) => request<ScheduledPost[]>(`/posts${qs(p)}`),
   create: (b: PostInput) => request<ScheduledPost>("/posts", { method: "POST", body: b }),
   update: (id: string, b: PostInput) => request<ScheduledPost>(`/posts/${id}`, { method: "PUT", body: b }),
+  reschedule: (id: string, scheduled_at: string) => request<ScheduledPost>(`/posts/${id}/reschedule`, { method: "POST", body: { scheduled_at } }),
   cancel: (id: string) => request<ScheduledPost>(`/posts/${id}/cancel`, { method: "POST" }),
   remove: (id: string) => request<void>(`/posts/${id}`, { method: "DELETE" }),
   limit: (account_id: string) => request<{ used: number; limit: number }>(`/posts/limit${qs({ account_id })}`),
+};
+
+export type MediaAsset = {
+  id: string; kind: "image" | "video"; name: string; url: string; file_name: string; content_type: string; size: number;
+  width: number | null; height: number | null; created_at: string | null;
+};
+export type MediaLibraryPage = { items: MediaAsset[]; total: number; used_bytes: number; quota_bytes: number; publicly_reachable: boolean };
+export const mediaLibrary = {
+  list: (p?: { kind?: "image" | "video"; limit?: number; offset?: number }) => request<MediaLibraryPage>(`/media${qs(p)}`),
+  upload: (files: File[]) => {
+    const f = new FormData();
+    files.forEach((file) => f.append("files", file));
+    return request<MediaAsset[]>("/media", { method: "POST", form: f });
+  },
+  remove: (id: string) => request<void>(`/media/${id}`, { method: "DELETE" }),
 };
 
 export type AccountInsights = {

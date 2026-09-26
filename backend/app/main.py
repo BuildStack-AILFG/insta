@@ -26,6 +26,8 @@ from app.api.instagram import router as instagram_router
 from app.api.integrations import hooks as hooks_router
 from app.api.integrations import router as integrations_router
 from app.api.links import router as links_router
+from app.api.media import files as media_files_router
+from app.api.media import router as media_router
 from app.api.pipeline import router as pipeline_router
 from app.api.posts import router as posts_router
 from app.api.public import router as public_router
@@ -74,11 +76,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth_router, contacts_router, instagram_router, comment_automations_router, giveaways_router, posts_router, insights_router, growth_router, flows_router, custom_replies_router, settings_router, workspace_router,
+for r in (auth_router, contacts_router, instagram_router, comment_automations_router, giveaways_router, posts_router, media_router, insights_router, growth_router, flows_router, custom_replies_router, settings_router, workspace_router,
           inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, admin_router):
     app.include_router(r, prefix="/api")
 # Public surfaces (no login): Instagram webhooks, provider hooks, public plans/QR, tracked-link redirects, and the API-key REST API.
-for r in (webhooks_router, hooks_router, public_router, public_api_router, site_router, links_router, bio_public_router):
+for r in (webhooks_router, hooks_router, public_router, public_api_router, site_router, links_router, bio_public_router, media_files_router):
     app.include_router(r, prefix="/api")
 
 
