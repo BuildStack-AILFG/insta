@@ -1,0 +1,471 @@
+import { AtSign, BarChart3, Bell, Bot, Brain, Clock, CreditCard, Filter, GitBranch, Handshake, Heart, Inbox, KeyRound, Layers, Link2, Mail, MessageCircle, MessageSquareReply, MousePointerClick, Plug, Receipt, Repeat, Send, ShieldCheck, Sparkles, Tag, Target, TrendingUp, UserCheck, Users, Webhook, Workflow, Zap, type LucideIcon } from "lucide-react";
+import type { Faq } from "./seo";
+
+export type VisualKind = "inbox" | "comments" | "flow" | "ai" | "replies" | "pipeline" | "payments" | "stories" | "leads" | "analytics" | "integrations";
+
+export type Feature = {
+  slug: string;
+  navLabel: string;
+  icon: LucideIcon;
+  /** One line used in menus and cards. */
+  tagline: string;
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string[];
+  h1: string;
+  lead: string;
+  visual: VisualKind;
+  benefits: { icon: LucideIcon; title: string; body: string }[];
+  steps: { title: string; body: string }[];
+  useCases: { title: string; body: string }[];
+  faqs: Faq[];
+  related: string[];
+};
+
+export const FEATURES: Feature[] = [
+  {
+    slug: "comment-to-dm",
+    navLabel: "Comment → DM",
+    icon: MessageCircle,
+    tagline: "Reply to comments and DM everyone who asks — automatically",
+    metaTitle: "Instagram Comment to DM Automation",
+    metaDescription: "When someone comments a keyword on your post or reel, reply under the comment and send them a DM with your link, price list or offer — in under a second.",
+    keywords: ["Instagram comment to DM", "Instagram comment auto reply", "comment keyword DM", "ManyChat comment automation alternative"],
+    h1: "Turn every “price?” and “link?” comment into a DM conversation",
+    lead: "Pick a post or reel, add the keywords your audience comments, and write the reply. GramForGrow answers under the comment and slides into their DMs with a link button — while you sleep.",
+    visual: "comments",
+    benefits: [
+      { icon: Zap, title: "Replies in under a second", body: "Comments arrive through Meta's webhooks and get answered instantly, so the person is still on your post when your DM lands." },
+      { icon: MessageSquareReply, title: "Public reply variations", body: "Write several public replies and one is picked at random each time, so your comment section never looks like a bot wrote it." },
+      { icon: Link2, title: "DMs with link buttons", body: "Send the message with up to three buttons that open your shop, booking page or download — the highest-converting format Instagram allows." },
+      { icon: Target, title: "Exact posts, next post or all", body: "Run it on chosen posts and reels, arm it for the next thing you publish, or let it watch everything you've ever posted." },
+      { icon: Repeat, title: "Once per person", body: "People often comment the keyword three times. They get one DM, not three, and the repeats are logged as skipped." },
+      { icon: Filter, title: "Keywords and exclusions", body: "Match comments that contain a keyword, are exactly a keyword, or any comment at all — and ignore comments with words like “refund”." },
+      { icon: UserCheck, title: "Follow, email or phone to unlock", body: "Only send the link once they follow you, or after they share an email or phone number — valid answers are saved on the contact." },
+      { icon: MousePointerClick, title: "Know who clicked", body: "DM links are tracked per person: see clicks per automation and tag everyone who opened your link." },
+    ],
+    steps: [
+      { title: "Connect Instagram", body: "Log in with your Business or Creator account and approve access to comments and messages." },
+      { title: "Pick the posts", body: "Choose posts or reels from your grid, or set the automation to your next post." },
+      { title: "Set the keyword and replies", body: "Add keywords, a few public reply variations and the DM with its buttons." },
+      { title: "Go live and watch the log", body: "Every comment shows up in the activity log with what happened — replied, DMed, skipped or failed." },
+    ],
+    useCases: [
+      { title: "Product launches", body: "“Comment LINK and I'll DM you” on a launch reel — every commenter gets the product page instantly." },
+      { title: "Creators and freebies", body: "Deliver a guide, preset pack or discount code to everyone who comments, and grow your DM list." },
+      { title: "Lead magnets", body: "Start a DM flow from the comment that collects an email or phone number before sending the resource." },
+    ],
+    faqs: [
+      { q: "Is this allowed by Instagram?", a: "Yes. It uses Meta's official Instagram API and its “private replies” feature, which lets a business send one DM in response to a comment within 7 days of it." },
+      { q: "Can I send more than one DM?", a: "Instagram allows one private reply per comment. As soon as the person replies to your DM, the conversation is open and your flows, keyword replies and AI agent can continue it." },
+      { q: "Does it work on reels and carousels?", a: "Yes — feed posts, reels and carousels. Comments on Instagram Live can be captured too." },
+      { q: "Will my own replies trigger the automation?", a: "No. Comments made by your own account (including the automatic public replies) are recognised and ignored." },
+    ],
+    related: ["flow-builder", "lead-capture", "team-inbox"],
+  },
+  {
+    slug: "team-inbox",
+    navLabel: "Team DM Inbox",
+    icon: Inbox,
+    tagline: "Every DM, story reply and mention — one inbox for the whole team",
+    metaTitle: "Shared Instagram DM Inbox for Teams",
+    metaDescription: "Answer Instagram DMs, story replies and mentions from one shared inbox. Assign chats, leave private notes, use quick replies and hand over from bot to human.",
+    keywords: ["Instagram shared inbox", "Instagram DM for teams", "Instagram multi-agent", "Instagram DM management"],
+    h1: "A shared inbox that keeps every Instagram conversation owned",
+    lead: "Stop passing one phone around. Your whole team replies to DMs from the browser, every chat has an owner, and nothing gets answered twice — or not at all.",
+    visual: "inbox",
+    benefits: [
+      { icon: Users, title: "Assign and route automatically", body: "Round-robin or least-busy rules hand every new chat to a teammate, so the first reply never waits on someone noticing it." },
+      { icon: Clock, title: "Reply-window tracking", body: "Instagram lets businesses reply within 24 hours of the last message. The inbox shows exactly how long you have — and up to 7 days for human agents when your app has that permission." },
+      { icon: MessageSquareReply, title: "Quick replies with a slash", body: "Type / and pick a saved answer for prices, shipping and timings — consistent replies in two keystrokes." },
+      { icon: Tag, title: "Labels, tags and private notes", body: "Label chats, tag contacts and leave notes only your team sees, so whoever picks up next has the full story." },
+      { icon: Bot, title: "Bot first, human when it matters", body: "Let flows and the AI agent handle routine questions. The moment a teammate replies, automation pauses for that chat." },
+      { icon: Handshake, title: "Profile and deals beside the chat", body: "See their @username, whether they follow you, their tags and open deals without leaving the conversation." },
+    ],
+    steps: [
+      { title: "Connect your account", body: "Link your Instagram Business or Creator account in a couple of clicks." },
+      { title: "Invite your team", body: "Add agents and admins with roles, then choose how new chats are assigned." },
+      { title: "Reply together", body: "Work from one inbox with filters for open, mine, unassigned and resolved chats." },
+      { title: "Measure and improve", body: "Track first-response time and workload per teammate in analytics." },
+    ],
+    useCases: [
+      { title: "D2C brands", body: "Sizing, shipping and order questions answered by whoever is free, with the product link one click away." },
+      { title: "Agencies", body: "Manage DMs for client accounts with clear ownership and notes on every conversation." },
+      { title: "Creators", body: "Keep brand-deal DMs separate from fan messages with labels, and never lose a collaboration request." },
+    ],
+    faqs: [
+      { q: "Do messages I send from the Instagram app show up?", a: "Yes. Messages sent from the Instagram app appear in the conversation too, so the history is always complete." },
+      { q: "Can I reply after 24 hours?", a: "Instagram only allows replies within 24 hours of the person's last message. If your Meta app has the Human Agent permission, a teammate can still reply for up to 7 days." },
+      { q: "Do story replies and mentions come in?", a: "Yes — story replies, story mentions, shared posts, reactions and regular DMs all land in the inbox." },
+      { q: "How many teammates can use it?", a: "As many seats as your plan includes. Everyone signs in with their own login, so every reply is attributed." },
+    ],
+    related: ["ai-agent", "keyword-replies", "sales-pipeline"],
+  },
+  {
+    slug: "story-automation",
+    navLabel: "Story Replies & Mentions",
+    icon: Heart,
+    tagline: "Thank, tag and reward everyone who engages with your stories",
+    metaTitle: "Instagram Story Reply & Mention Automation",
+    metaDescription: "Automatically answer story replies and story mentions on Instagram: thank people, tag them, send a discount or start a DM flow.",
+    keywords: ["Instagram story reply automation", "story mention auto DM", "Instagram story DM", "story engagement automation"],
+    h1: "Make every story reply and mention count",
+    lead: "When someone replies to your story or mentions you in theirs, GramForGrow can thank them, tag them and send the next step — a discount, a link or a question.",
+    visual: "stories",
+    benefits: [
+      { icon: Heart, title: "Instant thank-yous", body: "Reply to story mentions within seconds so the people who promote you feel seen." },
+      { icon: Tag, title: "Tag your fans", body: "Tag everyone who mentions you, then find them later as a segment for launches and collaborations." },
+      { icon: Workflow, title: "Start a flow", body: "Use “Story reply or mention” as a flow trigger to ask a question, share a link or capture an email." },
+      { icon: AtSign, title: "See the story", body: "The story they replied to or mentioned you in is shown right in the inbox." },
+    ],
+    steps: [
+      { title: "Create a flow", body: "Choose the “Story reply or mention” trigger in the flow builder." },
+      { title: "Write the reply", body: "Thank them, add a link button or ask a question." },
+      { title: "Tag and follow up", body: "Add a tag and optionally hand over to your team." },
+      { title: "Publish", body: "Every story reply and mention from then on gets the same great response." },
+    ],
+    useCases: [
+      { title: "User-generated content", body: "Reward customers who post about you with a discount on their next order." },
+      { title: "Polls and questions", body: "Follow up on story replies with a product link or booking page." },
+      { title: "Events", body: "Thank attendees who tag you and send them next event details." },
+    ],
+    faqs: [
+      { q: "Do mentions from private accounts arrive?", a: "Instagram delivers story mentions to your account's messages, and GramForGrow receives what Instagram shares through its API." },
+      { q: "Can I limit how often someone gets the message?", a: "Yes. Each flow has a cooldown so a fan who mentions you every day doesn't get the same message every time." },
+    ],
+    related: ["flow-builder", "comment-to-dm", "team-inbox"],
+  },
+  {
+    slug: "flow-builder",
+    navLabel: "DM Flow Builder",
+    icon: Workflow,
+    tagline: "No-code DM funnels that ask, branch and act",
+    metaTitle: "No-Code Instagram DM Flow Builder",
+    metaDescription: "Build Instagram DM funnels without code: quick replies, questions with validation, conditions, delays, tags, deals, webhooks and AI replies.",
+    keywords: ["Instagram DM flow builder", "Instagram chatbot builder", "Instagram DM funnel", "no-code Instagram bot"],
+    h1: "Design DM conversations that qualify and convert",
+    lead: "Drag steps onto a canvas: send a message, offer quick replies, ask for an email, branch on the answer, tag the contact, create a deal. Publish, and it runs on every matching DM.",
+    visual: "flow",
+    benefits: [
+      { icon: MousePointerClick, title: "Quick replies that branch", body: "Offer up to 13 tappable answers and send each one down its own path — typing the option works too." },
+      { icon: UserCheck, title: "Questions with validation", body: "Ask for an email, phone number, number or choice; invalid answers are retried and valid ones are saved to the contact." },
+      { icon: GitBranch, title: "Conditions and delays", body: "Branch on tags, details or answers, and wait minutes, hours or days before the next step." },
+      { icon: Link2, title: "Link buttons", body: "Send up to three buttons that open a link — the shop page, a booking calendar or a PDF." },
+      { icon: TrendingUp, title: "CRM actions", body: "Tag contacts, set details, assign a teammate, create or move a deal and send a payment link." },
+      { icon: Webhook, title: "Webhooks and AI", body: "Call your own system mid-flow or let the AI agent answer from your knowledge base." },
+    ],
+    steps: [
+      { title: "Choose a trigger", body: "A keyword, any first message, a story reply, an event from your store, or a comment automation's follow-up." },
+      { title: "Add steps", body: "Pick from messages, questions, logic, contact and sales steps." },
+      { title: "Publish", body: "Validation catches loose ends before a flow goes live." },
+      { title: "Watch runs", body: "See every run, where it is waiting and what it collected." },
+    ],
+    useCases: [
+      { title: "Lead qualification", body: "Ask budget, timeline and email, tag hot leads and hand them to sales." },
+      { title: "FAQ menus", body: "Offer quick-reply topics like pricing, shipping and returns." },
+      { title: "After comment → DM", body: "Continue the conversation once someone replies to your comment DM." },
+    ],
+    faqs: [
+      { q: "Can a flow message someone who hasn't messaged me?", a: "No — Instagram only lets businesses reply to people who messaged or commented first. Flows run inside those conversations." },
+      { q: "What happens if the person goes quiet?", a: "The run waits for their reply. You can also add delays and follow-ups, within Instagram's reply window." },
+      { q: "Can I test a flow?", a: "Yes. Run it for yourself from the builder after DMing your account from a test profile." },
+    ],
+    related: ["lead-capture", "ai-agent", "comment-to-dm"],
+  },
+  {
+    slug: "lead-capture",
+    navLabel: "Lead Capture in DMs",
+    icon: Mail,
+    tagline: "Collect emails and phone numbers right inside the DM",
+    metaTitle: "Capture Leads from Instagram DMs",
+    metaDescription: "Collect emails, phone numbers and answers inside Instagram DMs, save them to contacts and send them to Google Sheets, your CRM or any webhook.",
+    keywords: ["Instagram lead generation", "collect emails Instagram DM", "Instagram lead capture", "Instagram to Google Sheets"],
+    h1: "Turn DMs into leads you can actually follow up",
+    lead: "Ask for an email or phone number in the DM, validate it, save it to the contact and push it to the tools your team uses — all without a form.",
+    visual: "leads",
+    benefits: [
+      { icon: Mail, title: "Validated answers", body: "Emails and phone numbers are checked before they're saved, with a friendly retry message if they're wrong." },
+      { icon: Layers, title: "Saved on the contact", body: "Every answer becomes a contact detail you can filter, segment and use in messages." },
+      { icon: Webhook, title: "Sent where you need it", body: "Push leads to Google Sheets, Zapier, Make or your own backend with signed webhooks." },
+      { icon: Bell, title: "Team alerts", body: "Notify a Slack channel the moment a hot lead comes in." },
+    ],
+    steps: [
+      { title: "Start from a comment or DM", body: "Trigger a flow from a keyword, a comment automation or a story reply." },
+      { title: "Ask the question", body: "Add an “Ask a question” step with email or phone validation." },
+      { title: "Send the reward", body: "Deliver the guide, coupon or link once they answer." },
+      { title: "Sync it", body: "Connect a webhook or integration to send leads onward." },
+    ],
+    useCases: [
+      { title: "Webinars and courses", body: "Collect emails from everyone who comments “WEBINAR”." },
+      { title: "Real estate and services", body: "Capture phone numbers for a call-back from reel commenters." },
+      { title: "Launch waitlists", body: "Build a waitlist from DMs before your product drops." },
+    ],
+    faqs: [
+      { q: "Where do captured leads go?", a: "They're saved on the contact in GramForGrow and can be sent to any tool through webhooks, Zapier or Make." },
+      { q: "Can I export them?", a: "Yes — export contacts to CSV any time, filtered by tag or segment." },
+    ],
+    related: ["flow-builder", "comment-to-dm", "integrations-api"],
+  },
+  {
+    slug: "ai-agent",
+    navLabel: "AI DM Agent",
+    icon: Brain,
+    tagline: "Answers DMs from your knowledge base, hands off when unsure",
+    metaTitle: "AI Agent for Instagram DMs",
+    metaDescription: "An AI agent that answers Instagram DMs from your FAQs, documents and website, qualifies leads and hands conversations to your team when it isn't sure.",
+    keywords: ["Instagram AI chatbot", "AI DM replies Instagram", "Instagram AI customer support", "AI agent for Instagram"],
+    h1: "An AI agent that knows your business and knows its limits",
+    lead: "Teach it with FAQs, text and your website. It answers DMs in your tone, collects the details you care about and hands the chat to a human the moment it isn't confident.",
+    visual: "ai",
+    benefits: [
+      { icon: Brain, title: "Grounded in your content", body: "Answers come from the knowledge you add — FAQs, text and website pages — not the open internet." },
+      { icon: UserCheck, title: "Confident or it hands off", body: "Below your confidence threshold, or when someone asks for a person, the chat goes to your team." },
+      { icon: Target, title: "Lead qualification", body: "Tell it which details to collect (budget, city, timeline) and they're saved on the contact." },
+      { icon: Sparkles, title: "Intent matching", body: "Understands “how much is it??” as a pricing question even without the exact keyword." },
+    ],
+    steps: [
+      { title: "Add knowledge", body: "Paste FAQs, add text or crawl pages from your website." },
+      { title: "Set the tone", body: "Choose the persona, style and what it must never say." },
+      { title: "Test in the playground", body: "Ask it questions before it talks to anyone." },
+      { title: "Switch it on", body: "It answers DMs your keyword replies and flows don't cover." },
+    ],
+    useCases: [
+      { title: "Product questions", body: "Ingredients, sizes, shipping times — answered at 2 am." },
+      { title: "Pre-sales", body: "Qualify enquiries and book the serious ones with your team." },
+      { title: "Overflow support", body: "Handle the common questions so your team focuses on the hard ones." },
+    ],
+    faqs: [
+      { q: "Which AI model does it use?", a: "Anthropic's Claude models. You can use the included monthly replies or bring your own API key." },
+      { q: "Will it make things up?", a: "It is instructed to answer only from your knowledge base and to hand off when it isn't sure." },
+    ],
+    related: ["team-inbox", "keyword-replies", "flow-builder"],
+  },
+  {
+    slug: "keyword-replies",
+    navLabel: "Keyword & Auto-Replies",
+    icon: MessageSquareReply,
+    tagline: "Instant answers, welcome messages and ice breakers",
+    metaTitle: "Instagram DM Keyword Replies, Welcome Messages & Ice Breakers",
+    metaDescription: "Auto-reply to Instagram DMs by keyword, greet first-time messages, answer outside business hours and set ice breaker questions people can tap.",
+    keywords: ["Instagram auto reply DM", "Instagram keyword reply", "Instagram ice breakers", "Instagram welcome message"],
+    h1: "Stop typing the same answers ten times a day",
+    lead: "Keyword replies answer pricing, timings and shipping instantly. Welcome and away messages cover first contact and after hours, and ice breakers give people questions to tap.",
+    visual: "replies",
+    benefits: [
+      { icon: MessageSquareReply, title: "Keyword replies", body: "Exact, contains or catch-all matches, answered in priority order — optionally starting a flow." },
+      { icon: Sparkles, title: "Ice breakers", body: "Up to four questions people see when they open a chat with you for the first time." },
+      { icon: Clock, title: "Welcome, away and delayed replies", body: "Greet new people, tell them when you're closed and reassure them if nobody replied in a few minutes." },
+      { icon: Brain, title: "AI intent matching", body: "Match the meaning of a message to your replies, not just exact words." },
+    ],
+    steps: [
+      { title: "Add replies", body: "Write keyword replies for your most common questions." },
+      { title: "Set ice breakers", body: "Pick up to four questions for your chat's welcome screen." },
+      { title: "Set hours", body: "Choose business hours and the away message." },
+      { title: "Done", body: "Replies go out 24×7 inside Instagram's reply window." },
+    ],
+    useCases: [
+      { title: "Pricing and menus", body: "“price”, “menu”, “rates” — answered instantly with a link." },
+      { title: "Store timings", body: "Opening hours and location without anyone picking up the phone." },
+      { title: "After-hours", body: "Let people know when you'll be back." },
+    ],
+    faqs: [
+      { q: "Do ice breakers need approval?", a: "No. They're set on your account through Instagram's API and appear for people starting a new chat." },
+    ],
+    related: ["ai-agent", "flow-builder", "team-inbox"],
+  },
+  {
+    slug: "sales-pipeline",
+    navLabel: "Sales Pipeline",
+    icon: TrendingUp,
+    tagline: "A deal board for the leads your DMs create",
+    metaTitle: "Sales Pipeline for Instagram Leads",
+    metaDescription: "Track Instagram leads on a drag-and-drop deal board, create deals automatically from new contacts or flows, and report on win rate and revenue.",
+    keywords: ["Instagram CRM", "Instagram sales pipeline", "Instagram lead tracking", "DM to deal"],
+    h1: "From “how much?” to paid, on one board",
+    lead: "Every lead from your DMs can become a deal. Move it through stages, see what's stuck and know which content brings revenue.",
+    visual: "pipeline",
+    benefits: [
+      { icon: Layers, title: "Drag-and-drop stages", body: "Customise stages, colours and win probabilities." },
+      { icon: Zap, title: "Deals from automation", body: "Create a deal for every new Instagram contact, or from a flow step when someone qualifies." },
+      { icon: BarChart3, title: "Sales reports", body: "Win rate, revenue, cycle length and lost reasons." },
+      { icon: Receipt, title: "Payments on the deal", body: "Send a payment link and watch the deal move to Won when it's paid." },
+    ],
+    steps: [
+      { title: "Set up stages", body: "Start from the defaults or build your own." },
+      { title: "Add deals", body: "Manually, automatically for new contacts, or from flows." },
+      { title: "Work the board", body: "Drag deals forward and add notes." },
+      { title: "Report", body: "See what's working in sales reports." },
+    ],
+    useCases: [
+      { title: "Service businesses", body: "Track enquiries from DMs to booked jobs." },
+      { title: "High-ticket products", body: "Follow up on every serious lead from your reels." },
+    ],
+    faqs: [
+      { q: "Is this a full CRM?", a: "It's a focused pipeline for the leads your Instagram brings in. Export or sync to your main CRM via webhooks if you need to." },
+    ],
+    related: ["payments", "lead-capture", "team-inbox"],
+  },
+  {
+    slug: "payments",
+    navLabel: "Payments in DMs",
+    icon: CreditCard,
+    tagline: "Send Razorpay payment links right in the chat",
+    metaTitle: "Collect Payments in Instagram DMs with Razorpay",
+    metaDescription: "Create Razorpay payment links from the Instagram inbox or a flow, send them in the DM and see them marked paid automatically.",
+    keywords: ["Instagram payment link", "Razorpay Instagram", "collect payments Instagram DM", "sell on Instagram DMs"],
+    h1: "Close the sale without leaving the conversation",
+    lead: "Connect your own Razorpay account, create a payment link in the chat and get notified when it's paid — money goes straight to you.",
+    visual: "payments",
+    benefits: [
+      { icon: CreditCard, title: "Your Razorpay account", body: "Payments go directly to your account; we never touch the money." },
+      { icon: Send, title: "From the inbox or a flow", body: "Send a link manually or automatically when a flow reaches the checkout step." },
+      { icon: ShieldCheck, title: "Paid status, automatically", body: "Links are marked paid from Razorpay's webhook, with a polling fallback." },
+    ],
+    steps: [
+      { title: "Connect Razorpay", body: "Add your key ID and secret in Settings." },
+      { title: "Send a link", body: "Create one from the chat or a flow step." },
+      { title: "Get paid", body: "The link and its deal update when the customer pays." },
+    ],
+    useCases: [
+      { title: "DM-first sellers", body: "Take orders in DMs and collect payment in the same thread." },
+      { title: "Coaches and services", body: "Share a payment link after qualifying a lead." },
+    ],
+    faqs: [
+      { q: "Do you charge a commission?", a: "No. You pay Razorpay's standard fees; GramForGrow takes nothing from the payment." },
+    ],
+    related: ["sales-pipeline", "flow-builder", "team-inbox"],
+  },
+  {
+    slug: "analytics",
+    navLabel: "Analytics",
+    icon: BarChart3,
+    tagline: "See which posts turn comments into conversations",
+    metaTitle: "Instagram DM & Comment Automation Analytics",
+    metaDescription: "Track comments received, DMs sent, reply times, automation results and team performance for your Instagram account.",
+    keywords: ["Instagram DM analytics", "comment automation analytics", "Instagram response time", "Instagram team performance"],
+    h1: "Know what your content and your team deliver",
+    lead: "Comments received and matched, DMs sent and seen, first-response time and each teammate's workload — updated live.",
+    visual: "analytics",
+    benefits: [
+      { icon: MessageCircle, title: "Comment → DM funnel", body: "Comments received, matched, replied and DMed, per automation and per day." },
+      { icon: Clock, title: "First-response time", body: "How long people wait for a first reply, and how it changes." },
+      { icon: Users, title: "Team workload", body: "Messages and conversations handled per teammate." },
+      { icon: Bell, title: "Health alerts", body: "Get warned when access is about to expire or an account stops receiving webhooks." },
+    ],
+    steps: [
+      { title: "Connect and automate", body: "Analytics fill in as comments and DMs arrive." },
+      { title: "Pick a range", body: "Look at the last 7, 30 or 90 days." },
+      { title: "Act on it", body: "Double down on the posts and automations that work." },
+    ],
+    useCases: [
+      { title: "Content teams", body: "See which reels drive the most DMs." },
+      { title: "Support leads", body: "Keep response times down as volume grows." },
+    ],
+    faqs: [
+      { q: "Is data real-time?", a: "Yes — counts update as Instagram delivers comments and messages, typically within seconds." },
+      { q: "Can I export it?", a: "Contacts and deals export to CSV, and webhooks can stream events to your own analytics." },
+    ],
+    related: ["comment-to-dm", "team-inbox", "sales-pipeline"],
+  },
+  {
+    slug: "post-scheduler",
+    navLabel: "Post Scheduler",
+    icon: Clock,
+    tagline: "Schedule photos, carousels, reels and stories",
+    metaTitle: "Instagram Post Scheduler for Reels, Carousels & Stories",
+    metaDescription: "Plan and auto-publish Instagram photos, carousels, reels and stories through the official API, with a first comment and publishing-limit checks.",
+    keywords: ["Instagram scheduler", "schedule Instagram reels", "auto post Instagram", "Instagram content calendar"],
+    h1: "Plan a week of Instagram in one sitting",
+    lead: "Queue photos, carousels, reels and stories, pick the time, and GramForGrow publishes them through Meta's official API — then pairs perfectly with a “next post” comment automation.",
+    visual: "analytics",
+    benefits: [
+      { icon: Clock, title: "Every format", body: "Photos, 2–10 item carousels, reels and stories — with captions and an optional first comment." },
+      { icon: ShieldCheck, title: "Official publishing", body: "Uses Instagram's Content Publishing API, and shows how much of the 24-hour publishing limit you've used." },
+      { icon: Zap, title: "Pairs with automations", body: "Arm a comment automation for your next post, schedule the post, and the DMs start the moment it goes live." },
+      { icon: Bell, title: "Know when it's live", body: "Status updates as Instagram processes videos, with a link to the live post and clear errors if a file is rejected." },
+    ],
+    steps: [
+      { title: "Add media links", body: "Paste public links to your images or videos." },
+      { title: "Write the caption", body: "With character and hashtag counters built in." },
+      { title: "Pick a time", body: "Or publish right away." },
+      { title: "Done", body: "It publishes on its own and shows up in insights." },
+    ],
+    useCases: [
+      { title: "Content batching", body: "Plan the week's reels and carousels on Sunday." },
+      { title: "Launches", body: "Publish the launch reel at exactly the right minute, with the comment → DM automation ready." },
+    ],
+    faqs: [
+      { q: "Where do the files come from?", a: "Instagram downloads them from a public https link, such as your CDN, Cloudinary or S3." },
+      { q: "Is there a posting limit?", a: "Instagram allows a limited number of API-published posts per 24 hours per account; the composer shows how many you've used." },
+    ],
+    related: ["insights", "comment-to-dm", "analytics"],
+  },
+  {
+    slug: "insights",
+    navLabel: "Instagram Insights",
+    icon: TrendingUp,
+    tagline: "Reach, views, followers and audience in one place",
+    metaTitle: "Instagram Insights & Audience Analytics",
+    metaDescription: "See views, reach, interactions, follower growth, audience demographics and per-post performance for your Instagram account.",
+    keywords: ["Instagram insights", "Instagram analytics tool", "Instagram audience demographics", "Instagram post performance"],
+    h1: "Know what your Instagram is really doing",
+    lead: "Views, reach, interactions and follower growth for any period, who your followers are, and how each recent post performed — next to the DMs and comments it produced.",
+    visual: "analytics",
+    benefits: [
+      { icon: BarChart3, title: "Account overview", body: "Views, reach, engaged accounts, interactions, shares, saves and profile link taps for 7, 14 or 30 days." },
+      { icon: Users, title: "Audience", body: "Your followers by country, city, age and gender." },
+      { icon: TrendingUp, title: "Follower growth", body: "Follows and unfollows over the period." },
+      { icon: MessageCircle, title: "Per-post performance", body: "Reach, views, likes, comments, shares and saves for recent posts and reels." },
+    ],
+    steps: [
+      { title: "Connect Instagram", body: "Insights need the account's insights permission." },
+      { title: "Pick a range", body: "Last 7, 14 or 30 days." },
+      { title: "Act on it", body: "Post more of what reaches and converts." },
+    ],
+    useCases: [
+      { title: "Creators", body: "Show brands your real reach and audience." },
+      { title: "Brands", body: "See which reels drive reach and which drive DMs." },
+    ],
+    faqs: [
+      { q: "Why is audience data empty?", a: "Instagram only shares audience demographics for accounts with at least 100 followers." },
+      { q: "How fresh is the data?", a: "Instagram updates most insights every few hours, and some numbers can take up to 48 hours." },
+    ],
+    related: ["analytics", "post-scheduler", "comment-to-dm"],
+  },
+  {
+    slug: "integrations-api",
+    navLabel: "Integrations & API",
+    icon: Plug,
+    tagline: "Connect your store, Slack, Sheets and your own systems",
+    metaTitle: "Instagram Automation Integrations, REST API & Webhooks",
+    metaDescription: "Send Instagram events to Slack, Google Sheets, Zapier, Make or your own backend with signed webhooks, and use the REST API to DM people who messaged you.",
+    keywords: ["Instagram API integration", "Instagram Zapier", "Instagram webhooks", "Instagram to Google Sheets"],
+    h1: "Connect Instagram to the tools you already run on",
+    lead: "Stream new DMs, comment automations and captured leads to your tools, record store and payment events on contacts, and use a REST API to reply from your own systems.",
+    visual: "integrations",
+    benefits: [
+      { icon: Webhook, title: "Signed outbound webhooks", body: "Message, contact, comment-automation, deal and payment events delivered to your URL, signed with HMAC-SHA256." },
+      { icon: Bell, title: "Slack notifications", body: "Post new conversations, comment automations, captured leads and won deals to a channel." },
+      { icon: Plug, title: "Store and payment events", body: "Shopify, WooCommerce, Razorpay and Stripe events are recorded on the customer's contact and can start flows." },
+      { icon: KeyRound, title: "REST API with keys", body: "DM people who messaged you in the last 24 hours, upsert contacts and track events with revocable API keys." },
+    ],
+    steps: [
+      { title: "Choose an integration", body: "Slack, Shopify, WooCommerce, Razorpay, Stripe or a generic webhook." },
+      { title: "Connect it", body: "Paste the hook URL we give you and set the signing secret." },
+      { title: "Automate", body: "Use incoming events as flow triggers and outgoing webhooks for your tools." },
+    ],
+    useCases: [
+      { title: "Lead routing", body: "Send every captured lead to Google Sheets or your CRM." },
+      { title: "Ops alerts", body: "Ping Slack when a VIP messages or a deal is won." },
+      { title: "Custom apps", body: "Reply to a customer's DM from your own backend after an order update." },
+    ],
+    faqs: [
+      { q: "Can I send a DM to anyone through the API?", a: "Only to people who messaged or commented on your account — Instagram doesn't allow businesses to message people first." },
+      { q: "How do I verify your webhooks?", a: "Every delivery carries an X-LFG-Signature header: the HMAC-SHA256 of the raw body with your endpoint's secret." },
+      { q: "Can I use Zapier, Make or n8n?", a: "Yes — through the generic webhook integration or the REST API." },
+    ],
+    related: ["lead-capture", "payments", "flow-builder"],
+  },
+];
+
+export const featureBySlug = (slug: string) => FEATURES.find((f) => f.slug === slug);

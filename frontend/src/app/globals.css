@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------------------------------------
+   Theme tokens. Dark is the default; <html data-theme="light"> switches to the light palette.
+
+   Light palette (60 / 20 / 10 / 7 / 3):
+     #F1F3E8 page   #E7EBD9 cards & sidebar   #F8F9F2 inputs & popovers   #315C3B primary   #4C8A55 accent
+
+   Most of the app is written with Tailwind's white/black utilities (text-white, bg-black, border-white/10 ...).
+   Tailwind v4 reads those from --color-white / --color-black at runtime, so remapping the two variables below
+   re-themes every one of them at once: "white" becomes the ink colour, "black" becomes the page colour.
+------------------------------------------------------------------------------------------------ */
+/* GramForGrow palette — dark = pink on near-black (gradient on body); light = pink on white. */
+:root {
+  --background: #0a0508;
+  --foreground: #ffffff;
+  --surface: #140910; /* modals, menus */
+  --alt: #0e0409; /* alternating landing sections */
+  --card: rgb(255 255 255 / 0.035);
+  --field: rgb(255 255 255 / 0.05);
+  --sidebar: #0a0508;
+  --brand: #ec4899;
+  --brand-hover: #db2777;
+  --brand-soft: #f472b6;
+  --brand-bright: #f9a8d4; /* accent text/labels: bright on black, deep pink on white */
+  --ink-faint: color-mix(in srgb, #ffffff 45%, transparent); /* sidebar section titles */
+  --ink-fainter: color-mix(in srgb, #ffffff 35%, transparent);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #fff5f9;
+  --foreground: #2b0a1a; /* deep plum ink — never grey or black */
+  --surface: #ffffff;
+  --alt: #ffe9f2;
+  --card: #ffffff;
+  --field: #fff5f9;
+  --sidebar: #ffe9f2;
+  --brand: #db2777;
+  --brand-hover: #be185d;
+  --brand-soft: #ec4899;
+  --brand-bright: #db2777;
+  --ink-faint: color-mix(in srgb, #2b0a1a 68%, transparent);
+  --ink-fainter: color-mix(in srgb, #2b0a1a 60%, transparent);
+  --color-white: var(--foreground);
+  --color-black: var(--background);
+  color-scheme: light;
+}
+
+/* Subtrees that must look the same in both themes (Instagram DM mock-ups, the widget preview, the landing hero). */
+.theme-fixed {
+  --background: #0a0508;
+  --foreground: #ffffff;
+  --surface: #140910;
+  --alt: #0e0409;
+  --card: rgb(255 255 255 / 0.035);
+  --field: rgb(255 255 255 / 0.05);
+  --sidebar: #0a0508;
+  --brand: #ec4899;
+  --brand-hover: #db2777;
+  --brand-soft: #f472b6;
+  --brand-bright: #f9a8d4;
+  --ink-faint: color-mix(in srgb, #ffffff 45%, transparent);
+  --ink-fainter: color-mix(in srgb, #ffffff 35%, transparent);
+  --color-white: #ffffff;
+  --color-black: #000000;
+}
+
+/* Solid brand / pink fills keep light text in the light theme (text-white would otherwise turn into dark ink). */
+:root[data-theme="light"] :is(.bg-brand, .hover\:bg-brand-hover:hover, .app-btn-primary, .app-badge-green, .btn-accent, .bg-\[\#25D366\], .bg-red-600, .bg-red-500, .bg-violet-600) {
+  --color-white: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-alt: var(--alt);
+  --color-card: var(--card);
+  --color-field: var(--field);
+  --color-sidebar: var(--sidebar);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-bright: var(--brand-bright);
+  --font-sans: var(--font-plus-jakarta);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-plus-jakarta), "Inter", system-ui, sans-serif;
+}
+/* Dark theme: pink → black gradient wash (GramForGrow). */
+:root:not([data-theme="light"]) body {
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(236, 72, 153, 0.18), transparent 60%),
+    radial-gradient(900px 560px at 0% 108%, rgba(219, 39, 119, 0.12), transparent 58%),
+    var(--background);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .landing-section {
+    @apply py-16 md:py-24 lg:py-28;
+  }
+
+  .enterprise-heading {
+    font-family: var(--font-plus-jakarta);
+    @apply text-[2rem] sm:text-[2.5rem] lg:text-[2.75rem] font-bold tracking-[-0.02em] text-white leading-[1.12];
+  }
+
+  .landing-logo {
+    font-family: var(--font-plus-jakarta);
+    font-weight: 660;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+  }
+}
+
+/* Ported from the GramForGrow marketing site's own animation utilities. */
+
+@keyframes lfg-card-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.lfg-card-float {
+  animation: lfg-card-float 3.8s ease-in-out infinite;
+}
+
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  @apply inline-block h-1.5 w-1.5 rounded-full bg-current opacity-60;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.typing-dot-delay-1 {
+  animation-delay: 0.15s;
+}
+
+.typing-dot-delay-2 {
+  animation-delay: 0.3s;
+}
+
+.phone-scroll {
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.phone-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.phone-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.phone-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+}
+
+/* Login / signup illustration: the icon ring turns clockwise; icons counter-turn (same duration) to stay upright. */
+@keyframes auth-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-orbit {
+  animation: auth-orbit-spin 60s linear infinite;
+}
+
+.auth-orbit-counter {
+  animation: auth-orbit-spin 60s linear infinite reverse;
+}
+
+/* Hover: outlined badges fill with brand green (white icon); the already-solid ones shift to the lighter green. */
+.auth-badge {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.auth-badge:hover {
+  background-color: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.auth-badge-solid:hover {
+  background-color: var(--brand-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lfg-card-float,
+  .typing-dot {
+    animation: none !important;
+  }
+}
+/* ------------------------------------------------------------------------------------------------
+   App surfaces (dashboard + auth + marketing) — one shared black/glass palette. Brand green #00926B, hover #007A59.
+------------------------------------------------------------------------------------------------ */
+@layer components {
+  /* Black card with a hairline edge — hierarchy comes from the border, never from a lighter fill. */
+  .app-card {
+    @apply rounded-2xl border border-white/10 bg-black;
+  }
+
+  /* Slightly lifted black card, for form/dialog panels that sit on top of a page of .app-card rows. */
+  .app-panel {
+    @apply rounded-2xl border border-white/10 bg-card;
+  }
+
+  .app-input {
+    @apply rounded-lg border border-white/10 bg-field text-white outline-none placeholder:text-white/30 focus:border-brand;
+  }
+
+  .app-btn-primary {
+    @apply rounded-lg bg-brand font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .app-btn-ghost {
+    @apply rounded-lg border border-white/10 font-semibold text-white transition-colors hover:bg-white/[0.06];
+  }
+
+  /* Green filled pill/badge — the "used to be green" surfaces, now brand green with white text. */
+  .app-badge-green {
+    @apply rounded-full bg-brand font-semibold text-white;
+  }
+
+  .app-badge-neutral {
+    @apply rounded-full bg-white/10 font-semibold text-white/70;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Light-theme legibility. Faint "white/NN" text was tuned for a black page; the same alpha of dark ink on cream
+   reads weaker, so the low end is nudged up. Pastel status colours (300/400 shades) are swapped for readable deep ones.
+------------------------------------------------------------------------------------------------ */
+:root[data-theme="light"] .text-white\/25:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 50%, transparent); }
+:root[data-theme="light"] .text-white\/30:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 55%, transparent); }
+:root[data-theme="light"] .text-white\/35:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 60%, transparent); }
+:root[data-theme="light"] .text-white\/40:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 64%, transparent); }
+:root[data-theme="light"] .text-white\/45:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 68%, transparent); }
+:root[data-theme="light"] .text-white\/50:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 72%, transparent); }
+:root[data-theme="light"] .text-white\/55:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 75%, transparent); }
+:root[data-theme="light"] .text-white\/60:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 78%, transparent); }
+:root[data-theme="light"] .text-white\/65:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 80%, transparent); }
+:root[data-theme="light"] .text-white\/70:not(.theme-fixed *) { color: color-mix(in oklab, var(--color-white) 84%, transparent); }
+:root[data-theme="light"] .placeholder\:text-white\/30:not(.theme-fixed *)::placeholder { color: color-mix(in oklab, var(--color-white) 50%, transparent); }
+:root[data-theme="light"] :is(.text-red-200, .text-red-300, .text-red-400, .hover\:text-red-300:hover) { color: #a3241b; }
+:root[data-theme="light"] :is(.text-sky-200, .text-sky-300, .text-sky-400) { color: #0b5d8a; }
+:root[data-theme="light"] :is(.text-amber-200, .text-amber-300, .text-amber-400) { color: #8a5a00; }
+:root[data-theme="light"] :is(.text-emerald-200, .text-pink-300, .text-emerald-400) { color: #1f6b3a; }
+:root[data-theme="light"] .text-purple-300 { color: #6d3fc0; }
+:root[data-theme="light"] .text-amber-100 { color: #6b4500; }
+/* Trial banner: a soft red strip in the light theme (its text uses the deep red above). Toasts stay dark and use *-100 text, untouched. */
+:root[data-theme="light"] .bg-red-950\/60 { background-color: #f4dcd4; }
