@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 from functools import lru_cache
 from typing import Annotated
@@ -119,6 +121,13 @@ class Settings(BaseSettings):
         if not self.database_url_sync:
             self.database_url_sync = _rewrite_driver(self.database_url, "psycopg")
         return self
+
+    @property
+    def webhook_verify_token(self) -> str:
+        """INSTAGRAM_WEBHOOK_VERIFY_TOKEN, or a stable token derived from JWT_SECRET so the platform works with no extra setting."""
+        if self.instagram_webhook_verify_token:
+            return self.instagram_webhook_verify_token
+        return "gfg-" + hmac.new(self.jwt_secret.encode(), b"instagram-webhook-verify", hashlib.sha256).hexdigest()[:32]
 
     @property
     def is_production(self) -> bool:

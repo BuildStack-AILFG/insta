@@ -10,10 +10,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.api.deps import Ctx, get_ctx, get_db, require_manager
+from app.api.deps import Ctx, get_ctx, get_current_user, get_db, is_platform_admin, require_manager
 from app.core.config import get_settings
 from app.models.conversation import Conversation
 from app.models.instagram_account import InstagramAccount
+from app.models.tenant import User
 from app.services import quotas
 from app.services.instagram import accounts as svc
 from app.services.instagram import graph
@@ -71,18 +72,21 @@ async def _enforce_quota(db: AsyncSession, ctx: Ctx) -> None:
 
 
 @router.get("/config")
-async def instagram_config(request: Request, ctx: Ctx = Depends(get_ctx)) -> dict:
+async def instagram_config(request: Request, ctx: Ctx = Depends(get_ctx), user: User = Depends(get_current_user)) -> dict:
     s = get_settings()
-    base = svc.public_base(str(request.base_url))
-    return {
-        "oauth_enabled": bool(s.instagram_app_id and s.instagram_app_secret),
-        "webhook_url": svc.webhook_url(base),
-        "verify_token": (s.instagram_webhook_verify_token or None) if ctx.is_manager else None,
-        "webhook_secret_configured": bool(s.instagram_app_secret),
-        "redirect_uri": svc.redirect_uri(),
-        "scopes": list(graph.SCOPES),
-        "graph_version": s.graph_api_version,
-    }
+    out = {"oauth_enabled": bool(s.instagram_app_id and s.instagram_app_secret)}
+    # The Meta app is ours, not the customer's: its setup details are only for the people who run the platform.
+    if is_platform_admin(user):
+        out["setup"] = {
+            "app_id_configured": bool(s.instagram_app_id),
+            "app_secret_configured": bool(s.instagram_app_secret),
+            "webhook_url": svc.webhook_url(svc.public_base(str(request.base_url))),
+            "verify_token": s.webhook_verify_token,
+            "redirect_uri": svc.redirect_uri(),
+            "scopes": list(graph.SCOPES),
+            "graph_version": s.graph_api_version,
+        }
+    return out
 
 
 @router.get("/accounts")
@@ -95,7 +99,7 @@ async def list_accounts(ctx: Ctx = Depends(get_ctx), db: AsyncSession = Depends(
 async def oauth_url(ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
     s = get_settings()
     if not (s.instagram_app_id and s.instagram_app_secret):
-        raise HTTPException(status_code=409, detail={"error": "Instagram login isn't configured on this server yet (INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET).",
+        raise HTTPException(status_code=409, detail={"error": "Connecting with Instagram is temporarily unavailable. Please try again shortly or contact support.",
                                                      "code": "oauth_not_configured"})
     await _enforce_quota(db, ctx)
     return {"url": graph.authorize_url(svc.make_state(ctx.tenant_id, ctx.user_id), svc.redirect_uri())}

@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2, ExternalLink, KeyRound, Plus, RefreshCw, S
 import { Alert, Badge, Button, Card, CopyField, EmptyState, Field, fmtDateTime, Input, Modal, Page, PageHeader, Spinner, Textarea, Toggle, timeAgo, useUi } from "@/components/ui/kit";
 import { InstagramIcon } from "@/components/icons/BrandIcons";
 import { useWorkspace } from "@/components/dashboard/WorkspaceContext";
-import { errorMessage, instagram, type IgAccount, type IgConfig } from "@/lib/api";
+import { errorMessage, instagram, type IgAccount, type IgConfig, type IgSetup } from "@/lib/api";
 
 export default function InstagramPage() {
   const { toast } = useUi();
@@ -54,7 +54,7 @@ export default function InstagramPage() {
             body="You'll log in with Instagram and approve access to messages and comments. Only Professional accounts (Business or Creator) can be connected — switch in the Instagram app under Settings → Account type."
             action={connectButtons || undefined} />
           {config && !config.oauth_enabled && (
-            <p className="mx-auto mt-4 max-w-lg text-center text-[12.5px] text-white/45">“Connect with Instagram” appears once the server has an Instagram app configured (INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET). Until then, paste an access token generated for your account in the Meta app dashboard.</p>
+            <p className="mx-auto mt-4 max-w-lg text-center text-[12.5px] text-white/45">One-click “Connect with Instagram” is temporarily unavailable. You can still connect with an access token, or contact support.</p>
           )}
         </Card>
       ) : (
@@ -65,7 +65,7 @@ export default function InstagramPage() {
         <p className="mt-4 text-[12.5px] text-white/40">Disconnected: {accounts.filter((a) => a.status === "disconnected").map((a) => `@${a.username}`).join(", ")} — connect again to resume their automations. Their conversation history is kept.</p>
       )}
 
-      {config && canManage && <SetupGuide config={config} />}
+      {config?.setup && <SetupGuide setup={config.setup} />}
       <TokenModal open={showToken} onClose={() => setShowToken(false)} onConnected={(a) => { setShowToken(false); toast(`@${a.username} connected`); (a.warnings ?? []).forEach((w) => toast(w, "error")); void load(); }} />
     </Page>
   );
@@ -176,12 +176,12 @@ function TokenModal({ open, onClose, onConnected }: { open: boolean; onClose: ()
   );
 }
 
-function SetupGuide({ config }: { config: IgConfig }) {
+function SetupGuide({ setup }: { setup: IgSetup }) {
   const [open, setOpen] = useState(false);
   return (
     <Card className="mt-6 p-5">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
-        <span><span className="text-[14px] font-semibold text-white">Meta app setup</span><span className="ml-2 text-[12.5px] text-white/45">for whoever manages your Meta developer app</span></span>
+        <span><span className="text-[14px] font-semibold text-white">Meta app setup</span><span className="ml-2 text-[12.5px] text-white/45">platform admins only — customers never see this</span></span>
         <span className="text-[12.5px] text-sky-300">{open ? "Hide" : "Show"}</span>
       </button>
       {open && (
@@ -191,12 +191,12 @@ function SetupGuide({ config }: { config: IgConfig }) {
             <li>Set the server&apos;s INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET from Instagram → App settings.</li>
             <li>Under Business login settings, add the redirect URL below to “OAuth redirect URIs”.</li>
             <li>Under Webhooks, use the callback URL and verify token below, then subscribe to: comments, live_comments, messages, messaging_postbacks, messaging_seen, message_reactions, messaging_referral.</li>
-            <li>Request Advanced Access for {config.scopes.join(", ")} in App Review before going live with other people&apos;s accounts.</li>
+            <li>Request Advanced Access for {setup.scopes.join(", ")} in App Review before going live with other people&apos;s accounts.</li>
           </ol>
-          <CopyField label="OAuth redirect URI" value={config.redirect_uri} />
-          <CopyField label="Webhook callback URL" value={config.webhook_url} />
-          {config.verify_token ? <CopyField label="Webhook verify token" value={config.verify_token} /> : <Alert tone="yellow">INSTAGRAM_WEBHOOK_VERIFY_TOKEN isn&apos;t set on the server yet.</Alert>}
-          {!config.webhook_secret_configured && <Alert tone="yellow">INSTAGRAM_APP_SECRET isn&apos;t set — incoming webhooks are rejected until it is (their signatures can&apos;t be verified).</Alert>}
+          <CopyField label="OAuth redirect URI" value={setup.redirect_uri} />
+          <CopyField label="Webhook callback URL" value={setup.webhook_url} />
+          <CopyField label="Webhook verify token" value={setup.verify_token} />
+          {!(setup.app_id_configured && setup.app_secret_configured) && <Alert tone="yellow">INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET aren&apos;t set on the server — customers can&apos;t use “Connect with Instagram” and incoming webhooks are rejected until they are.</Alert>}
         </div>
       )}
     </Card>

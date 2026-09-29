@@ -24,7 +24,7 @@ MAX_BODY = 2 * 1024 * 1024
 @router.get("/instagram")
 async def verify(hub_mode: str | None = Query(None, alias="hub.mode"), hub_verify_token: str | None = Query(None, alias="hub.verify_token"),
                  hub_challenge: str | None = Query(None, alias="hub.challenge")) -> PlainTextResponse:
-    expected = get_settings().instagram_webhook_verify_token
+    expected = get_settings().webhook_verify_token
     if hub_mode == "subscribe" and expected and hub_verify_token and hmac.compare_digest(hub_verify_token, expected):
         return PlainTextResponse(hub_challenge or "")
     raise HTTPException(status_code=403, detail={"error": "Webhook verification failed."})

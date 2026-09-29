@@ -196,7 +196,12 @@ export type IgAccount = {
   last_synced_at: string | null; created_at: string | null; ice_breakers: IceBreaker[]; human_agent_tag: boolean; warnings?: string[];
 };
 export type IgConfig = {
-  oauth_enabled: boolean; webhook_url: string; verify_token: string | null; webhook_secret_configured: boolean; redirect_uri: string; scopes: string[]; graph_version: string;
+  oauth_enabled: boolean;
+  /** Only returned to platform admins — the Meta app belongs to the platform, not to customer workspaces. */
+  setup?: IgSetup;
+};
+export type IgSetup = {
+  app_id_configured: boolean; app_secret_configured: boolean; webhook_url: string; verify_token: string; redirect_uri: string; scopes: string[]; graph_version: string;
 };
 export type IgMedia = {
   id: string; caption: string | null; media_type: string | null; media_product_type: string | null; thumbnail_url: string | null; permalink: string | null;
