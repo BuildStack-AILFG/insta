@@ -16,6 +16,8 @@ export const SITE = {
   address: env(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, ""),
   gstin: env(process.env.NEXT_PUBLIC_COMPANY_GSTIN, ""),
   cin: env(process.env.NEXT_PUBLIC_COMPANY_CIN, ""),
+  /** Grievance Officer name shown in the Privacy Policy (DPDP Rules / IT Rules 2021). */
+  grievanceOfficer: env(process.env.NEXT_PUBLIC_GRIEVANCE_OFFICER, ""),
   twitter: "@gramforgrow",
   social: {
     linkedin: "https://www.linkedin.com/showcase/gramforgrow",
@@ -24,7 +26,7 @@ export const SITE = {
     facebook: "https://www.facebook.com/gramforgrow",
   },
   /** ISO date the legal texts were last revised. Bump it whenever they change. */
-  legalUpdated: "2026-09-26",
+  legalUpdated: "2026-10-01",
 } as const;
 
 export const whatsappLink = (text?: string) => `https://wa.me/${SITE.whatsappNumber}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
