@@ -8,7 +8,6 @@ import { AiMock, AnalyticsMock, CommentToDmMock, FlowMock, InboxMock, StoryMock 
 const SUB_NAV = [
   { label: "Features", href: "#features" },
   { label: "AI Suite", href: "#ai-suite" },
-  { label: "Why us?", href: "#why-us" },
   { label: "Industries", href: "#industries" },
   { label: "Integrations", href: "#integrations" },
   { label: "Success Stories", href: "#success-stories" },

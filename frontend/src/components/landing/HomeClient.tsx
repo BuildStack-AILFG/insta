@@ -9,7 +9,6 @@ import ProductHubsSection from "@/components/landing/ProductHubsSection";
 import AutomationInActionSection from "@/components/landing/AutomationInActionSection";
 import CapabilitiesGridSection from "@/components/landing/CapabilitiesGridSection";
 import AICapabilitiesSection from "@/components/landing/AICapabilitiesSection";
-import StatsSection from "@/components/landing/StatsSection";
 import IntegrationsTeaser from "@/components/landing/IntegrationsTeaser";
 import IndustriesGridSection from "@/components/landing/IndustriesGridSection";
 import SuccessStoriesSection from "@/components/landing/SuccessStoriesSection";
@@ -38,7 +37,6 @@ export default function HomeClient({ pricing }: { pricing?: React.ReactNode }) {
         <AutomationInActionSection />
         <CapabilitiesGridSection />
         <AICapabilitiesSection onGetStarted={handleGetStarted} onBookDemo={handleBookDemo} />
-        <StatsSection />
         <IntegrationsTeaser />
         <IndustriesGridSection />
         <SuccessStoriesSection />
