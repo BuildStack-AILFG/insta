@@ -104,6 +104,7 @@ export default function GoogleSignInButton({ mode, companyName, blockedReason }:
         <span className="h-px flex-1 bg-white/10" />
       </div>
       <div className={`group relative ${configured && (busy || !ready) ? "pointer-events-none opacity-60" : ""}`}>
+        {/* Fixed hex colours: the light theme remaps bg-white to dark ink, but Google's button must stay white in both themes. */}
         <button
           type="button"
           tabIndex={configured && !blocked ? -1 : 0}
@@ -115,7 +116,7 @@ export default function GoogleSignInButton({ mode, companyName, blockedReason }:
                 ? undefined
                 : () => setError("Google sign-in isn't available yet — please use your email and password for now.")
           }
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white px-4 py-3 text-[14.5px] font-semibold text-neutral-900 transition-colors group-hover:bg-neutral-100"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#dadce0] bg-[#ffffff] px-4 py-3 text-[14.5px] font-semibold text-[#1f1f1f] shadow-sm transition-colors group-hover:bg-[#f8f9fa]"
         >
           <GoogleLogo />
           {busy ? "Signing in…" : mode === "signup" ? "Sign up with Google" : "Continue with Google"}
