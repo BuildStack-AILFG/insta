@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Building2 } from "lucide-react";
 import FormField from "./FormField";
@@ -173,13 +174,13 @@ export default function SignupForm() {
           />
           <span>
             I agree to the{" "}
-            <a href="#" className="font-medium text-brand hover:text-brand-soft">
+            <Link href="/terms" target="_blank" className="font-medium text-brand hover:text-brand-soft">
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="#" className="font-medium text-brand hover:text-brand-soft">
+            <Link href="/privacy" target="_blank" className="font-medium text-brand hover:text-brand-soft">
               Privacy Policy
-            </a>
+            </Link>
           </span>
         </label>
         {touched.agreed && errors.agreed && <p className="mt-1.5 text-[12.5px] text-red-400">{errors.agreed}</p>}
