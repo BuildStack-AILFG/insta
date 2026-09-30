@@ -107,7 +107,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
     <div
       onClick={toggle}
       className={`theme-fixed relative mx-auto hidden max-w-[1200px] cursor-pointer overflow-hidden rounded-[32px] border-[6px] border-white/10 transition-colors duration-500 md:block sm:border-[8px] ${
-        isDark ? "bg-black" : "bg-[#ec4899]"
+        isDark ? "bg-black" : "bg-[#db2777]"
       }`}
       style={{ containerType: "inline-size" }}
     >
@@ -140,7 +140,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
             color: isDark ? "#f9a8d4" : "#FFFFFF",
             textShadow: isDark
               ? "0 0 18px #0B1712, 0 0 18px #0B1712, 0 0 30px #0B1712"
-              : "0 0 18px #ec4899, 0 0 18px #ec4899, 0 0 30px #ec4899",
+              : "0 0 18px #db2777, 0 0 18px #db2777, 0 0 30px #db2777",
           }}
         >
           Into Sales
@@ -179,7 +179,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
 
         <p
           className={`absolute text-center leading-snug transition-colors duration-500 ${
-            isDark ? "text-white/40" : "text-white/60"
+            isDark ? "text-white/40" : "text-white/85"
           }`}
           style={{ left: "50%", top: "67.5%", width: "min(40cqw, 560px)", transform: "translateX(-50%)", fontSize: "1.5cqw" }}
         >
@@ -216,7 +216,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
               onBookDemo?.();
             }}
             className={`text-[13px] font-semibold underline underline-offset-4 transition-colors duration-300 ${
-              isDark ? "text-white/40 hover:text-white" : "text-white/60 hover:text-white"
+              isDark ? "text-white/40 hover:text-white" : "text-white/85 hover:text-white"
             }`}
           >
             or book a live demo
@@ -242,7 +242,7 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
     <div
       onClick={toggle}
       className={`theme-fixed relative mx-auto cursor-pointer overflow-hidden rounded-[28px] border-[5px] border-white/10 px-6 py-10 transition-colors duration-500 md:hidden ${
-        isDark ? "bg-black" : "bg-[#ec4899]"
+        isDark ? "bg-black" : "bg-[#db2777]"
       }`}
     >
       <button
@@ -300,7 +300,7 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
 
       <p
         className={`mx-auto mt-8 max-w-[320px] text-center text-[15px] leading-snug transition-colors duration-500 ${
-          isDark ? "text-white/40" : "text-white/60"
+          isDark ? "text-white/40" : "text-white/85"
         }`}
       >
         Someone comments “PRICE” — GramForGrow replies and slides into their DMs in under a second.
@@ -332,7 +332,7 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
             onBookDemo?.();
           }}
           className={`text-[13px] font-semibold underline underline-offset-4 transition-colors duration-300 ${
-            isDark ? "text-white/40 hover:text-white" : "text-white/60 hover:text-white"
+            isDark ? "text-white/40 hover:text-white" : "text-white/85 hover:text-white"
           }`}
         >
           or book a live demo
