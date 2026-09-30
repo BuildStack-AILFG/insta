@@ -5,6 +5,7 @@ export type LegalDoc = { slug: string; title: string; metaDescription: string; s
 
 const CO = SITE.legalName;
 const MAIL = SITE.supportEmail;
+const OWNER = "SCALEDESK TECHNOLOGY PRIVATE LIMITED";
 
 /**
  * NOTE FOR THE BUSINESS: these texts are a solid, product-accurate starting point but are not legal advice. Have a lawyer review them
@@ -14,10 +15,10 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "privacy",
     title: "Privacy Policy",
-    metaDescription: `How ${CO} collects, uses, shares and protects personal data when you use GramForGrow, and the choices and rights you have.`,
+    metaDescription: `How ${OWNER} collects, uses, shares and protects personal data when you use GramForGrow, and the choices and rights you have.`,
     summary: "What we collect, why we collect it, who we share it with and how you can control it.",
     body: [
-      { type: "p", text: `This policy explains how **${CO}** ("**${SITE.name}**", "we", "us") handles personal data when you visit our website or use the GramForGrow service. It applies under India's Digital Personal Data Protection Act, 2023, the Information Technology Act, 2000 and, where relevant, the EU/UK GDPR.` },
+      { type: "p", text: `${SITE.name} is a product of **${OWNER}**. This policy explains how **${OWNER}** ("**${SITE.name}**", "we", "us") handles personal data when you visit our website or use the GramForGrow service. It applies under India's Digital Personal Data Protection Act, 2023, the Information Technology Act, 2000 and, where relevant, the EU/UK GDPR.` },
       { type: "h2", text: "1. Two roles: our data and your customers' data" },
       { type: "ul", items: ["**Account data** — information about you and your team members that we collect to run your account. For this we decide why and how it is used.", "**Workspace data** — contacts, conversations, comments, automations and files your business puts into GramForGrow. For this we process data **on your behalf** and under your instructions; you decide why it is collected and are responsible for having a lawful basis and consent to message your customers."] },
       { type: "h2", text: "2. What we collect" },
@@ -42,7 +43,7 @@ export const LEGAL: LegalDoc[] = [
       { type: "h2", text: "10. Changes" },
       { type: "p", text: "We will post updates here and, for material changes, notify account holders by email or in the dashboard." },
       { type: "h2", text: "11. Contact and grievance redressal" },
-      { type: "p", text: `${CO}${SITE.address ? `, ${SITE.address}` : ""}. Email: **${MAIL}**. Grievances about the handling of personal data can be sent to the same address, marked "Grievance Officer"; we aim to acknowledge within 48 hours and resolve within 30 days.` },
+      { type: "p", text: `${SITE.name} is operated by **${OWNER}**${SITE.address ? `, ${SITE.address}` : ""}. Email: **${MAIL}**. Grievances about the handling of personal data can be sent to the same address, marked "Grievance Officer"; we aim to acknowledge within 48 hours and resolve within 30 days.` },
     ],
   },
   {
