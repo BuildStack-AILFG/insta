@@ -9,13 +9,14 @@ import GoogleSignInButton from "./GoogleSignInButton";
 import { ApiError, login, safeNextPath, storeSession } from "@/lib/api";
 import { getEmailError, getPasswordError } from "@/lib/validation";
 
-type Touched = { email?: boolean; password?: boolean };
+type Touched = { email?: boolean; password?: boolean; agreed?: boolean };
 
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [touched, setTouched] = useState<Touched>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -28,14 +29,15 @@ export default function LoginForm() {
   const errors = {
     email: getEmailError(email),
     password: getPasswordError(password),
+    agreed: agreed ? undefined : "Please accept the Terms and Conditions and Privacy Policy to log in",
   };
-  const hasErrors = Boolean(errors.email || errors.password);
+  const hasErrors = Boolean(errors.email || errors.password || errors.agreed);
 
   const markTouched = (field: keyof Touched) => setTouched((t) => ({ ...t, [field]: true }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ email: true, password: true });
+    setTouched({ email: true, password: true, agreed: true });
     if (hasErrors) return;
 
     setSubmitting(true);
@@ -118,15 +120,40 @@ export default function LoginForm() {
         Keep me logged in
       </label>
 
+      <div>
+        <label className="flex items-start gap-2.5 text-[13.5px] text-white/60">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => {
+              setAgreed(e.target.checked);
+              markTouched("agreed");
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 text-brand focus:ring-brand"
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="font-medium text-brand hover:text-brand-soft">
+              Terms and Conditions
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="font-medium text-brand hover:text-brand-soft">
+              Privacy Policy
+            </Link>
+          </span>
+        </label>
+        {touched.agreed && errors.agreed && <p className="mt-1.5 text-[12.5px] text-red-400">{errors.agreed}</p>}
+      </div>
+
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !agreed}
         className="flex w-full items-center justify-center rounded-xl bg-brand px-4 py-3 text-[14.5px] font-semibold text-white transition-opacity hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "Logging in…" : "Log in"}
       </button>
 
-      <GoogleSignInButton mode="login" />
+      <GoogleSignInButton mode="login" blockedReason={errors.agreed} />
     </form>
   );
 }

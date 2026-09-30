@@ -38,7 +38,8 @@ function loadGis(): Promise<void> {
  * "Continue with Google" via Google Identity Services. Always shown; until NEXT_PUBLIC_GOOGLE_CLIENT_ID is set, clicking it
  * explains that Google sign-in isn't available yet instead of opening Google's popup.
  */
-export default function GoogleSignInButton({ mode, companyName }: { mode: "login" | "signup"; companyName?: string }) {
+/** When `blockedReason` is set (e.g. terms not accepted), clicking shows that message instead of opening Google's popup. */
+export default function GoogleSignInButton({ mode, companyName, blockedReason }: { mode: "login" | "signup"; companyName?: string; blockedReason?: string }) {
   const router = useRouter();
   const holder = useRef<HTMLDivElement>(null);
   const company = useRef(companyName);
@@ -89,6 +90,11 @@ export default function GoogleSignInButton({ mode, companyName }: { mode: "login
   }, [mode, router]);
 
   const configured = Boolean(CLIENT_ID);
+  const blocked = Boolean(blockedReason);
+
+  useEffect(() => {
+    if (!blocked) setError(null);
+  }, [blocked]);
 
   return (
     <div className="space-y-3">
@@ -100,15 +106,21 @@ export default function GoogleSignInButton({ mode, companyName }: { mode: "login
       <div className={`group relative ${configured && (busy || !ready) ? "pointer-events-none opacity-60" : ""}`}>
         <button
           type="button"
-          tabIndex={configured ? -1 : 0}
-          aria-hidden={configured || undefined}
-          onClick={configured ? undefined : () => setError("Google sign-in isn't available yet — please use your email and password for now.")}
+          tabIndex={configured && !blocked ? -1 : 0}
+          aria-hidden={(configured && !blocked) || undefined}
+          onClick={
+            blocked
+              ? () => setError(blockedReason ?? null)
+              : configured
+                ? undefined
+                : () => setError("Google sign-in isn't available yet — please use your email and password for now.")
+          }
           className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white px-4 py-3 text-[14.5px] font-semibold text-neutral-900 transition-colors group-hover:bg-neutral-100"
         >
           <GoogleLogo />
           {busy ? "Signing in…" : mode === "signup" ? "Sign up with Google" : "Continue with Google"}
         </button>
-        {configured && <div ref={holder} className="absolute inset-0 overflow-hidden rounded-xl opacity-[0.01] [&_iframe]:!h-full [&_iframe]:!w-full [&>div]:h-full" />}
+        {configured && <div ref={holder} className={`absolute inset-0 ${blocked ? "pointer-events-none" : ""} overflow-hidden rounded-xl opacity-[0.01] [&_iframe]:!h-full [&_iframe]:!w-full [&>div]:h-full`} />}
       </div>
       {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-[12.5px] text-red-400">{error}</p>}
     </div>
