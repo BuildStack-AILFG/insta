@@ -261,8 +261,9 @@ def authorize_url(state: str, redirect_uri: str) -> str:
     s = get_settings()
     from urllib.parse import urlencode
 
-    query = urlencode({"client_id": s.instagram_app_id, "redirect_uri": redirect_uri, "response_type": "code", "scope": ",".join(SCOPES),
-                       "state": state, "enable_fb_login": "0", "force_authentication": "1"})
+    # Same shape as the "Embed URL" Meta shows under Business login settings, plus our signed `state`.
+    query = urlencode({"force_reauth": "true", "client_id": s.instagram_app_id, "redirect_uri": redirect_uri, "response_type": "code",
+                       "scope": ",".join(SCOPES), "state": state})
     return f"{s.instagram_oauth_base.rstrip('/')}/oauth/authorize?{query}"
 
 
