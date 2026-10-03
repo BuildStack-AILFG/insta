@@ -42,6 +42,14 @@ def webhook_url(base: str) -> str:
     return f"{base.rstrip('/')}/api/webhooks/instagram"
 
 
+def deauthorize_url(base: str) -> str:
+    return f"{base.rstrip('/')}/api/webhooks/instagram/deauthorize"
+
+
+def data_deletion_url(base: str) -> str:
+    return f"{base.rstrip('/')}/api/webhooks/instagram/data-deletion"
+
+
 def redirect_uri() -> str:
     s = get_settings()
     return s.instagram_redirect_uri or f"{s.frontend_url.rstrip('/')}/dashboard/instagram/callback"

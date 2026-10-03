@@ -189,11 +189,13 @@ function SetupGuide({ setup }: { setup: IgSetup }) {
           <ol className="list-decimal space-y-1.5 pl-5 text-[12.5px] text-white/60">
             <li>Create a Business-type app at <a href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer" className="text-sky-300 underline">developers.facebook.com <ExternalLink size={10} className="inline" /></a> and add the <b>Instagram</b> product (API setup with Instagram business login).</li>
             <li>Set the server&apos;s INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET from Instagram → App settings.</li>
-            <li>Under Business login settings, add the redirect URL below to “OAuth redirect URIs”.</li>
+            <li>Under Business login settings, add the redirect URL below to “OAuth redirect URIs”, and the deauthorize and data deletion URLs below to their fields.</li>
             <li>Under Webhooks, use the callback URL and verify token below, then subscribe to: comments, live_comments, messages, messaging_postbacks, messaging_seen, message_reactions, messaging_referral.</li>
             <li>Request Advanced Access for {setup.scopes.join(", ")} in App Review before going live with other people&apos;s accounts.</li>
           </ol>
           <CopyField label="OAuth redirect URI" value={setup.redirect_uri} />
+          <CopyField label="Deauthorize callback URL" value={setup.deauthorize_url} />
+          <CopyField label="Data deletion request URL" value={setup.data_deletion_url} />
           <CopyField label="Webhook callback URL" value={setup.webhook_url} />
           <CopyField label="Webhook verify token" value={setup.verify_token} />
           {!(setup.app_id_configured && setup.app_secret_configured) && <Alert tone="yellow">INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET aren&apos;t set on the server — customers can&apos;t use “Connect with Instagram” and incoming webhooks are rejected until they are.</Alert>}

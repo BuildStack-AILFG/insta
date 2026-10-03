@@ -201,7 +201,7 @@ export type IgConfig = {
   setup?: IgSetup;
 };
 export type IgSetup = {
-  app_id_configured: boolean; app_secret_configured: boolean; webhook_url: string; verify_token: string; redirect_uri: string; scopes: string[]; graph_version: string;
+  app_id_configured: boolean; app_secret_configured: boolean; webhook_url: string; deauthorize_url: string; data_deletion_url: string; verify_token: string; redirect_uri: string; scopes: string[]; graph_version: string;
 };
 export type IgMedia = {
   id: string; caption: string | null; media_type: string | null; media_product_type: string | null; thumbnail_url: string | null; permalink: string | null;

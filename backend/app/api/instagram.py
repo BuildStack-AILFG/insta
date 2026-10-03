@@ -81,6 +81,8 @@ async def instagram_config(request: Request, ctx: Ctx = Depends(get_ctx), user: 
             "app_id_configured": bool(s.instagram_app_id),
             "app_secret_configured": bool(s.instagram_app_secret),
             "webhook_url": svc.webhook_url(svc.public_base(str(request.base_url))),
+            "deauthorize_url": svc.deauthorize_url(svc.public_base(str(request.base_url))),
+            "data_deletion_url": svc.data_deletion_url(svc.public_base(str(request.base_url))),
             "verify_token": s.webhook_verify_token,
             "redirect_uri": svc.redirect_uri(),
             "scopes": list(graph.SCOPES),
