@@ -81,6 +81,11 @@ def _parse_error(resp: httpx.Response) -> GraphError:
     err = data.get("error", {}) if isinstance(data.get("error"), dict) else {}
     # The token endpoint on api.instagram.com returns {error_type, code, error_message} instead of Graph's {error: {...}}.
     message = err.get("error_user_msg") or err.get("message") or data.get("error_message") or f"Instagram API returned HTTP {resp.status_code}"
+    if resp.status_code >= 400:
+        # Never log the URL (it can carry the app secret / tokens) — only Meta's error fields, which are safe and needed to debug.
+        log.warning("Instagram API %s %s -> %s: code=%s subcode=%s type=%s fbtrace_id=%s message=%s", resp.request.method, resp.request.url.path,
+                    resp.status_code, err.get("code") or data.get("code"), err.get("error_subcode"), err.get("type") or data.get("error_type"),
+                    err.get("fbtrace_id"), message)
     return GraphError(message, status=resp.status_code, code=err.get("code") or data.get("code"), subcode=err.get("error_subcode"),
                       details=err.get("error_user_title"))
 

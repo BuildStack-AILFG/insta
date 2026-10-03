@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -19,6 +20,8 @@ from app.services import quotas
 from app.services.instagram import accounts as svc
 from app.services.instagram import graph
 from app.services.instagram.graph import GraphError
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/instagram", tags=["instagram"])
 
@@ -117,6 +120,7 @@ async def oauth_callback(body: OAuthFinish, ctx: Ctx = Depends(require_manager),
     try:
         account, warnings = await svc.connect_oauth(db, ctx.tenant_id, body.code)
     except svc.AccountError as exc:
+        log.warning("Instagram connect failed for tenant %s: %s", ctx.tenant_id, exc.message)
         raise HTTPException(status_code=exc.status, detail={"error": exc.message})
     return {**_out(account), "warnings": warnings}
 
