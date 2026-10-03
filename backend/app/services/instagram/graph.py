@@ -287,9 +287,13 @@ async def exchange_code(code: str, redirect_uri: str) -> dict:
 async def long_lived_token(short_token: str) -> dict:
     """Short-lived (1h) -> long-lived (60 days) token: {access_token, token_type, expires_in}."""
     s = get_settings()
-    return await _send("GET", f"{s.instagram_graph_base.rstrip('/')}/access_token", retries=1, params={
-        "grant_type": "ig_exchange_token", "client_secret": s.instagram_app_secret, "access_token": short_token,
-    })
+    params = {"grant_type": "ig_exchange_token", "client_secret": s.instagram_app_secret, "access_token": short_token}
+    try:
+        return await _send("GET", f"{s.instagram_graph_base.rstrip('/')}/access_token", retries=1, params=params)
+    except GraphError as exc:
+        # Some apps get "Unsupported request - method type: get" on the unversioned path; the versioned one accepts it.
+        log.info("unversioned ig_exchange_token failed (%s); retrying on %s", exc, s.graph_api_version)
+        return await _send("GET", f"{_base()}/access_token", retries=1, params=params)
 
 
 async def refresh_token(token: str) -> dict:

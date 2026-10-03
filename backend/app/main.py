@@ -45,6 +45,8 @@ from app.services.instagram import graph
 
 settings = get_settings()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+# httpx logs every request URL at INFO, and Instagram token calls carry the app secret and access tokens in the query string.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger("app")
 
 
