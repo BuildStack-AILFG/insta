@@ -103,7 +103,10 @@ async def _refresh_accounts() -> tuple[int, int]:
     done = refreshed = 0
     async with db_session.async_session_factory() as db:
         stale = (await db.execute(select(InstagramAccount).where(
-            InstagramAccount.status == "connected", (InstagramAccount.last_synced_at.is_(None)) | (InstagramAccount.last_synced_at < utcnow() - ACCOUNT_REFRESH_EVERY)
+            InstagramAccount.status == "connected",
+            (InstagramAccount.last_synced_at.is_(None)) | (InstagramAccount.last_synced_at < utcnow() - ACCOUNT_REFRESH_EVERY)
+            # A 1-hour login token (long-lived exchange failed) can't wait for the hourly pass — retry every few minutes.
+            | ((InstagramAccount.token_expires_at < utcnow() + timedelta(hours=2)) & (InstagramAccount.last_synced_at < utcnow() - timedelta(minutes=5)))
         ).limit(5))).scalars().all()
         for account in stale:
             try:

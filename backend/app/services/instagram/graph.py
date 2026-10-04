@@ -81,6 +81,11 @@ def _parse_error(resp: httpx.Response) -> GraphError:
     err = data.get("error", {}) if isinstance(data.get("error"), dict) else {}
     # The token endpoint on api.instagram.com returns {error_type, code, error_message} instead of Graph's {error: {...}}.
     message = err.get("error_user_msg") or err.get("message") or data.get("error_message") or f"Instagram API returned HTTP {resp.status_code}"
+    if resp.status_code >= 400:
+        # Never log the URL (it can carry the app secret / tokens) — only Meta's error fields, which are safe and needed to debug.
+        log.warning("Instagram API %s %s -> %s: code=%s subcode=%s type=%s fbtrace_id=%s message=%s", resp.request.method, resp.request.url.path,
+                    resp.status_code, err.get("code") or data.get("code"), err.get("error_subcode"), err.get("type") or data.get("error_type"),
+                    err.get("fbtrace_id"), message)
     return GraphError(message, status=resp.status_code, code=err.get("code") or data.get("code"), subcode=err.get("error_subcode"),
                       details=err.get("error_user_title"))
 
@@ -261,8 +266,9 @@ def authorize_url(state: str, redirect_uri: str) -> str:
     s = get_settings()
     from urllib.parse import urlencode
 
-    query = urlencode({"client_id": s.instagram_app_id, "redirect_uri": redirect_uri, "response_type": "code", "scope": ",".join(SCOPES),
-                       "state": state, "enable_fb_login": "0", "force_authentication": "1"})
+    # Same shape as the "Embed URL" Meta shows under Business login settings, plus our signed `state`.
+    query = urlencode({"force_reauth": "true", "client_id": s.instagram_app_id, "redirect_uri": redirect_uri, "response_type": "code",
+                       "scope": ",".join(SCOPES), "state": state})
     return f"{s.instagram_oauth_base.rstrip('/')}/oauth/authorize?{query}"
 
 
@@ -286,9 +292,13 @@ async def exchange_code(code: str, redirect_uri: str) -> dict:
 async def long_lived_token(short_token: str) -> dict:
     """Short-lived (1h) -> long-lived (60 days) token: {access_token, token_type, expires_in}."""
     s = get_settings()
-    return await _send("GET", f"{s.instagram_graph_base.rstrip('/')}/access_token", retries=1, params={
-        "grant_type": "ig_exchange_token", "client_secret": s.instagram_app_secret, "access_token": short_token,
-    })
+    params = {"grant_type": "ig_exchange_token", "client_secret": s.instagram_app_secret, "access_token": short_token}
+    try:
+        return await _send("GET", f"{s.instagram_graph_base.rstrip('/')}/access_token", retries=1, params=params)
+    except GraphError as exc:
+        # Some apps get "Unsupported request - method type: get" on the unversioned path; the versioned one accepts it.
+        log.info("unversioned ig_exchange_token failed (%s); retrying on %s", exc, s.graph_api_version)
+        return await _send("GET", f"{_base()}/access_token", retries=1, params=params)
 
 
 async def refresh_token(token: str) -> dict:

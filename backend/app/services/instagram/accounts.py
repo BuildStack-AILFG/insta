@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 STATE_TTL = timedelta(minutes=15)
 # Refresh long-lived tokens once they are within this long of expiring (they last 60 days; refresh is allowed after 24h).
 REFRESH_WITHIN = timedelta(days=20)
+SHORT_TOKEN_SECONDS = 3600
 
 
 class AccountError(Exception):
@@ -40,6 +41,14 @@ def public_base(request_base: str | None = None) -> str:
 
 def webhook_url(base: str) -> str:
     return f"{base.rstrip('/')}/api/webhooks/instagram"
+
+
+def deauthorize_url(base: str) -> str:
+    return f"{base.rstrip('/')}/api/webhooks/instagram/deauthorize"
+
+
+def data_deletion_url(base: str) -> str:
+    return f"{base.rstrip('/')}/api/webhooks/instagram/data-deletion"
 
 
 def redirect_uri() -> str:
@@ -121,12 +130,17 @@ async def _store(db: AsyncSession, tenant_id: uuid.UUID, token: str, *, expires_
 async def connect_oauth(db: AsyncSession, tenant_id: uuid.UUID, code: str) -> tuple[InstagramAccount, list[str]]:
     try:
         short = await graph.exchange_code(code, redirect_uri())
-        long = await graph.long_lived_token(short["access_token"])
     except GraphError as exc:
         raise AccountError(f"Could not finish connecting Instagram: {exc}", 400 if not exc.is_transient else 502) from exc
     scopes = short.get("permissions") or []
     if isinstance(scopes, str):
         scopes = [p.strip() for p in scopes.split(",") if p.strip()]
+    try:
+        long = await graph.long_lived_token(short["access_token"])
+    except GraphError as exc:
+        # The code is single-use, so don't throw the login away: keep the 1-hour token and let the scheduler retry the exchange.
+        log.warning("long-lived token exchange failed, connecting with the short-lived token: %s", exc)
+        return await _store(db, tenant_id, short["access_token"], expires_in=SHORT_TOKEN_SECONDS, scopes=scopes, connection_type="oauth")
     return await _store(db, tenant_id, long["access_token"], expires_in=long.get("expires_in"), scopes=scopes, connection_type="oauth")
 
 
@@ -164,8 +178,13 @@ async def refresh_token_if_due(db: AsyncSession, account: InstagramAccount) -> b
     """Extend the long-lived token when it is close to expiring. Returns True when it was refreshed."""
     if account.token_expires_at and account.token_expires_at - utcnow() > REFRESH_WITHIN:
         return False
+    token = decrypt(account.access_token_enc)
     try:
-        data = await graph.refresh_token(decrypt(account.access_token_enc))
+        if account.token_expires_at and account.token_expires_at - utcnow() <= timedelta(seconds=SHORT_TOKEN_SECONDS):
+            # Still the 1-hour token from login (the exchange failed then) — swap it for a long-lived one.
+            data = await graph.long_lived_token(token)
+        else:
+            data = await graph.refresh_token(token)
     except GraphError as exc:
         if exc.is_auth_error:
             account.status, account.last_error = "error", f"Access expired — reconnect Instagram. ({exc})"[:500]
