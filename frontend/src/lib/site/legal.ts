@@ -35,8 +35,8 @@ export const LEGAL: LegalDoc[] = [
       { type: "h2", text: "3. What we collect" },
       { type: "table", head: ["Category", "Examples", "Source"], rows: [
         ["Account and profile", "Name, work email, phone, company name, role, hashed password, team invitations, login times", "You and your administrators"],
-        ["Connected Instagram account", "Instagram professional account ID, username, profile picture, linked Facebook Page, access tokens and granted permissions", "Meta, when you connect your account"],
-        ["Workspace data", "Usernames and public profile details of people who comment or message, comments, direct messages, story replies, media links, tags, notes, deals, contact details you collect, knowledge-base content", "Meta's Instagram API and your team"],
+        ["Connected Instagram account", "Instagram professional account ID, username, name, account type, profile picture, follower and media counts, access tokens and granted permissions", "Meta, when you connect your account"],
+        ["Workspace data", "Usernames and public profile details of people who comment or message, comments, direct messages, story replies, your posts and their captions and media links, post and account insights (reach, impressions, engagement), posts you schedule, tags, notes, deals, contact details you collect, knowledge-base content", "Meta's Instagram API and your team"],
         ["Billing", "Business name, GSTIN, billing address, plan, invoices, payment status and Razorpay identifiers. Card, UPI and bank details are entered on Razorpay and **never reach our servers**", "You and Razorpay"],
         ["Support and communications", "Emails, WhatsApp chats, contact-form and newsletter submissions", "You"],
         ["Technical and usage", "IP address, device and browser type, pages and features used, timestamps, error and security logs", "Your browser and our servers"],
@@ -56,7 +56,14 @@ export const LEGAL: LegalDoc[] = [
       { type: "p", text: "Where we rely on consent, you can **withdraw it as easily as you gave it** — by emailing us, using the unsubscribe link or disconnecting your Instagram account. Withdrawal does not affect processing already carried out, but we may no longer be able to provide the parts of the service that depend on it. Where we rely on legitimate interests, you can object (see section 11)." },
 
       { type: "h2", text: "5. Instagram and Meta platform data" },
-      { type: "p", text: "GramForGrow connects to Instagram only through **Meta's official Instagram API**, with permissions you grant and can revoke at any time. We use Instagram platform data only to provide the features you enable — receiving comments and messages, sending replies and DMs, showing conversations in your inbox and reporting on them." },
+      { type: "p", text: "GramForGrow connects to Instagram only through **Meta's official Instagram API**, with permissions you grant and can revoke at any time. We use Instagram platform data only to provide the features you enable:" },
+      { type: "table", head: ["Permission", "What we use it for"], rows: [
+        ["instagram_business_basic", "Read your account's username, name, profile picture, account type, follower and media counts, and list your posts so you can pick them in automations, giveaways and the scheduler"],
+        ["instagram_business_manage_comments", "Receive comments on your posts, reply to them publicly, send one private reply per comment, and hide or delete comments under your moderation rules"],
+        ["instagram_business_manage_messages", "Receive direct messages and story replies, show them in your inbox, and send replies (manual, automated or AI-written) to people who messaged you first"],
+        ["instagram_business_content_publish", "Publish the photos, videos, reels and carousels you create or schedule in GramForGrow to your account"],
+        ["instagram_business_manage_insights", "Show reach, impressions, engagement and follower metrics for your account and posts in your dashboard"],
+      ] },
       { type: "ul", items: [
         "We **do not sell, license or buy** Instagram platform data, and we do not use it for advertising, for profiling people across businesses or to build data sets for third parties.",
         "We share it only with the sub-processors in section 7 that help us provide the service, or when the law requires.",
@@ -70,7 +77,7 @@ export const LEGAL: LegalDoc[] = [
       { type: "h2", text: "7. Who we share data with" },
       { type: "p", text: "We share personal data only with service providers (sub-processors) who process it for us under written contracts that require confidentiality, security and use only on our instructions." },
       { type: "table", head: ["Provider", "Purpose", "Location"], rows: [
-        ["Meta Platforms (Instagram API)", "Receiving comments and messages and sending replies through your connected account", "USA / Ireland"],
+        ["Meta Platforms (Instagram API)", "Receiving comments and messages, sending replies, publishing posts you schedule and reading insights through your connected account", "USA / Ireland"],
         ["Razorpay", "Payments for GramForGrow plans, and payment links if you connect your own Razorpay account", "India"],
         ["Anthropic", "Generating AI replies, only when AI features are enabled", "USA"],
         ["Vercel", "Hosting the website and dashboard front end", "Global edge network"],
