@@ -104,7 +104,7 @@ export default function Footer() {
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
           <div className="max-w-xs">
             <Link href="/" className="inline-flex items-center gap-3 mb-4">
-              <img src="/image.png" alt="" className="h-9 w-10 object-contain brightness-0 invert" />
+              <img src="/logo-mark.png" alt="" className="h-10 w-10 object-contain" />
               <span className="text-xl font-bold font-[family-name:var(--font-plus-jakarta)] text-white">
                 GramForGrow
               </span>

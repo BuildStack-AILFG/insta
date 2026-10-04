@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, ShieldCheck, Instagram } from "lucide-react";
+import { LogOut, Settings, ShieldCheck } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { clearSession, getRefreshToken, logout } from "@/lib/api";
 import { useWorkspace } from "./WorkspaceContext";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 const ACCENT = "var(--brand)";
 const GLASS_BORDER = "color-mix(in srgb, var(--foreground) 10%, transparent)";
@@ -104,11 +105,8 @@ export default function TopBar() {
         className="flex h-14 items-center justify-between px-4 backdrop-blur-xl sm:px-6"
         style={{ backgroundColor: "color-mix(in srgb, var(--background) 85%, transparent)", borderBottom: `1px solid ${GLASS_BORDER}` }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#e1306c] text-white">
-            <Instagram className="h-4 w-4" strokeWidth={2.25} />
-          </span>
-          <span className="text-[16px] font-normal tracking-tight text-white">GramForGrow</span>
+        <Link href="/dashboard" className="flex items-center">
+          <BrandLogo size={30} textClassName="text-[16px]" />
         </Link>
 
         <div className="flex items-center gap-1">

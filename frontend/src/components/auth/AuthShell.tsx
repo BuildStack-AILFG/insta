@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import BrandLogo from "@/components/ui/BrandLogo";
 import type { ReactNode } from "react";
 import AuthIllustration from "./AuthIllustration";
 
@@ -16,8 +16,7 @@ export default function AuthShell({ mode, children }: AuthShellProps) {
       <div className="flex w-full flex-col px-6 py-7 sm:px-10 lg:w-[46%] lg:px-16 lg:py-10 xl:px-20">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="flex shrink-0 items-center gap-2">
-            <Image src="/logo-mark.png" alt="GramForGrow" width={30} height={30} className="rounded-lg" />
-            <span className="landing-logo text-[17px] text-white">GramForGrow</span>
+            <BrandLogo size={30} textClassName="text-[17px]" />
           </Link>
           <Link
             href={isLogin ? "/signup" : "/login"}
