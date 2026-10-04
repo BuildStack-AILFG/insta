@@ -9,7 +9,7 @@ export type Doc = {
 };
 
 /** Public API origin shown in examples. Set NEXT_PUBLIC_API_URL at build time (the dashboard needs it too). */
-export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.gramforgrow.com/api").replace(/\/$/, "");
+export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.gramforgrow.in/api").replace(/\/$/, "");
 
 export const DOCS: Doc[] = [
   {

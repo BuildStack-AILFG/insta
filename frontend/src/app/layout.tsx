@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/site/blocks";
 import { SITE } from "@/lib/site/config";
@@ -27,12 +27,10 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", site: SITE.twitter, creator: SITE.twitter, images: ["/og"] },
   formatDetection: { telephone: false },
-  icons: {
-    icon: "/favicon-green.png",
-    shortcut: "/favicon-green.png",
-    apple: "/favicon-green.png",
-  },
+  // Icons come from the app/favicon.ico, app/icon.png and app/apple-icon.png file conventions.
 };
+
+export const viewport: Viewport = { themeColor: "#e91e78" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

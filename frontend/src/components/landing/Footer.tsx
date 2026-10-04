@@ -5,6 +5,7 @@ import { Youtube, Linkedin, Facebook } from "lucide-react";
 import { MARKETING } from "@/lib/marketing/designTokens";
 import { WhatsAppIcon } from "@/components/icons/BrandIcons";
 import NewsletterForm from "@/components/site/NewsletterForm";
+import BrandLogo from "@/components/ui/BrandLogo";
 import { SITE, whatsappLink } from "@/lib/site/config";
 
 const FOOTER_SECTIONS = [
@@ -103,11 +104,8 @@ export default function Footer() {
       <div className={`${MARKETING.containerWide} py-14 lg:py-16`}>
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
           <div className="max-w-xs">
-            <Link href="/" className="inline-flex items-center gap-3 mb-4">
-              <img src="/logo-mark.png" alt="" className="h-10 w-10 object-contain" />
-              <span className="text-xl font-bold font-[family-name:var(--font-plus-jakarta)] text-white">
-                GramForGrow
-              </span>
+            <Link href="/" className="inline-flex mb-4" aria-label="GramForGrow home">
+              <BrandLogo size={30} tile className="gap-3" textClassName="text-xl" />
             </Link>
             <p className="text-sm text-white/70 leading-relaxed">
               Instagram automation — comment-to-DM, story replies, no-code DM flows, an AI agent and a shared inbox, all on
