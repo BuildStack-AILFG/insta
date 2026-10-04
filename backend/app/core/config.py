@@ -68,7 +68,7 @@ class Settings(BaseSettings):
 
     # Transactional email (invites, password reset). Optional — without it, invite/reset links are returned to the caller.
     resend_api_key: str = ""
-    email_from: str = "LeadForGrow <no-reply@leadforgrow.com>"
+    email_from: str = "GramForGrow <no-reply@gramforgrow.in>"
     # Base URL of the web app, used in emailed links. Defaults to the first non-localhost CORS origin, so production needs no extra setting.
     frontend_url: str = ""
 

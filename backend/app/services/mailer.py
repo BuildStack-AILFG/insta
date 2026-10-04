@@ -35,5 +35,5 @@ async def send(to: str, subject: str, html: str) -> bool:
 
 def button_html(heading: str, body: str, cta: str, url: str) -> str:
     return (f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px"><h2 style="color:#111">{heading}</h2>'
-            f'<p style="color:#444;line-height:1.5">{body}</p><p><a href="{url}" style="background:#00926B;color:#fff;padding:12px 20px;border-radius:8px;'
+            f'<p style="color:#444;line-height:1.5">{body}</p><p><a href="{url}" style="background:#e91e78;color:#fff;padding:12px 20px;border-radius:8px;'
             f'text-decoration:none;display:inline-block">{cta}</a></p><p style="color:#888;font-size:12px">If the button doesn\'t work, paste this link into your browser:<br>{url}</p></div>')

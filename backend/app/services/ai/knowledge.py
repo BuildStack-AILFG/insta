@@ -133,7 +133,7 @@ async def add_url(db: AsyncSession, tenant_id: uuid.UUID, url: str, crawl: bool 
         pages: list[tuple[str, str]] = []
         seen: set[str] = set()
         queue = [url]
-        async with httpx.AsyncClient(timeout=15, follow_redirects=False, headers={"User-Agent": "LeadForGrowBot/1.0"}) as http:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=False, headers={"User-Agent": "GramForGrowBot/1.0"}) as http:
             while queue and len(pages) < (MAX_CRAWL_PAGES if crawl else 1):
                 current = queue.pop(0)
                 if current in seen:

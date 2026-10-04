@@ -3,7 +3,7 @@ import AuthShell from "@/components/auth/AuthShell";
 import LoginForm from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Log in — GramForGrow",
+  title: "Log in",
   description: "Log in to your GramForGrow account to manage your Instagram comment automations, DMs and team inbox.",
 };
 

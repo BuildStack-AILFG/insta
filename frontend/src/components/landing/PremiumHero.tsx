@@ -114,23 +114,23 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
       <div className="relative w-full" style={{ aspectRatio: "1662 / 785" }}>
         <LeftCardStack dark={isDark} />
 
-        <h1
+        <div aria-hidden="true"
           className={`${anton.className} absolute leading-[0.85] tracking-tight transition-colors duration-500 ${
             isDark ? "text-[#F5F6F2]" : "text-white"
           }`}
           style={{ left: "40%", top: "14.6%", width: "46%", fontSize: "8.1cqw" }}
         >
           Comments
-        </h1>
-        <h1
+        </div>
+        <div aria-hidden="true"
           className={`${anton.className} absolute leading-[0.85] tracking-[-0.01em] transition-colors duration-500 ${
             isDark ? "text-[#F5F6F2]" : "text-white"
           }`}
           style={{ left: "50.7%", top: "33.8%", width: "46%", fontSize: "6.3cqw" }}
         >
           That turn
-        </h1>
-        <h1
+        </div>
+        <div aria-hidden="true"
           className={`${anton.className} absolute leading-[0.85] tracking-tight transition-colors duration-500`}
           style={{
             left: "41%",
@@ -144,7 +144,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
           }}
         >
           Into Sales
-        </h1>
+        </div>
 
         <MousePointer2
           className={`absolute h-[2.7cqw] w-[2.7cqw] drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] transition-colors duration-500 ${
@@ -261,24 +261,24 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
         />
       </button>
 
-      <h1
+      <div aria-hidden="true"
         className={`${anton.className} text-center leading-[0.85] tracking-tight transition-colors duration-500 ${isDark ? "text-[#F5F6F2]" : "text-white"}`}
         style={{ fontSize: "15vw" }}
       >
         Comments
-      </h1>
-      <h1
+      </div>
+      <div aria-hidden="true"
         className={`${anton.className} mt-1 text-center leading-[0.85] tracking-tight transition-colors duration-500 ${isDark ? "text-[#F5F6F2]" : "text-white"}`}
         style={{ fontSize: "8vw" }}
       >
         That turn
-      </h1>
-      <h1
+      </div>
+      <div aria-hidden="true"
         className={`${anton.className} text-center leading-[0.85] tracking-tight transition-colors duration-500`}
         style={{ fontSize: "13vw", color: isDark ? "#f9a8d4" : "#FFFFFF" }}
       >
         Into Sales
-      </h1>
+      </div>
 
       <div className="relative mx-auto mt-8 h-[100px] w-[260px]">
         {mobileCards.map((c, i) => (
@@ -345,6 +345,8 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
 export default function PremiumHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; onBookDemo?: () => void }) {
   return (
     <section className="bg-black px-3 pt-24 sm:px-4 sm:pt-28">
+      {/* The visible headline is split into decorative pieces (desktop + mobile copies), so the page's one H1 lives here for search engines and screen readers. */}
+      <h1 className="sr-only">Instagram comment automation — comments that turn into sales</h1>
       <DesktopHero onGetStarted={onGetStarted} onBookDemo={onBookDemo} />
       <MobileHero onGetStarted={onGetStarted} onBookDemo={onBookDemo} />
     </section>

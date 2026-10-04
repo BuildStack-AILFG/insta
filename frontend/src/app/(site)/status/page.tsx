@@ -4,7 +4,7 @@ import StatusBoard from "@/components/site/StatusBoard";
 import { pageMetadata } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
-  title: "System Status — GramForGrow",
+  title: "System Status",
   description: "Live health of the GramForGrow website, API and database, checked in real time.",
   path: "/status",
   ogTitle: "GramForGrow system status",

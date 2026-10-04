@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import AdminShell from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = {
-  title: "Admin console — GramForGrow",
+  title: "Admin console",
   robots: { index: false, follow: false },
 };
 

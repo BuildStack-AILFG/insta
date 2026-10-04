@@ -3,7 +3,7 @@ import { PageHero, Section } from "@/components/site/blocks";
 import { pageMetadata } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
-  title: "Data Deletion — GramForGrow",
+  title: "Data Deletion",
   description: "Status of an Instagram data deletion request, and how to ask us to delete your data.",
   path: "/data-deletion",
   ogTitle: "GramForGrow data deletion",

@@ -6,7 +6,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import { UiProvider } from "@/components/ui/kit";
 
 export const metadata: Metadata = {
-  title: "Dashboard — GramForGrow",
+  title: "Dashboard",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
