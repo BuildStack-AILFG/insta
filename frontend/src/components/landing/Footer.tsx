@@ -104,7 +104,7 @@ export default function Footer() {
       <div className={`${MARKETING.containerWide} py-14 lg:py-16`}>
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
           <div className="max-w-xs">
-            <Link href="/" className="inline-flex mb-4" aria-label="GramForGrow home">
+            <Link href="/" className="inline-flex mb-4" aria-label="DMForGrow home">
               <BrandLogo size={30} tile className="gap-3" textClassName="text-xl" />
             </Link>
             <p className="text-sm text-white/70 leading-relaxed">

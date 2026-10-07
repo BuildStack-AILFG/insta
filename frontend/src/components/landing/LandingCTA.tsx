@@ -14,7 +14,7 @@ export default function LandingCTA({ onGetStarted, onBookDemo }: { onGetStarted?
           Ready to turn your comments into customers?
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-white/60">
-          See GramForGrow in action with a personalized demo, or start your free trial and go live in minutes.
+          See DMForGrow in action with a personalized demo, or start your free trial and go live in minutes.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

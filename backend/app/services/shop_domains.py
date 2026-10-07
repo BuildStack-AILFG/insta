@@ -54,7 +54,7 @@ def normalize(raw: str) -> str:
     if len(d) > 253 or len(labels) < 2 or not all(_LABEL.match(x) for x in labels) or labels[-1].isdigit():
         raise DomainError("Enter a domain like shop.yourbrand.com")
     if any(d == own or d.endswith(f".{own}") for own in OWN):
-        raise DomainError("Use a domain you own — not a GramForGrow or Vercel address.")
+        raise DomainError("Use a domain you own — not a DMForGrow or Vercel address.")
     return d
 
 

@@ -1,6 +1,6 @@
-# GramForGrow backend
+# DMForGrow backend
 
-FastAPI + PostgreSQL backend for GramForGrow, an Instagram automation product: comment → DM automations, story
+FastAPI + PostgreSQL backend for DMForGrow, an Instagram automation product: comment → DM automations, story
 reply automation, a shared DM inbox, DM flows, an AI agent, a sales pipeline and payment links — on Meta's official
 **Instagram API with Instagram Login**. It is a fork of the WhatsApp product in `../wap`, but runs fully separately
 (own database, ports and secrets).

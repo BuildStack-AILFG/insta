@@ -130,7 +130,7 @@ async def invite(body: InviteIn, ctx: Ctx = Depends(require_manager), db: AsyncS
 
     tenant = await db.get(Tenant, ctx.tenant_id)
     link = _link(token)
-    sent = await mailer.send(email, f"You're invited to {tenant.name} on GramForGrow",
+    sent = await mailer.send(email, f"You're invited to {tenant.name} on DMForGrow",
                              mailer.button_html("Join your team", f"You've been invited to join <b>{tenant.name}</b> as {body.role}. This link expires in 7 days.", "Accept invitation", link))
     # When email isn't configured the inviter gets the link to share manually — never silently lose the invite.
     return {**_invite_out(row), "email_sent": sent, "invite_link": None if sent else link}

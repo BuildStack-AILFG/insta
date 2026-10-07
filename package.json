@@ -1,8 +1,8 @@
 {
-  "name": "gramforgrow",
+  "name": "dmforgrow",
   "private": true,
   "type": "module",
-  "description": "Run GramForGrow (Postgres, FastAPI backend, Next.js frontend) with `npm run dev`.",
+  "description": "Run DMForGrow (Postgres, FastAPI backend, Next.js frontend) with `npm run dev`.",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "kill": "node scripts/kill.mjs"

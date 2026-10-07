@@ -49,7 +49,7 @@ export default function SchedulerPage() {
 
   const cancel = async (p: ScheduledPost) => { try { await api.cancel(p.id); reload(); toast("Post cancelled"); } catch (e) { toast(errorMessage(e), "error"); } };
   const remove = async (p: ScheduledPost) => {
-    if (!(await confirm({ title: "Remove this post from GramForGrow?", body: p.status === "published" ? "It stays on Instagram." : undefined, confirmLabel: "Remove", danger: true }))) return;
+    if (!(await confirm({ title: "Remove this post from DMForGrow?", body: p.status === "published" ? "It stays on Instagram." : undefined, confirmLabel: "Remove", danger: true }))) return;
     try { await api.remove(p.id); reload(); } catch (e) { toast(errorMessage(e), "error"); }
   };
 

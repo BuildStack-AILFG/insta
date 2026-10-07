@@ -11,7 +11,7 @@ export const metadata = pageMetadata({
   path: "/about",
   ogTitle: `About ${SITE.name}`,
   ogKind: "Company",
-  keywords: ["ScaleDesk Technology", "GramForGrow company", "Instagram automation company India"],
+  keywords: ["ScaleDesk Technology", "DMForGrow company", "Instagram automation company India"],
 });
 
 export default function AboutPage() {
@@ -30,7 +30,7 @@ export default function AboutPage() {
         <div className="grid gap-10 lg:grid-cols-2">
           <div className={`${M.body} space-y-4`}>
             <p>Most brands grow on Instagram now: a reel goes viral and hundreds of people comment “price?” and “link?”. Answering them by hand is impossible, and every unanswered comment is a lost customer.</p>
-            <p>We built GramForGrow to fix that. Comment-to-DM automation that replies in a second, a shared DM inbox for the team, flows and an AI agent for the repetitive questions, and a pipeline and payment links beside the chat.</p>
+            <p>We built DMForGrow to fix that. Comment-to-DM automation that replies in a second, a shared DM inbox for the team, flows and an AI agent for the repetitive questions, and a pipeline and payment links beside the chat.</p>
             <p>We use Meta&apos;s official Instagram API — no password sharing, no risky bots — we price in rupees with GST invoices, and we try to be plain about how things work, including their limits.</p>
           </div>
           <dl className="grid grid-cols-2 gap-4">
@@ -52,7 +52,7 @@ export default function AboutPage() {
         ]} />
       </Section>
 
-      <Section overline="Company" title="Who's behind GramForGrow" alt narrow>
+      <Section overline="Company" title="Who's behind DMForGrow" alt narrow>
         <div className={`${M.card} space-y-3 p-6 text-[14.5px] text-white/70`}>
           <p className="flex items-start gap-3"><Compass size={18} className="mt-0.5 shrink-0 text-brand" /><span><b className="text-white">{SITE.legalName}</b> is the company that builds and operates {SITE.name}. It is the contracting party on your invoices, our Terms of Service and our Privacy Policy.</span></p>
           {SITE.address && <p><b className="text-white">Registered office:</b> {SITE.address}</p>}

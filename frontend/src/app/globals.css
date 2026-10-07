@@ -10,7 +10,7 @@
    Tailwind v4 reads those from --color-white / --color-black at runtime, so remapping the two variables below
    re-themes every one of them at once: "white" becomes the ink colour, "black" becomes the page colour.
 ------------------------------------------------------------------------------------------------ */
-/* GramForGrow palette — dark = pink on near-black (gradient on body); light = pink on white. */
+/* DMForGrow palette — dark = pink on near-black (gradient on body); light = pink on white. */
 :root {
   --background: #0a0508;
   --foreground: #ffffff;
@@ -93,7 +93,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-plus-jakarta), "Inter", system-ui, sans-serif;
 }
-/* Dark theme: pink → black gradient wash (GramForGrow). */
+/* Dark theme: pink → black gradient wash (DMForGrow). */
 :root:not([data-theme="light"]) body {
   background:
     radial-gradient(1100px 620px at 82% -8%, rgba(236, 72, 153, 0.18), transparent 60%),
@@ -120,7 +120,7 @@ body {
   }
 }
 
-/* Ported from the GramForGrow marketing site's own animation utilities. */
+/* Ported from the DMForGrow marketing site's own animation utilities. */
 
 @keyframes lfg-card-float {
   0%,

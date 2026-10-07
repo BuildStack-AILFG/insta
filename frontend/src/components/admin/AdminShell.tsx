@@ -35,7 +35,7 @@ function AdminGate({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-white btn-accent"><ShieldCheck size={16} /></span>
-            <span className="text-[15px] font-semibold tracking-tight">GramForGrow <span className="font-normal text-white/50">Admin console</span></span>
+            <span className="text-[15px] font-semibold tracking-tight">DMForGrow <span className="font-normal text-white/50">Admin console</span></span>
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden text-[12.5px] text-white/45 sm:block">{email}</span>

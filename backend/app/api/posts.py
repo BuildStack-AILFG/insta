@@ -192,7 +192,7 @@ async def cancel(post_id: uuid.UUID, ctx: Ctx = Depends(require_writer), db: Asy
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete(post_id: uuid.UUID, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> None:
-    """Removes it from GramForGrow. A post already published stays on Instagram."""
+    """Removes it from DMForGrow. A post already published stays on Instagram."""
     p = await _owned(db, ctx, post_id)
     if p.status == "processing":
         raise HTTPException(status_code=409, detail={"error": "Wait until this post finishes publishing."})

@@ -4,7 +4,7 @@ Revision ID: 0006
 Revises: 0005
 Create Date: 2026-09-26 12:00:00
 
-GramForGrow is forked from the WhatsApp product. This migration removes the WhatsApp-only surfaces (numbers, templates,
+DMForGrow is forked from the WhatsApp product. This migration removes the WhatsApp-only surfaces (numbers, templates,
 broadcasts, the commerce catalog and the website chat widget), adds connected Instagram accounts, comment automations and the
 comment log, and re-points conversations/contacts/messages at Instagram identities.
 

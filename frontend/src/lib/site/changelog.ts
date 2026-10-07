@@ -60,7 +60,7 @@ export const CHANGELOG: ChangeEntry[] = [
   },
   {
     date: "2026-09-26",
-    title: "GramForGrow for Instagram",
+    title: "DMForGrow for Instagram",
     tag: "New",
     summary: "Comment-to-DM automation, a shared DM inbox and DM flows for Instagram Business and Creator accounts, on Meta's official Instagram API.",
     items: [

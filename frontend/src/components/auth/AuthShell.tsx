@@ -39,7 +39,7 @@ export default function AuthShell({ mode, children }: AuthShellProps) {
         </div>
 
         <div className="pt-6 text-center text-[12px] text-white/30 lg:text-left">
-          © {new Date().getFullYear()} GramForGrow. All rights reserved.
+          © {new Date().getFullYear()} DMForGrow. All rights reserved.
         </div>
       </div>
 

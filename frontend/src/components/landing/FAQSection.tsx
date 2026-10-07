@@ -6,7 +6,7 @@ import { Plus, Minus } from "lucide-react";
 
 const FAQS = [
   {
-    q: "Is GramForGrow safe for my Instagram account?",
+    q: "Is DMForGrow safe for my Instagram account?",
     a: "Yes. We only use Meta's official Instagram API — you log in with Instagram and approve access, and we never ask for your password. Automations follow Instagram's rules, like replying within 24 hours of someone's last message.",
   },
   {
@@ -48,7 +48,7 @@ export default function FAQSection({ onBookDemo }: { onBookDemo?: () => void }) 
             Questions before you start
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-white/60">
-            Common questions about GramForGrow, onboarding, pricing, and security.
+            Common questions about DMForGrow, onboarding, pricing, and security.
           </p>
         </div>
 

@@ -5,9 +5,9 @@ import { pageMetadata } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
   title: "System Status",
-  description: "Live health of the GramForGrow website, API and database, checked in real time.",
+  description: "Live health of the DMForGrow website, API and database, checked in real time.",
   path: "/status",
-  ogTitle: "GramForGrow system status",
+  ogTitle: "DMForGrow system status",
   ogKind: "Status",
 });
 

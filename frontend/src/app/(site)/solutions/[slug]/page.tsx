@@ -42,7 +42,7 @@ export default async function SolutionPage({ params }: Props) {
         <FeatureGrid items={s.challenges.map((c) => ({ icon: AlertTriangle, title: c.title, body: c.body }))} />
       </Section>
 
-      <Section overline="The playbook" title="How teams solve it with GramForGrow">
+      <Section overline="The playbook" title="How teams solve it with DMForGrow">
         <ol className="grid gap-4 md:grid-cols-2">
           {s.playbook.map((p, i) => {
             const f = featureBySlug(p.feature);

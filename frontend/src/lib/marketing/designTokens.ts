@@ -1,4 +1,4 @@
-/** GramForGrow marketing design system — full black + glass surfaces, brand green #ec4899. */
+/** DMForGrow marketing design system — full black + glass surfaces, brand green #ec4899. */
 
 export const BRAND = {
   green: {

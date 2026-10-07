@@ -15,7 +15,7 @@ export const metadata = pageMetadata({
 
 export default function ContactPage() {
   const cards = [
-    { icon: MessageCircle, title: "WhatsApp", body: "The fastest way to reach us.", href: whatsappLink("Hi, I'd like to know more about GramForGrow"), label: "Chat with us" },
+    { icon: MessageCircle, title: "WhatsApp", body: "The fastest way to reach us.", href: whatsappLink("Hi, I'd like to know more about DMForGrow"), label: "Chat with us" },
     { icon: Mail, title: "Email", body: SITE.supportEmail, href: `mailto:${SITE.supportEmail}`, label: "Send an email" },
   ];
   return (

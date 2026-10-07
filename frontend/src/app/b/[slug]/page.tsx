@@ -49,7 +49,7 @@ export default async function BioPage({ params }: Props) {
             </a>
           ))}
         </div>
-        <Link href="/" className="mt-12 inline-block text-[11.5px] text-white/35 hover:text-white/60">Made with GramForGrow</Link>
+        <Link href="/" className="mt-12 inline-block text-[11.5px] text-white/35 hover:text-white/60">Made with DMForGrow</Link>
       </div>
     </main>
   );

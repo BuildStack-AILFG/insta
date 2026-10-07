@@ -1,6 +1,6 @@
 # Build phases — what to build when
 
-GramForGrow is an Instagram automation product. This file is the roadmap: what each phase delivers, and the rule that
+DMForGrow is an Instagram automation product. This file is the roadmap: what each phase delivers, and the rule that
 infrastructure is only added when a concrete trigger calls for it.
 
 Constraints that shape every phase (Meta's Instagram messaging rules):

@@ -70,7 +70,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="GramForGrow API", version="1.0.0", lifespan=lifespan,
+    title="DMForGrow API", version="1.0.0", lifespan=lifespan,
     docs_url=None if settings.is_production else "/docs", redoc_url=None, openapi_url=None if settings.is_production else "/openapi.json",
 )
 

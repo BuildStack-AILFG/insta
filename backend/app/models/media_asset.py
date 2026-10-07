@@ -1,4 +1,4 @@
-"""Media library: images and videos uploaded to GramForGrow, served publicly so Instagram can download them for publishing."""
+"""Media library: images and videos uploaded to DMForGrow, served publicly so Instagram can download them for publishing."""
 
 from __future__ import annotations
 

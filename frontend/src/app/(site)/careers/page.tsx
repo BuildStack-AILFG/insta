@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 });
 
 export default function CareersPage() {
-  const mail = `mailto:${SITE.supportEmail}?subject=${encodeURIComponent("Careers at GramForGrow")}`;
+  const mail = `mailto:${SITE.supportEmail}?subject=${encodeURIComponent("Careers at DMForGrow")}`;
   return (
     <>
       <PageHero
@@ -43,7 +43,7 @@ export default function CareersPage() {
           <p>Send a short note about what you&apos;ve built or done, links to your work and the kind of role you&apos;re looking for to <a className="font-medium text-brand hover:underline" href={mail}>{SITE.supportEmail}</a> with the subject &ldquo;Careers&rdquo;. We read every message and will reply if there&apos;s a match.</p>
         </div>
       </Section>
-      <CtaBand title="Not looking for a job?" body="Try GramForGrow free or talk to our team about your use case." />
+      <CtaBand title="Not looking for a job?" body="Try DMForGrow free or talk to our team about your use case." />
     </>
   );
 }

@@ -15,12 +15,12 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "privacy",
     title: "Privacy Policy",
-    metaDescription: `How ${OWNER} collects, uses, shares and protects personal data when you use GramForGrow, and your rights under India's DPDP Act, the GDPR, UK GDPR and US state privacy laws.`,
+    metaDescription: `How ${OWNER} collects, uses, shares and protects personal data when you use DMForGrow, and your rights under India's DPDP Act, the GDPR, UK GDPR and US state privacy laws.`,
     summary: "What we collect, why, the legal basis, who we share it with, where it is stored, how long we keep it and how you can exercise your rights — in India and abroad.",
     body: [
       { type: "p", text: `${SITE.name} is a product of **${OWNER}**. This policy explains how **${OWNER}** ("**${SITE.name}**", "we", "us", "our") collects, uses, shares and protects personal data when you visit our website, create an account or use the ${SITE.name} service.` },
       { type: "p", text: "We wrote it to meet India's **Digital Personal Data Protection Act, 2023** and **Digital Personal Data Protection Rules, 2025** (\"DPDP\"), the **Information Technology Act, 2000** and the rules made under it, and, where they apply to you, the **EU General Data Protection Regulation** (\"GDPR\"), the **UK GDPR and Data Protection Act 2018**, and US state privacy laws such as the **California Consumer Privacy Act** as amended by the CPRA (\"CCPA\")." },
-      { type: "callout", tone: "info", title: "In short", text: "We use your data only to run GramForGrow. We do not sell or rent personal data. We do not use Instagram data or your customers' conversations for advertising, and we do not use them to train AI models. You can access, correct, export or delete your data at any time by emailing us." },
+      { type: "callout", tone: "info", title: "In short", text: "We use your data only to run DMForGrow. We do not sell or rent personal data. We do not use Instagram data or your customers' conversations for advertising, and we do not use them to train AI models. You can access, correct, export or delete your data at any time by emailing us." },
 
       { type: "h2", text: "1. Who we are" },
       { type: "p", text: `${SITE.name} is owned and operated by **${OWNER}**, a company incorporated in India${SITE.cin ? ` (CIN ${SITE.cin})` : ""}${SITE.address ? `, with its registered office at ${SITE.address}` : ""}. For account data we are the **Data Fiduciary** under DPDP and the **controller** under the GDPR and UK GDPR. You can reach us at **${MAIL}**.` },
@@ -28,9 +28,9 @@ export const LEGAL: LegalDoc[] = [
       { type: "h2", text: "2. Our two roles" },
       { type: "ul", items: [
         "**Account data** — information about you, your team members and your business that we collect to run and bill your account, plus data about visitors to our website. Here **we decide** why and how data is used (Data Fiduciary / controller / \"business\" under the CCPA).",
-        "**Workspace data** — Instagram comments, direct messages, profile details of people who interact with your account, contacts, deals, automations, knowledge-base content and files that your business brings into GramForGrow. Here **we process data on your behalf** and only on your documented instructions (Data Processor / processor / \"service provider\"). **You** are the Data Fiduciary or controller and are responsible for having a lawful basis, giving notice to your customers and obtaining any consent needed to message them.",
+        "**Workspace data** — Instagram comments, direct messages, profile details of people who interact with your account, contacts, deals, automations, knowledge-base content and files that your business brings into DMForGrow. Here **we process data on your behalf** and only on your documented instructions (Data Processor / processor / \"service provider\"). **You** are the Data Fiduciary or controller and are responsible for having a lawful basis, giving notice to your customers and obtaining any consent needed to message them.",
       ] },
-      { type: "p", text: "If you are a customer or follower of a business that uses GramForGrow, that business controls your data. Please send requests to them first; we will help them respond." },
+      { type: "p", text: "If you are a customer or follower of a business that uses DMForGrow, that business controls your data. Please send requests to them first; we will help them respond." },
 
       { type: "h2", text: "3. What we collect" },
       { type: "table", head: ["Category", "Examples", "Source"], rows: [
@@ -56,19 +56,19 @@ export const LEGAL: LegalDoc[] = [
       { type: "p", text: "Where we rely on consent, you can **withdraw it as easily as you gave it** — by emailing us, using the unsubscribe link or disconnecting your Instagram account. Withdrawal does not affect processing already carried out, but we may no longer be able to provide the parts of the service that depend on it. Where we rely on legitimate interests, you can object (see section 11)." },
 
       { type: "h2", text: "5. Instagram and Meta platform data" },
-      { type: "p", text: "GramForGrow connects to Instagram only through **Meta's official Instagram API**, with permissions you grant and can revoke at any time. We use Instagram platform data only to provide the features you enable:" },
+      { type: "p", text: "DMForGrow connects to Instagram only through **Meta's official Instagram API**, with permissions you grant and can revoke at any time. We use Instagram platform data only to provide the features you enable:" },
       { type: "table", head: ["Permission", "What we use it for"], rows: [
         ["instagram_business_basic", "Read your account's username, name, profile picture, account type, follower and media counts, and list your posts so you can pick them in automations, giveaways and the scheduler"],
         ["instagram_business_manage_comments", "Receive comments on your posts, reply to them publicly, send one private reply per comment, and hide or delete comments under your moderation rules"],
         ["instagram_business_manage_messages", "Receive direct messages and story replies, show them in your inbox, and send replies (manual, automated or AI-written) to people who messaged you first"],
-        ["instagram_business_content_publish", "Publish the photos, videos, reels and carousels you create or schedule in GramForGrow to your account"],
+        ["instagram_business_content_publish", "Publish the photos, videos, reels and carousels you create or schedule in DMForGrow to your account"],
         ["instagram_business_manage_insights", "Show reach, impressions, engagement and follower metrics for your account and posts in your dashboard"],
       ] },
       { type: "ul", items: [
         "We **do not sell, license or buy** Instagram platform data, and we do not use it for advertising, for profiling people across businesses or to build data sets for third parties.",
         "We share it only with the sub-processors in section 7 that help us provide the service, or when the law requires.",
         "We comply with Meta's Platform Terms and Developer Policies, including their data-use and deletion requirements.",
-        "When you disconnect an Instagram account, we stop collecting new data from it and delete our stored access token. You can also remove GramForGrow from the apps and websites connected to your Instagram or Facebook account in their settings.",
+        "When you disconnect an Instagram account, we stop collecting new data from it and delete our stored access token. You can also remove DMForGrow from the apps and websites connected to your Instagram or Facebook account in their settings.",
       ] },
 
       { type: "h2", text: "6. AI features" },
@@ -78,7 +78,7 @@ export const LEGAL: LegalDoc[] = [
       { type: "p", text: "We share personal data only with service providers (sub-processors) who process it for us under written contracts that require confidentiality, security and use only on our instructions." },
       { type: "table", head: ["Provider", "Purpose", "Location"], rows: [
         ["Meta Platforms (Instagram API)", "Receiving comments and messages, sending replies, publishing posts you schedule and reading insights through your connected account", "USA / Ireland"],
-        ["Razorpay", "Payments for GramForGrow plans, and payment links if you connect your own Razorpay account", "India"],
+        ["Razorpay", "Payments for DMForGrow plans, and payment links if you connect your own Razorpay account", "India"],
         ["Anthropic", "Generating AI replies, only when AI features are enabled", "USA"],
         ["Vercel", "Hosting the website and dashboard front end", "Global edge network"],
         ["Railway", "Hosting the application servers and database", "USA / EU"],
@@ -136,18 +136,18 @@ export const LEGAL: LegalDoc[] = [
       { type: "p", text: `Email **${MAIL}** with the subject "Privacy request", or ask an authorised agent to do so for you. We may need to verify your identity before acting. We respond within **30 days** (DPDP and GDPR, extendable where the law allows) or **45 days** (CCPA), and always within 90 days. If the request concerns a business's workspace data, we will pass it to that business and help them answer.` },
 
       { type: "h2", text: "12. Children" },
-      { type: "p", text: "GramForGrow is a business tool and is not directed at children. You must be at least **18 years old** to create an account. We do not knowingly collect personal data from anyone under 18 (a child under DPDP), under 16 in the EU or under 13 in the USA, and we do not track children or target advertising at them. If you believe a child has given us personal data, contact us and we will delete it. Businesses must not use GramForGrow to target children or to process their data without verifiable parental consent." },
+      { type: "p", text: "DMForGrow is a business tool and is not directed at children. You must be at least **18 years old** to create an account. We do not knowingly collect personal data from anyone under 18 (a child under DPDP), under 16 in the EU or under 13 in the USA, and we do not track children or target advertising at them. If you believe a child has given us personal data, contact us and we will delete it. Businesses must not use DMForGrow to target children or to process their data without verifiable parental consent." },
 
       { type: "h2", text: "13. Cookies and tracking" },
       { type: "p", text: "We use only the cookies and local storage needed to sign you in, keep you secure and remember your preferences. We do not use advertising cookies or sell browsing data. See our [Cookie Policy](/cookies)." },
 
       { type: "h2", text: "14. Deleting your account and data" },
       { type: "ol", items: [
-        "Disconnect your Instagram account in the dashboard, or remove GramForGrow in your Instagram or Facebook app settings. We stop collecting data from it immediately.",
+        "Disconnect your Instagram account in the dashboard, or remove DMForGrow in your Instagram or Facebook app settings. We stop collecting data from it immediately.",
         `To delete your workspace or account and all related data, email **${MAIL}** from your account email with the subject "Delete my data". Owners can export contacts and deals from the dashboard first.`,
         "We confirm your request, delete the data within the periods in section 9 and tell you when it is done, apart from records the law requires us to keep.",
       ] },
-      { type: "p", text: "If you messaged or commented on a business that uses GramForGrow, ask that business to delete your data, or email us with your Instagram username and the business's name and we will forward and support the request." },
+      { type: "p", text: "If you messaged or commented on a business that uses DMForGrow, ask that business to delete your data, or email us with your Instagram username and the business's name and we will forward and support the request." },
 
       { type: "h2", text: "15. Changes to this policy" },
       { type: "p", text: "We may update this policy as our service or the law changes. The date at the top shows the current version. For material changes we will notify account owners by email or in the dashboard at least 15 days before they take effect and, where the law requires, ask for fresh consent." },
@@ -166,12 +166,12 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "terms",
     title: "Terms of Service",
-    metaDescription: `The agreement between ${CO} and customers who use GramForGrow: accounts, acceptable use, fees, data, AI features, liability and more.`,
-    summary: "The rules for using GramForGrow, what you can expect from us and what we expect from you.",
+    metaDescription: `The agreement between ${CO} and customers who use DMForGrow: accounts, acceptable use, fees, data, AI features, liability and more.`,
+    summary: "The rules for using DMForGrow, what you can expect from us and what we expect from you.",
     body: [
-      { type: "p", text: `These terms are an agreement between **${CO}** ("we", "us") and the business or person who creates a GramForGrow account ("you"). By creating an account or using the service you accept them. If you accept on behalf of a company, you confirm you are authorised to do so.` },
+      { type: "p", text: `These terms are an agreement between **${CO}** ("we", "us") and the business or person who creates a DMForGrow account ("you"). By creating an account or using the service you accept them. If you accept on behalf of a company, you confirm you are authorised to do so.` },
       { type: "h2", text: "1. The service" },
-      { type: "p", text: "GramForGrow is software for automating and managing Instagram comments and direct messages, sales and payments. It works with the Instagram API provided by Meta. We are an independent company and are **not affiliated with, endorsed by or sponsored by Instagram or Meta**." },
+      { type: "p", text: "DMForGrow is software for automating and managing Instagram comments and direct messages, sales and payments. It works with the Instagram API provided by Meta. We are an independent company and are **not affiliated with, endorsed by or sponsored by Instagram or Meta**." },
       { type: "h2", text: "2. Your account" },
       { type: "ul", items: ["Provide accurate information and keep it up to date", "Keep credentials confidential and tell us promptly about unauthorised use", "You are responsible for activity under your workspace, including by team members you invite"] },
       { type: "h2", text: "3. Using Instagram responsibly" },
@@ -207,7 +207,7 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "refund-policy",
     title: "Refund & Cancellation Policy",
-    metaDescription: "How to cancel GramForGrow, when refunds apply, how failed or duplicate payments are handled and how long refunds take.",
+    metaDescription: "How to cancel DMForGrow, when refunds apply, how failed or duplicate payments are handled and how long refunds take.",
     summary: "Plans are prepaid and don't auto-renew. Here's how cancellation and refunds work.",
     body: [
       { type: "h2", text: "Cancellation" },
@@ -223,10 +223,10 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "cookies",
     title: "Cookie Policy",
-    metaDescription: `What cookies and similar storage ${CO} uses on the GramForGrow website and dashboard, and how to control them.`,
+    metaDescription: `What cookies and similar storage ${CO} uses on the DMForGrow website and dashboard, and how to control them.`,
     summary: "We keep this simple: only what's needed to sign you in and remember your preferences.",
     body: [
-      { type: "p", text: "Cookies and similar technologies (such as your browser's local storage) are small pieces of data stored on your device. Here is what GramForGrow uses." },
+      { type: "p", text: "Cookies and similar technologies (such as your browser's local storage) are small pieces of data stored on your device. Here is what DMForGrow uses." },
       { type: "table", head: ["Purpose", "What we store", "Duration"], rows: [["Sign-in (essential)", "Session tokens that keep you signed in to the dashboard", "Until you sign out or the session expires"], ["Preferences (essential)", "Your light or dark theme choice", "Until you clear it"], ["Security (essential)", "Short-lived data used to protect forms and rate-limit abuse", "Short"]] },
       { type: "p", text: "We do not use advertising cookies. If we add analytics or other optional technologies in future, we will update this page and ask for your consent where the law requires it." },
       { type: "h2", text: "Third-party content" },
@@ -238,7 +238,7 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "security",
     title: "Security",
-    metaDescription: `How ${CO} protects GramForGrow customer data: encryption, access control, webhook verification, tenant isolation and responsible disclosure.`,
+    metaDescription: `How ${CO} protects DMForGrow customer data: encryption, access control, webhook verification, tenant isolation and responsible disclosure.`,
     summary: "The practical measures we take to protect your workspace and your customers' data.",
     body: [
       { type: "p", text: "Your conversations and contacts are among your business's most sensitive data. This page describes the controls we operate today." },
@@ -250,7 +250,7 @@ export const LEGAL: LegalDoc[] = [
       { type: "ul", items: ["Inbound Instagram and integration webhooks are accepted only if their **signature verifies**", "Outbound webhooks are signed with HMAC-SHA256, and requests to private or internal network addresses are blocked", "Rate limiting on sign-in, forms and APIs", "Input validation and constrained file uploads", "CSV exports neutralise spreadsheet formulas"] },
       { type: "h2", text: "Operations" },
       { type: "ul", items: ["Hosted on reputable cloud providers that maintain their own certifications", "Managed database with backups", "Health monitoring and a public [status page](/status)"] },
-      { type: "callout", tone: "info", title: "Independent audits", text: "We have not yet completed an independent certification such as SOC 2 or ISO 27001 for GramForGrow itself. If your organisation needs a security questionnaire or a data processing agreement, contact us." },
+      { type: "callout", tone: "info", title: "Independent audits", text: "We have not yet completed an independent certification such as SOC 2 or ISO 27001 for DMForGrow itself. If your organisation needs a security questionnaire or a data processing agreement, contact us." },
       { type: "h2", text: "Report a vulnerability" },
       { type: "p", text: `If you believe you've found a security issue, email **${MAIL}** with details. Please give us reasonable time to fix it before disclosing it publicly, and avoid accessing other people's data. We acknowledge reports promptly and appreciate responsible research.` },
     ],
@@ -258,11 +258,11 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "compliance",
     title: "Compliance",
-    metaDescription: `How GramForGrow supports compliance with Meta's Instagram platform policies, India's DPDP Act, GDPR and GST invoicing requirements.`,
+    metaDescription: `How DMForGrow supports compliance with Meta's Instagram platform policies, India's DPDP Act, GDPR and GST invoicing requirements.`,
     summary: "How the product helps you meet Instagram platform, data-protection and tax obligations.",
     body: [
       { type: "h2", text: "Instagram platform policies" },
-      { type: "p", text: "GramForGrow uses Meta's official Instagram API. The product is built around its rules: businesses only reply to people who commented or messaged first, replies are limited to 24 hours after the person's last message (7 days for human agents where permitted), one private reply per comment, and stop requests are honoured. You remain responsible for what you send." },
+      { type: "p", text: "DMForGrow uses Meta's official Instagram API. The product is built around its rules: businesses only reply to people who commented or messaged first, replies are limited to 24 hours after the person's last message (7 days for human agents where permitted), one private reply per comment, and stop requests are honoured. You remain responsible for what you send." },
       { type: "h2", text: "India — DPDP Act, 2023 and IT Act, 2000" },
       { type: "ul", items: ["We collect personal data for stated purposes and describe them in our [Privacy Policy](/privacy)", "You can ask us to access, correct or erase your data and to withdraw consent", "We take reasonable security safeguards and will report breaches as the law requires", `A grievance channel is available at ${MAIL}`] },
       { type: "h2", text: "GDPR and UK GDPR" },
@@ -278,10 +278,10 @@ export const LEGAL: LegalDoc[] = [
   {
     slug: "accessibility",
     title: "Accessibility",
-    metaDescription: `${CO}'s commitment to making the GramForGrow website and dashboard usable by everyone, and how to report a problem.`,
+    metaDescription: `${CO}'s commitment to making the DMForGrow website and dashboard usable by everyone, and how to report a problem.`,
     summary: "We aim for a site and dashboard that everyone can use.",
     body: [
-      { type: "p", text: "We want everyone to be able to use GramForGrow, including people who use screen readers, keyboards, zoom or high-contrast settings. We aim to follow the Web Content Accessibility Guidelines (WCAG) 2.1 level AA." },
+      { type: "p", text: "We want everyone to be able to use DMForGrow, including people who use screen readers, keyboards, zoom or high-contrast settings. We aim to follow the Web Content Accessibility Guidelines (WCAG) 2.1 level AA." },
       { type: "h2", text: "What we do" },
       { type: "ul", items: ["Semantic headings, landmarks and labelled form fields", "Keyboard access to menus, dialogs and forms", "Visible focus states and sufficient colour contrast in both the light and dark themes", "Respect for the 'reduce motion' setting", "Text alternatives for meaningful icons"] },
       { type: "h2", text: "Known limitations" },

@@ -21,7 +21,7 @@ export const HELP: HelpCategory[] = [
     blurb: "Connecting your account, the 24-hour window and message delivery.",
     faqs: [
       { q: "Which Instagram accounts can I connect?", a: "Professional accounts — Business or Creator. Personal accounts have no API access; switch in the Instagram app under Settings → Account type and tools." },
-      { q: "Do I have to share my Instagram password?", a: "No. You log in with Instagram and approve access to comments and messages. GramForGrow never sees your password, and you can revoke access any time." },
+      { q: "Do I have to share my Instagram password?", a: "No. You log in with Instagram and approve access to comments and messages. DMForGrow never sees your password, and you can revoke access any time." },
       { q: "Why can't I reply to someone?", a: "Instagram only lets businesses reply within 24 hours of the person's last message (up to 7 days for human agents if your Meta app has that permission). You can reply again as soon as they message you." },
       { q: "Can I message people who never contacted me?", a: "No. Instagram doesn't allow businesses to message people first. Conversations start when someone comments, DMs you, replies to your story or mentions you." },
       { q: "Why did a message fail?", a: "Open the message in the inbox to see the reason Instagram gave — for example the reply window closed, the person restricted your account, or access needs to be renewed." },
@@ -53,7 +53,7 @@ export const HELP: HelpCategory[] = [
   {
     id: "billing",
     title: "Plans, payments & invoices",
-    blurb: "Paying for GramForGrow and collecting payments from customers.",
+    blurb: "Paying for DMForGrow and collecting payments from customers.",
     faqs: [
       { q: "How do I upgrade?", a: "Open Settings → Plan & billing, choose a plan and billing period, add your business details and pay online with UPI, card or netbanking through Razorpay." },
       { q: "Is GST included in the price?", a: "Prices are shown before GST. 18% GST is added at checkout, and your invoice shows the breakup — CGST and SGST for in-state customers, IGST otherwise." },
@@ -68,7 +68,7 @@ export const HELP: HelpCategory[] = [
     title: "Privacy & security",
     blurb: "Where data lives and who can access it.",
     faqs: [
-      { q: "Who can see my conversations?", a: "Members of your workspace according to their role. Access by GramForGrow staff is restricted and used only to run the service or to help with a support request you make." },
+      { q: "Who can see my conversations?", a: "Members of your workspace according to their role. Access by DMForGrow staff is restricted and used only to run the service or to help with a support request you make." },
       { q: "How do I delete my data?", a: "Contact us from the email on your account and we'll delete your workspace and the data in it, subject to legal retention requirements such as tax invoices." },
       { q: "How do you protect credentials?", a: "Instagram access tokens, AI keys and payment keys are encrypted at rest. Passwords are hashed and never stored in plain text." },
     ],

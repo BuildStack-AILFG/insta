@@ -5,11 +5,11 @@ import { pageMetadata } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
   title: "Documentation — Guides & REST API Reference",
-  description: "Learn how to connect Instagram, set up comment automations, build DM flows, manage your pipeline and payments, and integrate with the GramForGrow REST API and webhooks.",
+  description: "Learn how to connect Instagram, set up comment automations, build DM flows, manage your pipeline and payments, and integrate with the DMForGrow REST API and webhooks.",
   path: "/docs",
-  ogTitle: "GramForGrow documentation",
+  ogTitle: "DMForGrow documentation",
   ogKind: "Docs",
-  keywords: ["Instagram automation documentation", "Instagram API guide", "GramForGrow API"],
+  keywords: ["Instagram automation documentation", "Instagram API guide", "DMForGrow API"],
 });
 
 const ICON = { "Get started": Rocket, Build: BookOpen, Developers: Code2, Administer: Settings2 } as const;
@@ -17,7 +17,7 @@ const ICON = { "Get started": Rocket, Build: BookOpen, Developers: Code2, Admini
 export default function DocsHome() {
   return (
     <>
-      <PageHero breadcrumbs={[{ name: "Documentation", path: "/docs" }]} overline="Documentation" title="Everything you need to automate Instagram with GramForGrow" lead="Step-by-step guides for your team and a complete reference for developers." />
+      <PageHero breadcrumbs={[{ name: "Documentation", path: "/docs" }]} overline="Documentation" title="Everything you need to automate Instagram with DMForGrow" lead="Step-by-step guides for your team and a complete reference for developers." />
       {DOC_GROUPS.map((g, i) => (
         <Section key={g} title={g} alt={i % 2 === 0}>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

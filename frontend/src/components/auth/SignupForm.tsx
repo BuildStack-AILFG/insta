@@ -71,7 +71,7 @@ export default function SignupForm() {
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <div>
         <h1 className="text-[26px] font-bold tracking-tight text-white sm:text-[28px]">
-          Create your <span className="text-brand">GramForGrow</span> account
+          Create your <span className="text-brand">DMForGrow</span> account
         </h1>
         <p className="mt-2 text-[14px] text-white/50">
           Turn Instagram comments into DMs and leads in minutes. No credit card required.

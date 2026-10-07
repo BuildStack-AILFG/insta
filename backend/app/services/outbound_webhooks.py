@@ -83,7 +83,7 @@ async def _deliver(db, hook: OutboundWebhook, event: str, body: bytes) -> tuple[
         secret = decrypt(hook.secret_enc)
         async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=4.0), follow_redirects=False) as http:
             resp = await http.post(hook.url, content=body, headers={
-                "Content-Type": "application/json", "X-LFG-Event": event, "X-LFG-Signature": sign(secret, body), "User-Agent": "GramForGrow-Webhooks/1.0",
+                "Content-Type": "application/json", "X-LFG-Event": event, "X-LFG-Signature": sign(secret, body), "User-Agent": "DMForGrow-Webhooks/1.0",
             })
         ok, status = 200 <= resp.status_code < 300, f"HTTP {resp.status_code}"
     except (httpx.HTTPError, UnsafeUrl, CryptoError) as exc:
@@ -101,7 +101,7 @@ async def _deliver(db, hook: OutboundWebhook, event: str, body: bytes) -> tuple[
 
 
 async def send_test(hook: OutboundWebhook) -> tuple[bool, str]:
-    body = json.dumps({"version": "1.0", "timestamp": datetime.now(timezone.utc).isoformat(), "type": "ping", "data": {"message": "Test event from GramForGrow"}}).encode()
+    body = json.dumps({"version": "1.0", "timestamp": datetime.now(timezone.utc).isoformat(), "type": "ping", "data": {"message": "Test event from DMForGrow"}}).encode()
     async with db_session.async_session_factory() as db:
         fresh = await db.get(OutboundWebhook, hook.id)
         result = await _deliver(db, fresh, "ping", body)

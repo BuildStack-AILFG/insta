@@ -223,7 +223,7 @@ function Integrations() {
   return (
     <Frame title="Integrations">
       <div className="p-5">
-        <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-4 py-2 text-[12.5px] font-semibold text-white"><Plug size={14} className="text-brand" /> GramForGrow</div>
+        <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-4 py-2 text-[12.5px] font-semibold text-white"><Plug size={14} className="text-brand" /> DMForGrow</div>
         <div className="grid grid-cols-3 gap-2.5">{items.map(([Icon, n]) => <div key={n} className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-card px-2 py-3 text-center"><Icon size={18} className="text-white/70" /><span className="text-[11.5px] font-medium text-white">{n}</span><Chip tone="green">Connected</Chip></div>)}</div>
       </div>
     </Frame>

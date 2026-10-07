@@ -32,7 +32,7 @@ export const FEATURES: Feature[] = [
     metaDescription: "When someone comments a keyword on your post or reel, reply under the comment and send them a DM with your link, price list or offer — in under a second.",
     keywords: ["Instagram comment to DM", "Instagram comment auto reply", "comment keyword DM", "ManyChat comment automation alternative"],
     h1: "Turn every “price?” and “link?” comment into a DM conversation",
-    lead: "Pick a post or reel, add the keywords your audience comments, and write the reply. GramForGrow answers under the comment and slides into their DMs with a link button — while you sleep.",
+    lead: "Pick a post or reel, add the keywords your audience comments, and write the reply. DMForGrow answers under the comment and slides into their DMs with a link button — while you sleep.",
     visual: "comments",
     benefits: [
       { icon: Zap, title: "Replies in under a second", body: "Comments arrive through Meta's webhooks and get answered instantly, so the person is still on your post when your DM lands." },
@@ -110,7 +110,7 @@ export const FEATURES: Feature[] = [
     metaDescription: "Automatically answer story replies and story mentions on Instagram: thank people, tag them, send a discount or start a DM flow.",
     keywords: ["Instagram story reply automation", "story mention auto DM", "Instagram story DM", "story engagement automation"],
     h1: "Make every story reply and mention count",
-    lead: "When someone replies to your story or mentions you in theirs, GramForGrow can thank them, tag them and send the next step — a discount, a link or a question.",
+    lead: "When someone replies to your story or mentions you in theirs, DMForGrow can thank them, tag them and send the next step — a discount, a link or a question.",
     visual: "stories",
     benefits: [
       { icon: Heart, title: "Instant thank-yous", body: "Reply to story mentions within seconds so the people who promote you feel seen." },
@@ -130,7 +130,7 @@ export const FEATURES: Feature[] = [
       { title: "Events", body: "Thank attendees who tag you and send them next event details." },
     ],
     faqs: [
-      { q: "Do mentions from private accounts arrive?", a: "Instagram delivers story mentions to your account's messages, and GramForGrow receives what Instagram shares through its API." },
+      { q: "Do mentions from private accounts arrive?", a: "Instagram delivers story mentions to your account's messages, and DMForGrow receives what Instagram shares through its API." },
       { q: "Can I limit how often someone gets the message?", a: "Yes. Each flow has a cooldown so a fan who mentions you every day doesn't get the same message every time." },
     ],
     related: ["flow-builder", "comment-to-dm", "team-inbox"],
@@ -201,7 +201,7 @@ export const FEATURES: Feature[] = [
       { title: "Launch waitlists", body: "Build a waitlist from DMs before your product drops." },
     ],
     faqs: [
-      { q: "Where do captured leads go?", a: "They're saved on the contact in GramForGrow and can be sent to any tool through webhooks, Zapier or Make." },
+      { q: "Where do captured leads go?", a: "They're saved on the contact in DMForGrow and can be sent to any tool through webhooks, Zapier or Make." },
       { q: "Can I export them?", a: "Yes — export contacts to CSV any time, filtered by tag or segment." },
     ],
     related: ["flow-builder", "comment-to-dm", "integrations-api"],
@@ -331,7 +331,7 @@ export const FEATURES: Feature[] = [
       { title: "Coaches and services", body: "Share a payment link after qualifying a lead." },
     ],
     faqs: [
-      { q: "Do you charge a commission?", a: "No. You pay Razorpay's standard fees; GramForGrow takes nothing from the payment." },
+      { q: "Do you charge a commission?", a: "No. You pay Razorpay's standard fees; DMForGrow takes nothing from the payment." },
     ],
     related: ["sales-pipeline", "flow-builder", "team-inbox"],
   },
@@ -376,7 +376,7 @@ export const FEATURES: Feature[] = [
     metaDescription: "Plan and auto-publish Instagram photos, carousels, reels and stories through the official API, with a first comment and publishing-limit checks.",
     keywords: ["Instagram scheduler", "schedule Instagram reels", "auto post Instagram", "Instagram content calendar"],
     h1: "Plan a week of Instagram in one sitting",
-    lead: "Queue photos, carousels, reels and stories, pick the time, and GramForGrow publishes them through Meta's official API — then pairs perfectly with a “next post” comment automation.",
+    lead: "Queue photos, carousels, reels and stories, pick the time, and DMForGrow publishes them through Meta's official API — then pairs perfectly with a “next post” comment automation.",
     visual: "analytics",
     benefits: [
       { icon: Clock, title: "Every format", body: "Photos, 2–10 item carousels, reels and stories — with captions and an optional first comment." },

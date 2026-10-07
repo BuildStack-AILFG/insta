@@ -1,6 +1,6 @@
-"""GramForGrow industry illustrations (pink theme) — original artwork, no third-party images.
+"""DMForGrow industry illustrations (pink theme) — original artwork, no third-party images.
 
-Each card shows the product's core moment: people comment on a post, GramForGrow replies in their DMs automatically.
+Each card shows the product's core moment: people comment on a post, DMForGrow replies in their DMs automatically.
 Run from frontend/: `python scripts/site-illustrations/build.py` -> public/images/site/industries/*.svg
 """
 

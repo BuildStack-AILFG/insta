@@ -27,7 +27,7 @@ public = APIRouter(prefix="/public/bio", tags=["public"])
 _SLUG = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$")
 _REF = re.compile(r"^[A-Za-z0-9_-]{1,60}$")
 URL = r"^https?://[^\s]+$"
-RESERVED = {"admin", "api", "app", "dashboard", "login", "signup", "help", "support", "gramforgrow"}
+RESERVED = {"admin", "api", "app", "dashboard", "login", "signup", "help", "support", "gramforgrow", "dmforgrow"}
 
 
 class LinkButton(BaseModel):

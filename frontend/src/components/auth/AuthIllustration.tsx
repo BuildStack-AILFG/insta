@@ -87,7 +87,7 @@ export default function AuthIllustration() {
           className="font-sans font-extrabold leading-[0.95] tracking-tight text-white"
           style={{ fontSize: "clamp(2rem, 6.4vw, 3.75rem)", wordBreak: "break-word" }}
         >
-          GramForGrow
+          DMForGrow
         </p>
       </div>
     </div>

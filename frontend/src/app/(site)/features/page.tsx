@@ -18,7 +18,7 @@ export const metadata = pageMetadata({
 export default function FeaturesPage() {
   return (
     <>
-      <JsonLd data={{ "@context": "https://schema.org", "@type": "ItemList", name: "GramForGrow features", itemListElement: FEATURES.map((f, i) => ({ "@type": "ListItem", position: i + 1, name: f.navLabel, url: absoluteUrl(`/features/${f.slug}`) })) }} />
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "ItemList", name: "DMForGrow features", itemListElement: FEATURES.map((f, i) => ({ "@type": "ListItem", position: i + 1, name: f.navLabel, url: absoluteUrl(`/features/${f.slug}`) })) }} />
       <PageHero
         breadcrumbs={[{ name: "Features", path: "/features" }]}
         overline="The platform"

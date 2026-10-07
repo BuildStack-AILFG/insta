@@ -183,7 +183,7 @@ function DesktopHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; 
           }`}
           style={{ left: "50%", top: "67.5%", width: "min(40cqw, 560px)", transform: "translateX(-50%)", fontSize: "1.5cqw" }}
         >
-          Someone comments “PRICE” — GramForGrow replies and slides into their DMs in under a second.
+          Someone comments “PRICE” — DMForGrow replies and slides into their DMs in under a second.
         </p>
 
         <div
@@ -303,7 +303,7 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
           isDark ? "text-white/40" : "text-white/85"
         }`}
       >
-        Someone comments “PRICE” — GramForGrow replies and slides into their DMs in under a second.
+        Someone comments “PRICE” — DMForGrow replies and slides into their DMs in under a second.
       </p>
 
       <div className="mt-6 flex flex-col items-center gap-3">

@@ -1,5 +1,5 @@
 """
-Platform admin console API: the people who run GramForGrow see every workspace, plan, payment and user, and can change plans, trials and limits.
+Platform admin console API: the people who run DMForGrow see every workspace, plan, payment and user, and can change plans, trials and limits.
 
 Access is limited to the emails in PLATFORM_ADMIN_EMAILS (anyone else gets a plain 404). This is an operations view: it returns account and billing
 metadata only, never message content or contact details.

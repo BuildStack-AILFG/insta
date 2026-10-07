@@ -31,7 +31,7 @@ export default function AutomationInActionSection() {
           Automation in Action
         </h2>
         <p className="mt-2 text-base text-white/60 sm:text-lg">
-          See how GramForGrow turns a comment into a DM conversation, instantly.
+          See how DMForGrow turns a comment into a DM conversation, instantly.
         </p>
       </div>
 

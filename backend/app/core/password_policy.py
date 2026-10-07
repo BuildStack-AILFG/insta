@@ -35,7 +35,7 @@ COMMON_PASSWORDS = {
     "princess", "football", "baseball", "starwars", "master", "trustno1",
     "abc123", "abcd1234", "abcdef", "test123", "test1234", "temp1234",
     "000000", "11111111", "00000000", "aaaaaa", "aaaaaaaa",
-    "gramforgrow", "gramforgrow123", "gramforgrow@123",
+    "gramforgrow", "gramforgrow123", "gramforgrow@123", "dmforgrow", "dmforgrow123", "dmforgrow@123",
 }
 
 _RX_UPPER = re.compile(r"[A-Z]")

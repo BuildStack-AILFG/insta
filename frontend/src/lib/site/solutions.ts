@@ -22,7 +22,7 @@ export type Solution = {
 
 const SAFE_FAQ: Faq = {
   q: "Is automating DMs safe for my account?",
-  a: "Yes. GramForGrow uses Meta's official Instagram API — you log in with Instagram and never share your password — and it follows Instagram's messaging rules.",
+  a: "Yes. DMForGrow uses Meta's official Instagram API — you log in with Instagram and never share your password — and it follows Instagram's messaging rules.",
 };
 
 export const SOLUTIONS: Solution[] = [
@@ -70,7 +70,7 @@ export const SOLUTIONS: Solution[] = [
     metaDescription: "“Comment GUIDE and I'll DM it to you” — deliver freebies, affiliate links and presets automatically, grow your email list and keep brand-deal DMs organised.",
     keywords: ["Instagram automation for creators", "comment to get link", "Instagram freebie DM", "influencer DM automation"],
     h1: "Grow faster with “comment to get it” — without living in your DMs",
-    lead: "Comment-gated freebies are the fastest way to grow engagement. GramForGrow delivers them to every commenter in seconds, while brand-deal DMs stay organised in one inbox.",
+    lead: "Comment-gated freebies are the fastest way to grow engagement. DMForGrow delivers them to every commenter in seconds, while brand-deal DMs stay organised in one inbox.",
     challenges: [
       { title: "Hundreds of comments per post", body: "Manually DMing every “GUIDE” comment is impossible after a post takes off." },
       { title: "Brand DMs get buried", body: "Collaboration requests drown under fan messages." },
@@ -229,7 +229,7 @@ export const SOLUTIONS: Solution[] = [
     icon: Megaphone,
     tagline: "Run comment automations and DMs for every client",
     metaTitle: "Instagram DM Automation for Agencies",
-    metaDescription: "Manage comment-to-DM automations, inboxes and reports for your clients' Instagram accounts from GramForGrow.",
+    metaDescription: "Manage comment-to-DM automations, inboxes and reports for your clients' Instagram accounts from DMForGrow.",
     keywords: ["Instagram automation agency", "manage client Instagram DMs", "agency comment to DM", "Instagram agency tool"],
     h1: "Deliver measurable Instagram results for every client",
     lead: "Set up comment automations for each campaign, give client teams a shared inbox and show them the comments and DMs their content generated.",

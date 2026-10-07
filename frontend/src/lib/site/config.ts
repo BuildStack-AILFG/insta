@@ -3,14 +3,14 @@
 const env = (v: string | undefined, fallback: string) => (v && v.trim() ? v.trim() : fallback);
 
 export const SITE = {
-  name: "GramForGrow",
+  name: "DMForGrow",
   legalName: "ScaleDesk Technology Pvt Ltd",
   url: env(process.env.NEXT_PUBLIC_SITE_URL, "https://gramforgrow.in").replace(/\/$/, ""),
   tagline: "Instagram comment & DM automation for growing brands",
   description:
     "Turn Instagram comments into customers: comment-to-DM automation, story reply automation, a shared DM inbox, no-code DM flows, an AI agent trained on your knowledge base, a sales pipeline and payment links — on Meta's official Instagram API.",
   supportEmail: env(process.env.NEXT_PUBLIC_SUPPORT_EMAIL, "support@gramforgrow.in"),
-  /** Our own support line (customers can reach the GramForGrow team on WhatsApp). */
+  /** Our own support line (customers can reach the DMForGrow team on WhatsApp). */
   whatsappNumber: "918810873052",
   /** Registered office. Shown on the contact, legal and invoice pages when set. */
   address: env(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, ""),

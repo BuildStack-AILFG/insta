@@ -113,7 +113,7 @@ async def require_writer(ctx: Ctx = Depends(get_ctx)) -> Ctx:
     return ctx
 
 
-# ---- platform admin (the people who run GramForGrow itself, not a customer workspace) -----------------------------------
+# ---- platform admin (the people who run DMForGrow itself, not a customer workspace) -----------------------------------
 
 def is_platform_admin(user: User) -> bool:
     return user.email.lower() in get_settings().platform_admin_emails

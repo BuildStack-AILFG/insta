@@ -116,7 +116,7 @@ export default function StoreShell({ store, children, home = false }: { store: P
           </div>
         </div>
         <div className="border-t border-[var(--line)] py-4 text-center text-[12px] text-[var(--faint)]">
-          © {store.name} · <Link href="/" className="hover:text-[var(--muted)]">Store by GramForGrow</Link>
+          © {store.name} · <Link href="/" className="hover:text-[var(--muted)]">Store by DMForGrow</Link>
         </div>
       </footer>
 

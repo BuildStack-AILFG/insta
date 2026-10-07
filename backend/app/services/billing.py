@@ -335,7 +335,7 @@ async def housekeeping() -> dict[str, int]:
             await db.commit()  # mark first: a failed email must not be retried every tick
             if mailer.enabled():
                 expired = tenant.plan_expires_at <= now
-                subject = "Your GramForGrow plan has ended" if expired else "Your GramForGrow plan ends soon"
+                subject = "Your DMForGrow plan has ended" if expired else "Your DMForGrow plan ends soon"
                 body = (f"Your <b>{html.escape(tenant.name)}</b> plan {'ended' if expired else 'ends'} on {tenant.plan_expires_at:%d %b %Y}. "
                         "Renew to keep your team, automations and campaigns running without interruption.")
                 page = mailer.button_html(subject, body, "Renew now", f"{get_settings().frontend_url}/dashboard/settings?tab=billing")

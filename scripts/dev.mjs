@@ -122,7 +122,7 @@ async function ensureDatabase() {
     log("db", `${DB.container} already running on localhost:${port}.`);
     return;
   }
-  if (await portOpen(port)) fail(`Port ${port} is used by something other than ${DB.container}. GramForGrow needs its own Postgres - free the port or change it in backend/.env.`);
+  if (await portOpen(port)) fail(`Port ${port} is used by something other than ${DB.container}. DMForGrow needs its own Postgres - free the port or change it in backend/.env.`);
 
   const exists = probe("docker", ["ps", "-a", "--filter", `name=^${DB.container}$`, "--format", "{{.Names}}"]).out.trim() === DB.container;
   if (exists) {
@@ -222,7 +222,7 @@ process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 
 // ---------------------------------------------------------------------------------------------------------------------
-console.log(`${color.dev}GramForGrow - local dev${color.reset}\n`);
+console.log(`${color.dev}DMForGrow - local dev${color.reset}\n`);
 
 if (await portOpen(BACKEND_PORT)) fail(`Port ${BACKEND_PORT} is already in use - stop whatever is running there (an old backend?) and try again.`);
 

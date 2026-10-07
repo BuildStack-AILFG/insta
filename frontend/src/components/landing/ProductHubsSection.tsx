@@ -81,7 +81,7 @@ export default function ProductHubsSection() {
           <p className={MARKETING.overline}>Everything You Need</p>
           <h2 className={`${MARKETING.h2} mt-3`}>Everything You Need to Grow on Instagram</h2>
           <p className={`${MARKETING.body} mt-4`}>
-            GramForGrow is an automation engine built only for Instagram — comments, DMs and stories, on Meta&apos;s official API. No risky bots, no password sharing.
+            DMForGrow is an automation engine built only for Instagram — comments, DMs and stories, on Meta&apos;s official API. No risky bots, no password sharing.
           </p>
         </div>
 

@@ -5,7 +5,7 @@ import { getPublicPricing } from "@/lib/site/livePlans";
 import { pageMetadata, softwareLd } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
-  title: "GramForGrow — Instagram Comment-to-DM Automation, DM Inbox & AI Replies",
+  title: "DMForGrow — Instagram Comment-to-DM Automation, DM Inbox & AI Replies",
   description:
     "Turn Instagram comments into customers: auto-reply to comments, DM everyone who comments a keyword, answer story replies, run a shared DM inbox and an AI agent — on Meta's official Instagram API.",
   path: "/",

@@ -112,7 +112,7 @@ async def slack_test(ctx: Ctx = Depends(require_manager), db: AsyncSession = Dep
     row = (await db.execute(select(Integration).where(Integration.tenant_id == ctx.tenant_id, Integration.provider == "slack"))).scalar_one_or_none()
     if row is None or not row.credentials_enc:
         raise HTTPException(status_code=404, detail={"error": "Slack isn't connected."})
-    ok, detail = await reg.post_slack(row.credentials_enc, "✅ GramForGrow is connected to this channel.")
+    ok, detail = await reg.post_slack(row.credentials_enc, "✅ DMForGrow is connected to this channel.")
     if not ok:
         raise HTTPException(status_code=502, detail={"error": f"Slack rejected the message: {detail}"})
     return {"ok": True}
