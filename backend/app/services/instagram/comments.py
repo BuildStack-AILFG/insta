@@ -105,15 +105,21 @@ async def log_comment(db: AsyncSession, account: InstagramAccount, value: dict, 
 
 # ---- background side: run the automation --------------------------------------------------------------------------
 
+async def process_comment(comment_row_id: uuid.UUID) -> None:
+    """Job entry point (services/jobs.py) — owns its own DB session; raises so the job is marked failed."""
+    async with db_session.async_session_factory() as db:
+        row = await db.get(InstagramComment, comment_row_id)
+        account = await db.get(InstagramAccount, row.account_id) if row else None
+        # Only ever handle a comment once: a re-run job must not send a second public reply / DM.
+        if row is None or account is None or account.status == "disconnected" or row.outcome != "pending":
+            return
+        await process(db, account, row)
+
+
 async def run_comment(comment_row_id: uuid.UUID) -> None:
-    """Background entry point — owns its own DB session and never raises."""
+    """Same as process_comment, but never raises."""
     try:
-        async with db_session.async_session_factory() as db:
-            row = await db.get(InstagramComment, comment_row_id)
-            account = await db.get(InstagramAccount, row.account_id) if row else None
-            if row is None or account is None or account.status == "disconnected":
-                return
-            await process(db, account, row)
+        await process_comment(comment_row_id)
     except Exception:  # noqa: BLE001
         log.exception("comment automation failed for comment row %s", comment_row_id)
 

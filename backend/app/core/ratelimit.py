@@ -7,6 +7,8 @@ from collections import defaultdict, deque
 
 from fastapi import HTTPException, Request, status
 
+from app.core.config import get_settings
+
 _hits: dict[str, deque[float]] = defaultdict(deque)
 _MAX_KEYS = 50_000
 
@@ -26,8 +28,13 @@ def allow(key: str, limit: int, window_seconds: int) -> bool:
 
 
 def client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
-    return (fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown"))
+    """The caller's IP. Only the entries our own proxies appended to X-Forwarded-For are trusted: anything further left was sent by the client."""
+    peer = request.client.host if request.client else "unknown"
+    hops = get_settings().trusted_proxy_hops
+    fwd = [p.strip() for p in (request.headers.get("x-forwarded-for") or "").split(",") if p.strip()]
+    if hops <= 0 or not fwd:
+        return peer
+    return fwd[-hops] if len(fwd) >= hops else fwd[0]
 
 
 def limit(request: Request, scope: str, max_calls: int, window_seconds: int, extra: str = "") -> None:

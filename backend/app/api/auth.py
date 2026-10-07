@@ -32,7 +32,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 def _client_meta(request: Request) -> tuple[str | None, str | None]:
     user_agent = request.headers.get("user-agent")
-    ip_address = request.headers.get("x-forwarded-for") or (request.client.host if request.client else None)
+    ip_address = ratelimit.client_ip(request)
     return user_agent, ip_address
 
 

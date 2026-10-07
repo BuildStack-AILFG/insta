@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -38,13 +38,15 @@ from app.api.site import router as site_router
 from app.api.team import router as team_router
 from app.api.webhooks import router as webhooks_router
 from app.api.workspace import router as workspace_router
+from app.core import logging as app_logging
 from app.core.config import get_settings
 from app.db import session as db_session
 from app.services import outbound_webhooks, scheduler
 from app.services.instagram import graph
 
 settings = get_settings()
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+app_logging.configure(json_logs=settings.is_production)
+app_logging.init_sentry(settings.sentry_dsn, settings.environment)
 # httpx logs every request URL at INFO, and Instagram token calls carry the app secret and access tokens in the query string.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger("app")
@@ -76,7 +78,21 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Tags every log line written while handling this request (and the response) with one id, so a user's error report can be traced."""
+    rid = app_logging.new_request_id(request.headers.get("x-request-id"))
+    token = app_logging.request_id.set(rid)
+    try:
+        response = await call_next(request)
+    finally:
+        app_logging.request_id.reset(token)
+    response.headers["X-Request-ID"] = rid
+    return response
+
 
 for r in (auth_router, contacts_router, instagram_router, comment_automations_router, giveaways_router, posts_router, media_router, insights_router, growth_router, flows_router, custom_replies_router, settings_router, workspace_router,
           inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, admin_router):

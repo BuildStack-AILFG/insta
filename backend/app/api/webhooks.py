@@ -17,8 +17,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.core.config import get_settings
 from app.models.instagram_account import InstagramAccount
-from app.services.automation import dispatcher
-from app.services.instagram import comments, growth, inbound
+from app.services import jobs
+from app.services.instagram import inbound
 
 log = logging.getLogger(__name__)
 
@@ -51,13 +51,15 @@ async def receive(request: Request, background: BackgroundTasks, db: AsyncSessio
         return {"ok": True, "ignored": True}
 
     result = await inbound.ingest(db, payload)
-    # Automation makes Graph calls and can be slow — never make Meta wait on it.
-    for message_id in result.dispatch:
-        background.add_task(dispatcher.dispatch_inbound, message_id)
-    for comment_row_id in result.comments:
-        background.add_task(comments.run_comment, comment_row_id)
-    for account_id, ref, conversation_id in result.referrals:
-        background.add_task(growth.run_ref, account_id, ref, conversation_id)
+    # Automation makes Graph calls and can be slow — never make Meta wait on it. The work is stored as jobs first, so a
+    # restart before the background task runs doesn't lose it (the scheduler picks up leftovers).
+    queued = [jobs.enqueue(db, "dispatch_inbound", {"message_id": str(m)}) for m in result.dispatch]
+    queued += [jobs.enqueue(db, "run_comment", {"comment_row_id": str(c)}) for c in result.comments]
+    queued += [jobs.enqueue(db, "run_ref", {"account_id": str(a), "ref": ref, "conversation_id": str(conv)}) for a, ref, conv in result.referrals]
+    if queued:
+        await db.commit()
+    for job in queued:
+        background.add_task(jobs.run, job.id)
     return {"ok": True, "messages": result.messages, "comments": len(result.comments), "duplicates": result.duplicates}
 
 

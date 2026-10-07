@@ -18,7 +18,7 @@ from app.models.conversation import Conversation, Message
 from app.models.tenant import Tenant
 from app.models.webhook import WebhookIngress
 from app.models.instagram_account import InstagramAccount
-from app.services import billing, payment_links
+from app.services import billing, jobs, payment_links
 from app.services.automation import dispatcher, flow_engine
 from app.services.instagram import accounts as ig_accounts
 from app.services.instagram import growth, publishing
@@ -45,6 +45,11 @@ def utcnow() -> datetime:
 async def tick() -> dict[str, int]:
     """One pass over every job. Exposed separately so tests (and an admin endpoint) can run it deterministically."""
     stats = {"flows": 0, "delayed_replies": 0, "accounts": 0, "tokens_refreshed": 0, "payment_links": 0, "posts_published": 0}
+
+    try:
+        stats["jobs_recovered"] = (await jobs.sweep())["recovered"]
+    except Exception:  # noqa: BLE001
+        log.exception("job sweep failed")
 
     async with db_session.async_session_factory() as db:
         due = await flow_engine.due_executions(db)

@@ -24,8 +24,9 @@ from app.models.contact import Contact
 from app.models.plan import Plan
 from app.models.tenant import Tenant, TenantMembership, User
 from app.models.instagram_account import InstagramAccount
+from app.models.job import Job
 from app.services import billing as billing_svc
-from app.services import entitlements
+from app.services import entitlements, jobs
 from app.services.plan_catalog import FEATURES
 
 log = logging.getLogger(__name__)
@@ -327,3 +328,22 @@ async def update_user(user_id: uuid.UUID, body: UserPatch, admin: User = Depends
     await db.commit()
     log.info("admin %s set user %s active=%s", admin.email, u.id, u.is_active)
     return {"id": str(u.id), "is_active": u.is_active}
+
+
+# ---- background jobs (webhook follow-up work) ---------------------------------------------------------------------------------
+
+@router.get("/jobs")
+async def list_jobs(status: str = Query(default="failed", pattern="^(pending|running|done|failed)$"), limit: int = Query(default=50, ge=1, le=200),
+                    _: User = Depends(require_platform_admin), db: AsyncSession = Depends(get_db)) -> dict:
+    counts = dict((await db.execute(select(Job.status, func.count()).group_by(Job.status))).all())
+    rows = (await db.execute(select(Job).where(Job.status == status).order_by(Job.updated_at.desc()).limit(limit))).scalars().all()
+    return {"counts": counts, "items": [{"id": str(j.id), "kind": j.kind, "status": j.status, "attempts": j.attempts, "last_error": j.last_error,
+                                         "created_at": _iso(j.created_at), "updated_at": _iso(j.updated_at)} for j in rows]}
+
+
+@router.post("/jobs/{job_id}/retry")
+async def retry_job(job_id: uuid.UUID, admin: User = Depends(require_platform_admin), db: AsyncSession = Depends(get_db)) -> dict:
+    if not await jobs.retry(db, job_id):
+        raise _err("Only failed jobs can be retried.", 409)
+    log.info("admin %s re-queued job %s", admin.email, job_id)
+    return {"id": str(job_id), "status": "pending"}

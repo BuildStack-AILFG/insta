@@ -41,17 +41,22 @@ def ref_url(username: str, ref: str) -> str:
     return f"https://ig.me/m/{username}?ref={ref}"
 
 
+async def process_ref(account_id: uuid.UUID, ref: str, conversation_id: uuid.UUID) -> None:
+    """Job entry point (services/jobs.py) for a messaging_referral — owns its own session; raises so the job is marked failed."""
+    async with db_session.async_session_factory() as db:
+        link = (await db.execute(select(RefLink).where(RefLink.account_id == account_id, RefLink.ref == ref[:60]))).scalar_one_or_none()
+        conv = await db.get(Conversation, conversation_id)
+        account = await db.get(InstagramAccount, account_id)
+        if link is None or conv is None or account is None or not link.enabled:
+            return
+        contact = await db.get(Contact, conv.contact_id)
+        await handle_ref(db, account, link, conv, contact)
+
+
 async def run_ref(account_id: uuid.UUID, ref: str, conversation_id: uuid.UUID) -> None:
-    """Background entry point for a messaging_referral — owns its own session and never raises."""
+    """Same as process_ref, but never raises."""
     try:
-        async with db_session.async_session_factory() as db:
-            link = (await db.execute(select(RefLink).where(RefLink.account_id == account_id, RefLink.ref == ref[:60]))).scalar_one_or_none()
-            conv = await db.get(Conversation, conversation_id)
-            account = await db.get(InstagramAccount, account_id)
-            if link is None or conv is None or account is None or not link.enabled:
-                return
-            contact = await db.get(Contact, conv.contact_id)
-            await handle_ref(db, account, link, conv, contact)
+        await process_ref(account_id, ref, conversation_id)
     except Exception:  # noqa: BLE001
         log.exception("ref link %s failed", ref)
 

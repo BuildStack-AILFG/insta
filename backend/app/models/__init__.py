@@ -7,6 +7,7 @@ from app.models.contact_event import ContactEvent
 from app.models.conversation import Conversation, Message
 from app.models.custom_reply import CustomReply
 from app.models.instagram_account import InstagramAccount
+from app.models.job import Job
 from app.models.growth import BioPage, RefLink
 from app.models.integration import ApiKey, Integration, OutboundWebhook
 from app.models.knowledge import KnowledgeChunk, KnowledgeSource
@@ -41,6 +42,7 @@ __all__ = [
     "InstagramAccount",
     "InstagramComment",
     "Integration",
+    "Job",
     "KnowledgeChunk",
     "KnowledgeSource",
     "MediaAsset",

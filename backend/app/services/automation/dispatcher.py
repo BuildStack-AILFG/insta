@@ -76,20 +76,25 @@ def _text_matches(keywords: list[str], text: str, mode: str) -> bool:
     return any(k in text for k in keywords)
 
 
+async def dispatch_message(message_id: uuid.UUID) -> None:
+    """Job entry point (services/jobs.py) — owns its own DB session; raises so the job is marked failed."""
+    async with db_session.async_session_factory() as db:
+        msg = await db.get(Message, message_id)
+        if msg is None:
+            return
+        conv = await db.get(Conversation, msg.conversation_id)
+        contact = await db.get(Contact, conv.contact_id)
+        account = await db.get(InstagramAccount, conv.account_id)
+        tenant = await db.get(Tenant, conv.tenant_id)
+        if None in (conv, contact, account, tenant) or account.status == "disconnected":
+            return
+        await run(db, tenant, account, conv, contact, msg)
+
+
 async def dispatch_inbound(message_id: uuid.UUID) -> None:
-    """Entry point from the webhook background task — owns its own DB session and never raises."""
+    """Same as dispatch_message, but never raises."""
     try:
-        async with db_session.async_session_factory() as db:
-            msg = await db.get(Message, message_id)
-            if msg is None:
-                return
-            conv = await db.get(Conversation, msg.conversation_id)
-            contact = await db.get(Contact, conv.contact_id)
-            account = await db.get(InstagramAccount, conv.account_id)
-            tenant = await db.get(Tenant, conv.tenant_id)
-            if None in (conv, contact, account, tenant) or account.status == "disconnected":
-                return
-            await run(db, tenant, account, conv, contact, msg)
+        await dispatch_message(message_id)
     except Exception:  # noqa: BLE001
         log.exception("automation dispatch failed for message %s", message_id)
 

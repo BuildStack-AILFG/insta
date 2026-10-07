@@ -57,19 +57,22 @@ function DropdownMenu({ items, isOpen }: { items: { label: string; href: string 
   );
 }
 
-export default function LandingNavbar() {
-  const [openDropdown, setOpenDropdown] = useState<"product" | "solutions" | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+function NavLink({ href, children, onNavigate }: { href: string; children: React.ReactNode; onNavigate: () => void }) {
+  return (
     <a
       href={href}
-      onClick={() => setIsMenuOpen(false)}
+      onClick={onNavigate}
       className="inline-flex items-center py-1 text-[14px] font-medium text-white hover:text-white transition-colors"
     >
       {children}
     </a>
   );
+}
+
+export default function LandingNavbar() {
+  const [openDropdown, setOpenDropdown] = useState<"product" | "solutions" | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-5 sm:px-6">
@@ -79,7 +82,7 @@ export default function LandingNavbar() {
         </a>
 
         <nav className="hidden lg:flex flex-1 items-center justify-center gap-7 xl:gap-9">
-          <NavLink href="#top">Home</NavLink>
+          <NavLink href="#top" onNavigate={closeMenu}>Home</NavLink>
           <div
             className="relative"
             onMouseEnter={() => setOpenDropdown("product")}
@@ -96,9 +99,9 @@ export default function LandingNavbar() {
             <NavDropdownTrigger isOpen={openDropdown === "solutions"}>Solutions</NavDropdownTrigger>
             <DropdownMenu items={solutionsDropdown} isOpen={openDropdown === "solutions"} />
           </div>
-          <NavLink href="/pricing">Pricing</NavLink>
-          <NavLink href="#faq">FAQ</NavLink>
-          <NavLink href="/contact">Contact</NavLink>
+          <NavLink href="/pricing" onNavigate={closeMenu}>Pricing</NavLink>
+          <NavLink href="#faq" onNavigate={closeMenu}>FAQ</NavLink>
+          <NavLink href="/contact" onNavigate={closeMenu}>Contact</NavLink>
         </nav>
 
         <div className="hidden lg:flex items-center gap-2 shrink-0">

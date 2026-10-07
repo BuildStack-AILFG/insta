@@ -91,6 +91,12 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     scheduler_interval_seconds: int = 15
 
+    # How many reverse proxies sit in front of the API and append to X-Forwarded-For (Railway's edge = 1). The client IP is
+    # read that many entries from the right, so a client can't spoof it by sending its own header. 0 = ignore the header.
+    trusted_proxy_hops: int = 1
+    # Error monitoring (optional). Leave empty to disable.
+    sentry_dsn: str = ""
+
     # Comma-separated in the environment: CORS_ORIGINS=https://app.example.com,https://www.example.com
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000", "http://localhost:3001"]
     # Optional regex for dynamic origins, e.g. Vercel preview deploys: https://.*\.vercel\.app
