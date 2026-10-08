@@ -20,7 +20,10 @@ from app.models.integration import Integration
 from app.models.tenant import Tenant
 from app.services.entitlements import require_feature
 from app.services import integrations as reg
-from app.services import payment_links, quotas
+from app.services import payment_links, quotas, shiprocket
+
+# Rows that belong to other features (the workspace's own Razorpay keys, Shiprocket) and never show as generic integrations.
+INTERNAL = {payment_links.PROVIDER, shiprocket.PROVIDER}
 from app.services.automation import events
 from app.services.phone import InvalidPhone, normalize_phone
 from app.services.instagram import messaging
@@ -55,13 +58,13 @@ async def adapters(_: Ctx = Depends(get_ctx)) -> dict:
 @router.get("")
 async def list_integrations(request: Request, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> list[dict]:
     base = public_base(str(request.base_url))
-    rows = (await db.execute(select(Integration).where(Integration.tenant_id == ctx.tenant_id, Integration.provider != payment_links.PROVIDER).order_by(Integration.created_at))).scalars().all()
+    rows = (await db.execute(select(Integration).where(Integration.tenant_id == ctx.tenant_id, Integration.provider.not_in(INTERNAL)).order_by(Integration.created_at))).scalars().all()
     return [_out(i, base) for i in rows]
 
 
 @router.put("/{provider}")
 async def upsert(provider: str, body: IntegrationIn, request: Request, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
-    if not reg.PROVIDER_RE.match(provider) or provider == payment_links.PROVIDER:
+    if not reg.PROVIDER_RE.match(provider) or provider in INTERNAL:
         raise HTTPException(status_code=422, detail={"error": "Invalid integration id."})
     kind = reg.kind_of(provider)
     row = (await db.execute(select(Integration).where(Integration.tenant_id == ctx.tenant_id, Integration.provider == provider))).scalar_one_or_none()
@@ -129,7 +132,7 @@ async def disconnect(provider: str, ctx: Ctx = Depends(require_manager), db: Asy
 async def receive(token: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict:
     ratelimit.limit(request, "hook", 240, 60, token[:8])
     row = (await db.execute(select(Integration).where(Integration.hook_token == token))).scalar_one_or_none()
-    if row is None or reg.kind_of(row.provider) in reg.NOTIFY or row.provider == payment_links.PROVIDER:
+    if row is None or reg.kind_of(row.provider) in reg.NOTIFY or row.provider in INTERNAL:
         raise HTTPException(status_code=404, detail={"error": "Unknown hook."})
     raw = await request.body()
     if len(raw) > MAX_HOOK_BODY:

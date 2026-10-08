@@ -34,6 +34,9 @@ from app.api.public import router as public_router
 from app.api.public_api import router as public_api_router
 from app.api.segments import router as segments_router
 from app.api.settings import router as settings_router
+from app.api.shop import courier as courier_router
+from app.api.shop import public as store_public_router
+from app.api.shop import router as shop_router
 from app.api.site import router as site_router
 from app.api.team import router as team_router
 from app.api.webhooks import router as webhooks_router
@@ -95,10 +98,10 @@ async def request_id_middleware(request: Request, call_next):
 
 
 for r in (auth_router, contacts_router, instagram_router, comment_automations_router, giveaways_router, posts_router, media_router, insights_router, growth_router, flows_router, custom_replies_router, settings_router, workspace_router,
-          inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, admin_router):
+          inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, shop_router, admin_router):
     app.include_router(r, prefix="/api")
 # Public surfaces (no login): Instagram webhooks, provider hooks, public plans/QR, tracked-link redirects, and the API-key REST API.
-for r in (webhooks_router, hooks_router, public_router, public_api_router, site_router, links_router, bio_public_router, media_files_router):
+for r in (webhooks_router, hooks_router, public_router, public_api_router, site_router, links_router, bio_public_router, store_public_router, courier_router, media_files_router):
     app.include_router(r, prefix="/api")
 
 

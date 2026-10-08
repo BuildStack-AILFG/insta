@@ -19,6 +19,7 @@ from app.models.public_forms import ContactMessage, NewsletterSubscriber
 from app.models.refresh_token import RefreshToken
 from app.models.scheduled_post import ScheduledPost
 from app.models.segment import Segment
+from app.models.shop import Shop, ShopCart, ShopOrder, ShopProduct, ShopVariant
 from app.models.team_invite import TeamInvite
 from app.models.tenant import Tenant, TenantMembership, User
 from app.models.tracked_link import TrackedLink
@@ -58,6 +59,11 @@ __all__ = [
     "RefreshToken",
     "ScheduledPost",
     "Segment",
+    "Shop",
+    "ShopCart",
+    "ShopOrder",
+    "ShopProduct",
+    "ShopVariant",
     "TeamInvite",
     "TrackedLink",
     "WebhookIngress",

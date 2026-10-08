@@ -3,12 +3,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, EyeOff, FlaskConical, Heart, Image as ImageIcon, Lock, Mail, MessageCircle, MessageCircleReply, MousePointerClick, Phone, Plus, Send, Trash2, UserPlus, Workflow, X } from "lucide-react";
+import { Check, EyeOff, FlaskConical, Heart, Image as ImageIcon, Lock, Mail, MessageCircle, MessageCircleReply, MousePointerClick, Phone, Plus, Send, ShoppingBag, Trash2, UserPlus, Workflow, X } from "lucide-react";
 import { Alert, Badge, Button, Card, cx, EmptyState, Field, Input, Modal, Page, PageHeader, Select, Spinner, Tabs, Textarea, Toggle, timeAgo, useUi } from "@/components/ui/kit";
 import {
-  commentAutomations as api, errorMessage, flows as flowsApi, instagram,
-  type CommentActivity, type CommentAutomation, type CommentAutomationInput, type FlowSummary, type IgAccount,
+  commentAutomations as api, errorMessage, flows as flowsApi, instagram, shop as shopApi,
+  type CommentActivity, type CommentAutomation, type CommentAutomationInput, type FlowSummary, type IgAccount, type Product,
 } from "@/lib/api";
+import { fmtMoney } from "@/lib/money";
 import MediaPicker from "@/components/dashboard/MediaPicker";
 import AiWriteButton from "@/components/dashboard/AiWriteButton";
 
@@ -84,6 +85,7 @@ function CommentAutomations() {
                       <div className="mt-2 flex flex-wrap gap-1">
                         {a.match_type === "any" ? <Badge tone="yellow">Any comment</Badge> : a.keywords.slice(0, 6).map((k) => <span key={k} className="rounded-md bg-white/10 px-2 py-0.5 text-[12px] text-white">{k}</span>)}
                         {a.match_type === "exact" && <Badge tone="blue">exact</Badge>}
+                        {a.product_id && <Badge tone="green"><ShoppingBag size={10} /> sells a product</Badge>}
                         {a.flow_id && <Badge tone="green"><Workflow size={10} /> follow-up flow</Badge>}
                         {a.gate !== "none" && <Badge tone="blue"><Lock size={10} /> {GATES[a.gate].short}</Badge>}
                         {a.dm_text_b.trim() && <Badge tone="yellow"><FlaskConical size={10} /> A/B test</Badge>}
@@ -92,8 +94,11 @@ function CommentAutomations() {
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-                    {([["Comments", a.stats.comments_matched], ["DMs sent", a.stats.dms_sent], a.gate !== "none" ? ["Unlocked", a.stats.gates_passed] : ["Replies", a.stats.public_replies_sent], ["Clicked", a.stats.link_clicks]] as [string, number][]).map(([l, v]) => (
-                      <div key={l as string} className="rounded-xl bg-white/[0.04] py-2"><div className="text-[18px] font-bold text-white">{(v as number).toLocaleString()}</div><div className="text-[11px] text-white/40">{l}</div></div>
+                    {(a.product_id
+                      ? [["Comments", a.stats.comments_matched.toLocaleString()], ["DMs sent", a.stats.dms_sent.toLocaleString()], ["Orders", a.stats.orders.toLocaleString()], ["Sales", fmtMoney(a.stats.revenue, "INR", { compact: true })]]
+                      : ([["Comments", a.stats.comments_matched], ["DMs sent", a.stats.dms_sent], a.gate !== "none" ? ["Unlocked", a.stats.gates_passed] : ["Replies", a.stats.public_replies_sent], ["Clicked", a.stats.link_clicks]] as [string, number][]).map(([l, v]) => [l, v.toLocaleString()])
+                    ).map(([l, v]) => (
+                      <div key={l} className="rounded-xl bg-white/[0.04] py-2"><div className="text-[18px] font-bold text-white">{v}</div><div className="text-[11px] text-white/40">{l}</div></div>
                     ))}
                   </div>
                   {a.dm_text_b.trim() && <AbResults id={a.id} />}
@@ -142,8 +147,9 @@ const EMPTY = (accountId: string): CommentAutomationInput => ({
   public_reply_enabled: true, public_replies: ["Sent you a DM {{username}}! 💌", "Check your DMs {{username}} ✨"], dm_enabled: true,
   dm_text: "Hey {{username}}! Here's the link you asked for 👇", dm_buttons: [{ title: "Open link", url: "" }], flow_id: null, once_per_user: true,
   gate: "none", gate_prompt: "", gate_button: "", gate_retry_text: "", track_clicks: true, dm_text_b: "",
-  reminder_enabled: false, reminder_after_minutes: 120, reminder_text: "",
+  reminder_enabled: false, reminder_after_minutes: 120, reminder_text: "", product_id: null, buy_button: "",
 });
+const BUY_BUTTON = "🛒 Buy now";
 
 const GATES = {
   none: { short: "", title: "Send it straight away", hint: "The DM goes out as soon as they comment", icon: Send,
@@ -157,6 +163,7 @@ const GATES = {
 } as const;
 
 const TEMPLATES: { id: string; label: string; apply: Partial<CommentAutomationInput> }[] = [
+  { id: "sell", label: "Sell a product", apply: { name: "Comment to buy", keywords: ["PRICE", "BUY", "ORDER"], gate: "none", dm_text: "Hey {{username}}! Here are the details 👇 Tap Buy now to order — UPI or cash on delivery.", dm_buttons: [] } },
   { id: "link", label: "Product link", apply: { name: "Product link DM", keywords: ["LINK", "PRICE"], gate: "none", dm_text: "Hey {{username}}! Here's the link 👇", dm_buttons: [{ title: "Shop now", url: "" }] } },
   { id: "follow", label: "Follow to unlock", apply: { name: "Follow to unlock", keywords: ["GUIDE"], gate: "follow", dm_text: "Thanks for following {{username}}! Here's your guide 👇", dm_buttons: [{ title: "Download", url: "" }] } },
   { id: "email", label: "Freebie for email", apply: { name: "Freebie for email", keywords: ["FREE"], gate: "email", dm_text: "Sent! Here's your freebie too {{username}} 🎁", dm_buttons: [{ title: "Get it", url: "" }] } },
@@ -170,6 +177,10 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
   const [picker, setPicker] = useState(false);
   const set = (p: Partial<CommentAutomationInput>) => setF((x) => ({ ...x, ...p }));
   const account = accounts.find((a) => a.id === f.account_id) ?? accounts[0];
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const initialProduct = automation?.product_id;
+  useEffect(() => { shopApi.products().then((l) => setProducts(l.filter((p) => p.status === "active" || p.id === initialProduct))).catch(() => setProducts([])); }, [initialProduct]);
+  const maxButtons = f.product_id ? 2 : 3;
 
   const problems = useMemo(() => {
     const out: string[] = [];
@@ -181,6 +192,7 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
     if (f.dm_enabled && !f.dm_text.trim()) out.push("Write the DM.");
     if (f.dm_enabled && f.dm_buttons.some((b) => (b.title.trim() || b.url.trim()) && (!b.title.trim() || !/^https?:\/\/\S+$/.test(b.url.trim())))) out.push("Every DM button needs a title and a link starting with https://");
     if (f.gate !== "none" && !f.dm_enabled) out.push("Turn the DM on — it's what gets sent once they unlock it.");
+    if (f.product_id && f.dm_buttons.filter((b) => b.title.trim()).length > 2) out.push("With a product, the DM has room for 2 more link buttons.");
     if (f.reminder_enabled && !(f.dm_enabled && f.track_clicks && f.dm_buttons.some((b) => b.title.trim() && b.url.trim()))) out.push("Click reminders need a link button with click tracking on.");
     return out;
   }, [f]);
@@ -286,8 +298,23 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
                     <p className="text-[11.5px] text-white/40">Half of the people get A, half get B (always the same one per person). Compare clicks on the automation card. Leave empty to turn the test off.</p>
                   </div>
                 </details>
+                <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-white/80"><ShoppingBag size={13} /> Sell a product from your Shop</div>
+                  {products && products.length === 0 ? (
+                    <p className="mt-1 text-[12px] text-white/45">Add products in <Link href="/dashboard/shop" className="underline">Shop</Link> and commenters can buy straight from this DM.</p>
+                  ) : (
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_180px]">
+                      <Select value={f.product_id ?? ""} onChange={(e) => set({ product_id: e.target.value || null })} disabled={!products}>
+                        <option value="">Don&apos;t sell a product</option>
+                        {(products ?? []).map((p) => <option key={p.id} value={p.id}>{p.name} · {fmtMoney(p.price)}</option>)}
+                      </Select>
+                      {f.product_id && <Input value={f.buy_button} maxLength={20} placeholder={BUY_BUTTON} onChange={(e) => set({ buy_button: e.target.value })} aria-label="Buy button text" />}
+                    </div>
+                  )}
+                  {f.product_id && <p className="mt-1.5 text-[11.5px] text-white/45">A Buy button goes first in the DM. Tapping it sends the product photo with a checkout link and the option to order right in the chat; once they order you get it in Shop and they get a confirmation DM. People who tap Buy but don&apos;t order get one reminder.</p>}
+                </div>
                 <div>
-                  <div className="mb-1.5 text-[12.5px] font-medium text-white/70">Link buttons ({f.dm_buttons.length}/3)</div>
+                  <div className="mb-1.5 text-[12.5px] font-medium text-white/70">Link buttons ({f.dm_buttons.length}/{maxButtons})</div>
                   {f.dm_buttons.map((b, i) => (
                     <div key={i} className="mb-2 flex gap-2">
                       <Input value={b.title} maxLength={20} placeholder="Button text" className="!w-40" onChange={(e) => set({ dm_buttons: f.dm_buttons.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} />
@@ -295,7 +322,7 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
                       <button onClick={() => set({ dm_buttons: f.dm_buttons.filter((_, j) => j !== i) })} className="rounded-md px-2 text-white/40 hover:bg-white/10 hover:text-white" aria-label="Remove button"><Trash2 size={14} /></button>
                     </div>
                   ))}
-                  {f.dm_buttons.length < 3 && <Button size="sm" variant="ghost" onClick={() => set({ dm_buttons: [...f.dm_buttons, { title: "", url: "" }] })}><Plus size={13} /> Add button</Button>}
+                  {f.dm_buttons.length < maxButtons && <Button size="sm" variant="ghost" onClick={() => set({ dm_buttons: [...f.dm_buttons, { title: "", url: "" }] })}><Plus size={13} /> Add button</Button>}
                   <label className="mt-2 flex items-center gap-2 text-[12.5px] text-white/60">
                     <Toggle checked={f.track_clicks} label="Track clicks" onChange={(v) => set({ track_clicks: v })} />
                     <MousePointerClick size={13} /> Track who clicks the buttons (tags them and counts clicks)
@@ -405,7 +432,7 @@ function Preview({ f, username, avatar }: { f: CommentAutomationInput; username:
   const render = (t: string) => t.replace(/\{\{\s*username\s*\}\}/g, who);
   const comment = f.match_type === "any" ? "Love this! 😍" : `${f.keywords[0] ?? "PRICE"} please`;
   const reply = f.public_replies.find((r) => r.trim());
-  const buttons = f.dm_buttons.filter((b) => b.title.trim());
+  const buttons = [...(f.product_id ? [{ title: f.buy_button.trim() || BUY_BUTTON }] : []), ...f.dm_buttons.filter((b) => b.title.trim())];
   return (
     <div className="lg:sticky lg:top-0">
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-white/35">Preview</div>

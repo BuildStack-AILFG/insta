@@ -23,6 +23,7 @@ import {
   CalendarClock,
   Clapperboard,
   Rocket,
+  Store,
 } from "lucide-react";
 
 export type NavItem = {
@@ -52,6 +53,7 @@ export const QUICK_LINKS: NavItem[] = [
   { id: "instagram", label: "Instagram", href: "/dashboard/instagram", icon: Instagram },
   { id: "inbox", label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
   { id: "contacts", label: "Contacts", href: "/dashboard/contacts", icon: ClipboardCheck },
+  { id: "shop", label: "Shop", href: "/dashboard/shop", icon: Store },
 ];
 
 /** Grouped rail icons — click opens a flyout panel listing that section's pages. */

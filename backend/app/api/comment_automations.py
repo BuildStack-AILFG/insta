@@ -15,6 +15,7 @@ from app.models.automation_flow import AutomationFlow
 from app.models.comment_automation import CommentAutomation, InstagramComment
 from app.models.conversation import Message
 from app.models.instagram_account import InstagramAccount
+from app.models.shop import ShopProduct
 from app.models.tracked_link import TrackedLink
 from app.services import quotas
 from app.services.instagram import moderation
@@ -60,6 +61,8 @@ class AutomationIn(BaseModel):
     dm_text_b: str = Field(default="", max_length=1000)  # optional A/B variant
     dm_buttons: list[DmButton] = Field(default_factory=list, max_length=3)
     flow_id: uuid.UUID | None = None
+    product_id: uuid.UUID | None = None  # comment-to-checkout: adds a "Buy now" button to the DM
+    buy_button: str = Field(default="", max_length=20)
     once_per_user: bool = True
     gate: Literal["none", "follow", "email", "phone"] = "none"
     gate_prompt: str = Field(default="", max_length=640)
@@ -94,6 +97,10 @@ class AutomationIn(BaseModel):
             raise ValueError("Add at least one public reply, or turn public replies off.")
         if self.reminder_enabled and not (self.dm_enabled and self.dm_buttons and self.track_clicks):
             raise ValueError("Click reminders need a DM with link buttons and click tracking on.")
+        if self.product_id and not self.dm_enabled:
+            raise ValueError("Selling a product needs the DM turned on — the Buy button goes in it.")
+        if self.product_id and len(self.dm_buttons) > 2:
+            raise ValueError("With a product, the DM has room for 2 more link buttons.")
         if self.gate != "none" and not self.dm_enabled:
             raise ValueError("An unlock step needs the DM turned on — it's what gets delivered once they unlock it.")
         return self
@@ -110,10 +117,11 @@ def _out(a: CommentAutomation, username: str | None = None) -> dict:
         "match_type": a.match_type, "keywords": a.keywords or [], "exclude_keywords": a.exclude_keywords or [],
         "public_reply_enabled": a.public_reply_enabled, "public_replies": a.public_replies or [],
         "dm_enabled": a.dm_enabled, "dm_text": a.dm_text, "dm_text_b": a.dm_text_b, "dm_buttons": a.dm_buttons or [], "flow_id": str(a.flow_id) if a.flow_id else None,
+        "product_id": str(a.product_id) if a.product_id else None, "buy_button": a.buy_button,
         "once_per_user": a.once_per_user, "gate": a.gate, "gate_prompt": a.gate_prompt, "gate_button": a.gate_button, "gate_retry_text": a.gate_retry_text,
         "track_clicks": a.track_clicks, "reminder_enabled": a.reminder_enabled, "reminder_after_minutes": a.reminder_after_minutes, "reminder_text": a.reminder_text,
         "stats": {"comments_matched": a.comments_matched, "public_replies_sent": a.public_replies_sent, "dms_sent": a.dms_sent,
-                  "gates_passed": a.gates_passed, "link_clicks": a.link_clicks, "reminders_sent": a.reminders_sent},
+                  "gates_passed": a.gates_passed, "link_clicks": a.link_clicks, "reminders_sent": a.reminders_sent, "orders": a.orders, "revenue": a.revenue},
         "last_triggered_at": _iso(a.last_triggered_at), "created_at": _iso(a.created_at), "updated_at": _iso(a.updated_at),
     }
 
@@ -133,6 +141,10 @@ async def _validate_refs(db: AsyncSession, ctx: Ctx, body: AutomationIn) -> Inst
         flow = await db.get(AutomationFlow, body.flow_id)
         if flow is None or flow.tenant_id != ctx.tenant_id:
             raise HTTPException(status_code=422, detail={"error": "That flow doesn't exist."})
+    if body.product_id:
+        product = await db.get(ShopProduct, body.product_id)
+        if product is None or product.tenant_id != ctx.tenant_id:
+            raise HTTPException(status_code=422, detail={"error": "That product doesn't exist."})
     return account
 
 
@@ -148,6 +160,7 @@ def _apply(a: CommentAutomation, body: AutomationIn) -> None:
     a.media_preview = [p for p in data["media_preview"] if p["id"] in a.media_ids] if body.media_scope == "specific" else []
     a.dm_buttons = data["dm_buttons"]
     a.flow_id = body.flow_id
+    a.product_id, a.buy_button = body.product_id, body.buy_button.strip()
 
 
 @router.get("")

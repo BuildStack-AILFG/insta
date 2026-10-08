@@ -48,6 +48,9 @@ class CommentAutomation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     dm_buttons: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     # Optionally continue the conversation in a published flow once the person replies.
     flow_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("automation_flows.id", ondelete="SET NULL"), nullable=True)
+    # Comment-to-checkout: adds a "Buy now" button to the DM that opens this product's checkout, attributed to the commenter.
+    product_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("shop_products.id", ondelete="SET NULL"), nullable=True)
+    buy_button: Mapped[str] = mapped_column(String(20), nullable=False, default="")
 
     # Fire at most once per commenter per automation (people often comment the keyword several times).
     once_per_user: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -74,6 +77,8 @@ class CommentAutomation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     dms_sent: Mapped[int] = mapped_column(Integer, default=0)
     gates_passed: Mapped[int] = mapped_column(Integer, default=0)
     link_clicks: Mapped[int] = mapped_column(Integer, default=0)  # unique people who clicked a DM link
+    orders: Mapped[int] = mapped_column(Integer, default=0)  # paid / COD shop orders from this automation's DMs
+    revenue: Mapped[int] = mapped_column(Integer, default=0)  # paise
     last_triggered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 

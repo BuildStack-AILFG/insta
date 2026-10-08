@@ -228,9 +228,12 @@ export type CommentAutomationInput = {
   dm_enabled: boolean; dm_text: string; dm_text_b: string; dm_buttons: { title: string; url: string }[]; flow_id: string | null; once_per_user: boolean;
   gate: "none" | "follow" | "email" | "phone"; gate_prompt: string; gate_button: string; gate_retry_text: string; track_clicks: boolean;
   reminder_enabled: boolean; reminder_after_minutes: number; reminder_text: string;
+  /** Comment-to-checkout: a Shop product whose "Buy now" button goes in the DM. */
+  product_id: string | null; buy_button: string;
 };
 export type CommentAutomation = CommentAutomationInput & {
-  id: string; account_username: string | null; stats: { comments_matched: number; public_replies_sent: number; dms_sent: number; gates_passed: number; link_clicks: number; reminders_sent: number };
+  id: string; account_username: string | null;
+  stats: { comments_matched: number; public_replies_sent: number; dms_sent: number; gates_passed: number; link_clicks: number; reminders_sent: number; orders: number; revenue: number };
   last_triggered_at: string | null; created_at: string | null; updated_at: string | null;
 };
 export type CommentActivity = {
@@ -671,3 +674,108 @@ export const growth = {
 };
 export const aiWrite = (purpose: "dm" | "public_reply" | "caption", brief: string) =>
   request<{ options: string[] }>("/ai/write", { method: "POST", body: { purpose, brief } });
+
+// ---- Instagram Shop: storefront, products, orders, public checkout -----------------------------------------------------
+
+export type ShopInput = {
+  slug: string; name: string; tagline: string; account_id: string | null; logo_url: string | null; published: boolean; online_payments: boolean; cod_enabled: boolean;
+  shipping_fee: number; free_shipping_above: number | null; support_phone: string; confirmation_message: string;
+  chat_orders: boolean; cod_confirmation: boolean; reminders_enabled: boolean; reminder_after_minutes: number; reminder_message: string;
+  gstin: string; legal_name: string; business_address: string; gst_rate: 0 | 5 | 12 | 18 | 28;
+};
+export type Shop = ShopInput & { id: string; url: string; views: number; default_confirmation_message: string; default_reminder_message: string };
+export type ShopOverview = {
+  shop: Shop | null; payments: { connected: boolean; test_mode: boolean };
+  stats: {
+    orders: number; revenue: number; comment_orders: number; comment_revenue: number; recovered_orders: number; recovered_revenue: number;
+    awaiting_payment: number; to_ship: number; views: number;
+  };
+};
+export type OptionGroup = { name: string; values: string[] };
+export type VariantInput = { options: Record<string, string>; price: number | null; stock: number | null; enabled: boolean };
+export type Variant = VariantInput & { id: string; title: string };
+export type ProductInput = {
+  name: string; description: string; price: number; compare_at_price: number | null; image_url: string | null; status: "active" | "hidden"; stock: number | null; sort: number;
+  options: OptionGroup[]; variants: VariantInput[];
+};
+export type Product = Omit<ProductInput, "variants"> & {
+  id: string; media_id: string | null; permalink: string | null; orders_count: number; revenue: number; created_at: string | null; variants: Variant[];
+};
+export type OrderItem = { product_id: string; variant_id?: string | null; name: string; variant?: string | null; price: number; qty: number; image_url: string | null };
+export const itemLabel = (i: { name: string; variant?: string | null }) => (i.variant ? `${i.name} (${i.variant})` : i.name);
+export type ShopAddress = { line1: string; line2?: string; city: string; state: string; pincode: string };
+export type OrderStatus = "new" | "confirmed" | "shipped" | "delivered" | "returned" | "cancelled";
+type Tracking = { courier: string | null; awb: string | null; tracking_url: string | null; courier_status: string | null; shipped_at: string | null; delivered_at: string | null };
+export type PaymentStatus = "pending" | "paid" | "cod" | "failed";
+export type ShopOrder = {
+  id: string; number: number; items: OrderItem[]; subtotal: number; shipping: number; total: number; currency: string; customer_name: string; customer_phone: string;
+  customer_email: string | null; address: ShopAddress; note: string; contact_id: string | null; source: "store" | "comment" | "chat"; automation: { id: string; name: string | null } | null;
+  payment_method: "online" | "cod"; payment_status: PaymentStatus; pay_url: string | null; paid_at: string | null; status: OrderStatus; confirmation_sent: boolean;
+  cod_confirmation: "asked" | "confirmed" | "declined" | null; recovered: boolean; created_at: string | null;
+  shiprocket_shipment_id: string | null; invoice_number: string | null; order_url: string | null; invoice_url: string | null;
+} & Tracking;
+export type Package = { weight_kg: number; length_cm: number; breadth_cm: number; height_cm: number };
+export type ShiprocketStatus =
+  | { connected: false }
+  | { connected: true; email: string; pickup_location: string; pickup_locations: string[]; package: Package; webhook_url: string; webhook_key: string; last_error: string | null; last_event_at: string | null };
+export type ShopReports = {
+  days: number;
+  series: { date: string; orders: number; revenue: number }[];
+  by_source: Partial<Record<"store" | "comment" | "chat", { orders: number; revenue: number }>>;
+  funnel: { comments: number; dms: number; buy_taps: number; orders: number; revenue: number };
+  by_automation: { id: string; name: string; thumbnail_url: string | null; posts: string; comments: number; dms: number; buy_taps: number; orders: number; revenue: number; conversion: number }[];
+  by_product: { id: string; name: string; image_url: string | null; orders: number; revenue: number }[];
+  returned: number;
+};
+export type ShopInvoiceLine = { name: string; qty: number; rate: number; taxable: number; cgst: number; sgst: number; igst: number; total: number };
+export type ShopInvoice = {
+  kind: "tax_invoice" | "bill_of_supply"; number: string; order_number: number; date: string; gst_rate: number; intra_state: boolean; place_of_supply: string;
+  seller: { name: string; store: string; gstin: string; address: string; phone: string; state: string };
+  buyer: { name: string; phone: string; email: string | null; address: ShopAddress };
+  lines: ShopInvoiceLine[]; totals: Omit<ShopInvoiceLine, "name" | "qty" | "rate">; payment: { method: "online" | "cod"; status: PaymentStatus };
+};
+export const shop = {
+  get: () => request<ShopOverview>("/shop"),
+  save: (b: ShopInput) => request<Shop>("/shop", { method: "PUT", body: b }),
+  products: () => request<Product[]>("/shop/products"),
+  createProduct: (b: ProductInput) => request<Product>("/shop/products", { method: "POST", body: b }),
+  updateProduct: (id: string, b: ProductInput) => request<Product>(`/shop/products/${id}`, { method: "PUT", body: b }),
+  removeProduct: (id: string) => request<void>(`/shop/products/${id}`, { method: "DELETE" }),
+  importPosts: (account_id: string, media_ids: string[]) =>
+    request<{ created: Product[]; skipped: number; errors: string[] }>("/shop/products/import", { method: "POST", body: { account_id, media_ids } }),
+  orders: (p?: { status?: string; payment?: string; limit?: number; offset?: number }) => request<Page<ShopOrder>>(`/shop/orders${qs(p)}`),
+  updateOrder: (id: string, b: { status?: OrderStatus; mark_paid?: boolean }) => request<ShopOrder>(`/shop/orders/${id}`, { method: "PATCH", body: b }),
+  ship: (id: string, b: { courier: string; awb: string; tracking_url: string | null }) => request<ShopOrder>(`/shop/orders/${id}/ship`, { method: "POST", body: b }),
+  shipWithShiprocket: (id: string, b: { city?: string; state?: string; package?: Package }) =>
+    request<{ order: ShopOrder; shipped: boolean; message: string | null }>(`/shop/orders/${id}/shiprocket`, { method: "POST", body: b }),
+  shiprocket: () => request<ShiprocketStatus>("/shop/shiprocket"),
+  connectShiprocket: (b: { email: string; password: string; pickup_location?: string | null; package?: Package }) =>
+    request<ShiprocketStatus>("/shop/shiprocket", { method: "PUT", body: b }),
+  disconnectShiprocket: () => request<void>("/shop/shiprocket", { method: "DELETE" }),
+  reports: (days: number) => request<ShopReports>(`/shop/reports${qs({ days })}`),
+};
+
+/** What the public store pages read (no login). */
+export type PublicStore = {
+  slug: string; name: string; tagline: string; logo_url: string | null; instagram: string | null; support_phone: string; shipping_fee: number;
+  free_shipping_above: number | null; payment_methods: ("online" | "cod")[];
+};
+export type PublicVariant = { id: string; title: string; options: Record<string, string>; price: number; sold_out: boolean };
+export type PublicProduct = {
+  id: string; name: string; description: string; price: number; price_varies: boolean; compare_at_price: number | null; image_url: string | null; permalink: string | null;
+  sold_out: boolean; options: OptionGroup[]; variants: PublicVariant[];
+};
+export type PublicOrder = {
+  number: number; items: OrderItem[]; subtotal: number; shipping: number; total: number; customer_name: string; address: ShopAddress; payment_method: "online" | "cod";
+  payment_status: PaymentStatus; status: OrderStatus; pay_url: string | null; created_at: string | null; has_invoice: boolean;
+} & Tracking;
+export type CheckoutInput = {
+  items: { product_id: string; variant_id?: string | null; qty: number }[]; name: string; phone: string; email?: string; address: ShopAddress; note: string;
+  payment_method: "online" | "cod"; ref?: string;
+};
+export const storefront = {
+  checkout: (slug: string, b: CheckoutInput) =>
+    request<{ order_id: string; token: string; number: number; pay_url: string | null; order_url: string }>(`/public/store/${encodeURIComponent(slug)}/checkout`, { method: "POST", auth: false, body: b }),
+  order: (slug: string, id: string, t: string) => request<{ store: PublicStore; order: PublicOrder }>(`/public/store/${encodeURIComponent(slug)}/orders/${id}${qs({ t })}`, { auth: false }),
+  invoice: (slug: string, id: string, t: string) => request<ShopInvoice>(`/public/store/${encodeURIComponent(slug)}/orders/${id}/invoice${qs({ t })}`, { auth: false }),
+};
