@@ -11,13 +11,21 @@ import ShipModal from "@/components/shop/ShipModal";
 import ShippingSettings from "@/components/shop/ShippingSettings";
 import ShopReports from "@/components/shop/ShopReports";
 import VariantsEditor, { draftFrom, toInput, type VariantDraft } from "@/components/shop/VariantsEditor";
+import CreateShopWizard from "@/components/shop/CreateShopWizard";
+import SiteEditor from "@/components/shop/SiteEditor";
 import {
   errorMessage, instagram, itemLabel, shop as api, type IgAccount, type OrderStatus, type Product, type ProductInput, type ShiprocketStatus, type ShopInput, type ShopOrder,
-  type ShopOverview,
+  type ShopOverview, type Shop,
 } from "@/lib/api";
 import { fmtMoney, fromMinor, toMinor } from "@/lib/money";
 
-type Tab = "orders" | "products" | "reports" | "settings";
+type Tab = "orders" | "products" | "website" | "reports" | "settings";
+
+function WebsiteTab({ shop, onSaved }: { shop: Shop; onSaved: () => void }) {
+  const [products, setProducts] = useState<Product[] | null>(null);
+  useEffect(() => { api.products().then(setProducts, () => setProducts([])); }, []);
+  return products ? <SiteEditor shop={shop} products={products} onSaved={onSaved} /> : <Spinner />;
+}
 
 export default function ShopPage() {
   const [overview, setOverview] = useState<ShopOverview | null>(null);
@@ -38,10 +46,7 @@ export default function ShopPage() {
       {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
 
       {!shop ? (
-        <Card className="mx-auto max-w-2xl p-6">
-          <div className="mb-4 flex items-center gap-2 text-[16px] font-semibold text-white"><ShoppingBag size={18} /> Set up your store</div>
-          <StoreSettings shop={null} accounts={accounts} onSaved={() => { void load(); setTab("products"); }} />
-        </Card>
+        <CreateShopWizard accounts={accounts} payments={payments} onDone={() => { void load(); setTab("products"); }} />
       ) : (
         <>
           {shop.online_payments && !payments.connected && (
@@ -56,10 +61,11 @@ export default function ShopPage() {
             <Stat label="To ship" value={stats.to_ship} sub={`${stats.awaiting_payment ? `${stats.awaiting_payment} awaiting payment · ` : ""}${stats.views.toLocaleString()} store visits`} />
           </div>
           <div className="mb-5"><CopyField label="Your store link — put it in your Instagram bio" value={shop.url} /></div>
-          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, { id: "products", label: "Products" }, { id: "reports", label: "Reports" },
-            { id: "settings", label: "Store settings" }]} value={tab} onChange={setTab} />
+          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, { id: "products", label: "Products" }, { id: "website", label: "Website" },
+            { id: "reports", label: "Reports" }, { id: "settings", label: "Store settings" }]} value={tab} onChange={setTab} />
           {tab === "orders" && <Orders onChange={load} />}
           {tab === "products" && <Products accounts={accounts} />}
+          {tab === "website" && <WebsiteTab shop={shop} onSaved={load} />}
           {tab === "reports" && <ShopReports />}
           {tab === "settings" && (
             <div className="grid max-w-5xl gap-4 lg:grid-cols-[1.3fr_1fr]">
@@ -231,8 +237,9 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
   const [f, setF] = useState({
     name: product?.name ?? "", description: product?.description ?? "", price: product && product.price >= 100 ? fromMinor(product.price) : "",
     mrp: product?.compare_at_price ? fromMinor(product.compare_at_price) : "", image_url: product?.image_url ?? "", visible: product ? product.status === "active" : true,
-    track: product ? product.stock !== null : false, stock: String(product?.stock ?? 10),
+    track: product ? product.stock !== null : false, stock: String(product?.stock ?? 10), images: (product?.images ?? []).join("\n"),
   });
+  const extra = f.images.split(/\s+/).map((u) => u.trim()).filter(Boolean);
   const [draft, setDraft] = useState<VariantDraft>(() => draftFrom(product));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -241,13 +248,14 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
   const variants = toInput(draft);
   const hasVariants = variants.variants.length > 0;
   const problem = !f.name.trim() ? "Give the product a name." : price === null || price < 100 ? "Enter a price of at least ₹1." : f.mrp.trim() && mrp === null ? "The MRP isn't a valid amount."
-    : f.image_url.trim() && !/^https?:\/\/\S+$/.test(f.image_url.trim()) ? "The photo must be a link starting with https://" : variants.problem;
+    : f.image_url.trim() && !/^https?:\/\/\S+$/.test(f.image_url.trim()) ? "The photo must be a link starting with https://"
+    : extra.some((u) => !/^https?:\/\/\S+$/.test(u)) ? "Every extra photo must be a link starting with https://" : extra.length > 8 ? "Up to 8 extra photos." : variants.problem;
 
   const save = async () => {
     setBusy(true); setErr(null);
     const body: ProductInput = { name: f.name.trim(), description: f.description.trim(), price: price!, compare_at_price: mrp, image_url: f.image_url.trim() || null,
       status: f.visible ? "active" : "hidden", stock: f.track && !hasVariants ? Math.max(0, parseInt(f.stock, 10) || 0) : null, sort: product?.sort ?? 0,
-      options: variants.options, variants: variants.variants };
+      options: variants.options, variants: variants.variants, images: extra };
     try { if (product) await api.updateProduct(product.id, body); else await api.createProduct(body); onSaved(); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
 
@@ -260,9 +268,15 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
           {f.image_url.trim() ? <img src={f.image_url} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" /> : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/25"><ImageIcon size={22} /></div>}
           <div className="flex-1 space-y-3">
             <Field label="Name"><Input value={f.name} maxLength={120} onChange={(e) => setF({ ...f, name: e.target.value })} autoFocus /></Field>
-            <Field label="Photo link"><Input value={f.image_url} placeholder="https://…" onChange={(e) => setF({ ...f, image_url: e.target.value })} /></Field>
+            <Field label="Main photo link"><Input value={f.image_url} placeholder="https://…" onChange={(e) => setF({ ...f, image_url: e.target.value })} /></Field>
           </div>
         </div>
+        <Field label="More photos (optional)" hint="One link per line — shown as a carousel on the product page.">
+          <Textarea rows={2} value={f.images} placeholder={"https://…/back.jpg\nhttps://…/detail.jpg"} onChange={(e) => setF({ ...f, images: e.target.value })} />
+        </Field>
+        {extra.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto">{extra.filter((u) => /^https?:\/\/\S+$/.test(u)).map((u) => <img key={u} src={u} alt="" className="h-14 w-12 shrink-0 rounded-md object-cover" />)}</div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Price (₹)"><Input value={f.price} inputMode="decimal" placeholder="499" onChange={(e) => setF({ ...f, price: e.target.value })} /></Field>
           <Field label="MRP (₹, optional)" hint="Shown struck through, with the discount"><Input value={f.mrp} inputMode="decimal" placeholder="799" onChange={(e) => setF({ ...f, mrp: e.target.value })} /></Field>

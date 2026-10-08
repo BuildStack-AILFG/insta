@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hmac
+import re
 import uuid
 from datetime import timedelta
 from typing import Literal
@@ -18,7 +19,7 @@ from app.models.billing import PaymentLink
 from app.models.comment_automation import CommentAutomation
 from app.models.instagram_account import InstagramAccount
 from app.models.shop import Shop, ShopCart, ShopOrder, ShopProduct, ShopVariant
-from app.services import payment_links, shiprocket
+from app.services import payment_links, shiprocket, shop_domains
 from app.services.billing import GSTIN_RE
 from app.services.entitlements import has_feature, require_feature
 from app.services.instagram.accounts import public_base
@@ -118,12 +119,21 @@ class ProductIn(BaseModel):
     price: int = Field(ge=100, le=10_000_000_00)  # paise; Razorpay's minimum is ₹1
     compare_at_price: int | None = Field(default=None, ge=0, le=10_000_000_00)
     image_url: str | None = Field(default=None, pattern=URL, max_length=2000)
+    images: list[str] = Field(default_factory=list, max_length=8)  # more photos for the product page carousel
     status: Literal["active", "hidden"] = "active"
     stock: int | None = Field(default=None, ge=0, le=1_000_000)
     sort: int = 0
     # Size / colour etc. With options, every combination is a variant with its own stock (and optionally price).
     options: list[OptionGroup] = Field(default_factory=list, max_length=2)
     variants: list[VariantIn] = Field(default_factory=list, max_length=100)
+
+    @field_validator("images")
+    @classmethod
+    def _images(cls, v: list[str]) -> list[str]:
+        v = [u.strip() for u in v if u.strip()]
+        if any(not re.match(URL, u) or len(u) > 2000 for u in v):
+            raise ValueError("Photo links must start with https://")
+        return list(dict.fromkeys(v))
 
     @model_validator(mode="after")
     def _check(self):
@@ -204,7 +214,10 @@ def shop_out(s: Shop) -> dict:
             "confirmation_message": s.confirmation_message, "default_confirmation_message": svc.DEFAULT_CONFIRMATION, "chat_orders": s.chat_orders,
             "cod_confirmation": s.cod_confirmation, "reminders_enabled": s.reminders_enabled, "reminder_after_minutes": s.reminder_after_minutes,
             "reminder_message": s.reminder_message, "default_reminder_message": svc.DEFAULT_REMINDER, "gstin": s.gstin, "legal_name": s.legal_name,
-            "business_address": s.business_address, "gst_rate": s.gst_rate, "url": svc.store_url(s), "views": s.views}
+            "business_address": s.business_address, "gst_rate": s.gst_rate, "site": svc.site_settings(s), "default_texts": svc.DEFAULT_TEXTS,
+            "default_colors": svc.DEFAULT_COLORS, "custom_domain": s.custom_domain, "domain_status": s.domain_status,
+            "domain_dns": shop_domains.instructions(s.custom_domain) if s.custom_domain else None, "domain_checked_at": _iso(s.domain_checked_at),
+            "default_url": f"{svc._frontend()}/s/{s.slug}", "url": svc.store_url(s), "views": s.views}
 
 
 def variant_out(v: ShopVariant) -> dict:
@@ -213,7 +226,7 @@ def variant_out(v: ShopVariant) -> dict:
 
 def product_out(p: ShopProduct, variants: list[ShopVariant] | None = None) -> dict:
     return {"id": str(p.id), "name": p.name, "description": p.description, "price": p.price, "compare_at_price": p.compare_at_price, "image_url": p.image_url,
-            "media_id": p.media_id, "permalink": p.permalink, "status": p.status, "stock": p.stock, "sort": p.sort, "options": p.options or [],
+            "images": p.images or [], "media_id": p.media_id, "permalink": p.permalink, "status": p.status, "stock": p.stock, "sort": p.sort, "options": p.options or [],
             "variants": [variant_out(v) for v in variants or []], "orders_count": p.orders_count, "revenue": p.revenue, "created_at": _iso(p.created_at)}
 
 
@@ -239,7 +252,8 @@ def public_product(p: ShopProduct, variants: list[ShopVariant]) -> dict:
     live = [v for v in variants if v.enabled] if p.options else []
     prices = [svc.unit_price(p, v) for v in live]
     return {"id": str(p.id), "name": p.name, "description": p.description, "price": min(prices) if prices else p.price, "price_varies": len(set(prices)) > 1,
-            "compare_at_price": p.compare_at_price, "image_url": p.image_url, "permalink": p.permalink, "sold_out": not svc.in_stock(p, variants),
+            "compare_at_price": p.compare_at_price, "image_url": p.image_url, "images": [u for u in [p.image_url, *(p.images or [])] if u],
+            "permalink": p.permalink, "sold_out": not svc.in_stock(p, variants),
             "options": (p.options or []) if live else [],
             "variants": [{"id": str(v.id), "title": v.title, "options": v.options, "price": svc.unit_price(p, v), "sold_out": v.stock is not None and v.stock <= 0}
                          for v in live]}
@@ -411,11 +425,13 @@ async def _public_shop(db: AsyncSession, slug: str, *, selling: bool = False) ->
     return s
 
 
-async def _store_info(db: AsyncSession, s: Shop) -> dict:
+async def _store_info(db: AsyncSession, s: Shop, products: list[ShopProduct] | None = None) -> dict:
+    """The store's header / footer data plus its website settings (with the hero carousel when `products` is given)."""
     account = await db.get(InstagramAccount, s.account_id) if s.account_id else None
+    methods = await svc.payment_methods(db, s)
     return {"slug": s.slug, "name": s.name, "tagline": s.tagline, "logo_url": s.logo_url or (account.profile_picture_url if account else None),
             "instagram": account.username if account else None, "support_phone": s.support_phone, "shipping_fee": s.shipping_fee,
-            "free_shipping_above": s.free_shipping_above, "payment_methods": await svc.payment_methods(db, s)}
+            "free_shipping_above": s.free_shipping_above, "payment_methods": methods, "site": svc.public_site(s, methods, products)}
 
 
 @public.get("/{slug}")
@@ -427,7 +443,10 @@ async def view_store(slug: str, request: Request, db: AsyncSession = Depends(get
     products = (await db.execute(select(ShopProduct).where(ShopProduct.tenant_id == s.tenant_id, ShopProduct.status == "active", ShopProduct.price >= 100)
                                  .order_by(ShopProduct.sort, ShopProduct.created_at.desc()))).scalars().all()
     variants = await svc.variants_of(db, [p.id for p in products])
-    return {"store": await _store_info(db, s), "products": [public_product(p, variants[p.id]) for p in products]}
+    best = sorted((p for p in products if p.orders_count > 0), key=lambda p: (-p.orders_count, -p.revenue))[:8]
+    newest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]
+    return {"store": await _store_info(db, s, products), "products": [public_product(p, variants[p.id]) for p in products],
+            "best_sellers": [str(p.id) for p in best], "new_arrivals": [str(p.id) for p in newest]}
 
 
 @public.get("/{slug}/products/{product_id}")
@@ -436,7 +455,10 @@ async def view_product(slug: str, product_id: uuid.UUID, db: AsyncSession = Depe
     p = await db.get(ShopProduct, product_id)
     if p is None or p.tenant_id != s.tenant_id or p.status != "active":
         raise HTTPException(status_code=404, detail={"error": "Product not found."})
-    return {"store": await _store_info(db, s), "product": public_product(p, (await svc.variants_of(db, [p.id]))[p.id])}
+    others = (await db.execute(select(ShopProduct).where(ShopProduct.tenant_id == s.tenant_id, ShopProduct.status == "active", ShopProduct.price >= 100,
+                                                         ShopProduct.id != p.id).order_by(ShopProduct.orders_count.desc(), ShopProduct.created_at.desc()).limit(8))).scalars().all()
+    variants = await svc.variants_of(db, [p.id, *(o.id for o in others)])
+    return {"store": await _store_info(db, s), "product": public_product(p, variants[p.id]), "related": [public_product(o, variants[o.id]) for o in others]}
 
 
 @public.post("/{slug}/checkout", status_code=status.HTTP_201_CREATED)
@@ -619,3 +641,117 @@ async def view_invoice(slug: str, order_id: uuid.UUID, t: str = Query(min_length
     if o.payment_status == "pending" or o.status == "cancelled":
         raise HTTPException(status_code=409, detail={"error": "An invoice is issued once the order is confirmed."})
     return svc.invoice(s, o)
+
+
+# ---- website ----------------------------------------------------------------------------------------------------------------
+
+class HeroSlide(BaseModel):
+    image_url: str = Field(pattern=URL, max_length=2000)
+    title: str = Field(default="", max_length=80)
+    subtitle: str = Field(default="", max_length=160)
+    cta_label: str = Field(default="Shop now", max_length=24)
+    product_id: uuid.UUID | None = None  # the button opens this product (else the product list)
+
+
+class AboutIn(BaseModel):
+    title: str = Field(default="", max_length=80)
+    text: str = Field(default="", max_length=1500)
+    image_url: str | None = Field(default=None, pattern=URL, max_length=2000)
+
+
+class FaqItem(BaseModel):
+    q: str = Field(min_length=1, max_length=150)
+    a: str = Field(min_length=1, max_length=600)
+
+
+class PoliciesIn(BaseModel):
+    shipping: str = Field(default="", max_length=1000)
+    returns: str = Field(default="", max_length=1000)
+
+
+HEX = r"^#[0-9a-fA-F]{6}$"
+
+
+class ColorsIn(BaseModel):
+    background: str = Field(default=svc.DEFAULT_COLORS["background"], pattern=HEX)
+    text: str = Field(default=svc.DEFAULT_COLORS["text"], pattern=HEX)
+    surface: str = Field(default=svc.DEFAULT_COLORS["surface"], pattern=HEX)
+    button_text: str = Field(default=svc.DEFAULT_COLORS["button_text"], pattern=HEX)
+
+
+class SiteIn(BaseModel):
+    accent: str = Field(default=svc.DEFAULT_ACCENT, pattern=HEX)
+    colors: ColorsIn = Field(default_factory=ColorsIn)
+    texts: dict[str, str] = Field(default_factory=dict)
+    announcement: str = Field(default="", max_length=120)
+    hero: list[HeroSlide] = Field(default_factory=list, max_length=6)
+    about: AboutIn = Field(default_factory=AboutIn)
+    faq: list[FaqItem] = Field(default_factory=list, max_length=12)
+    sections: dict[str, bool] = Field(default_factory=dict)
+    policies: PoliciesIn = Field(default_factory=PoliciesIn)
+
+    @field_validator("sections")
+    @classmethod
+    def _sections(cls, v: dict[str, bool]) -> dict[str, bool]:
+        return {k: bool(v[k]) for k in svc.SITE_SECTIONS if k in v}
+
+    @field_validator("texts")
+    @classmethod
+    def _texts(cls, v: dict[str, str]) -> dict[str, str]:
+        out = {k: str(v[k]).strip() for k in svc.DEFAULT_TEXTS if k in v}
+        if any(len(x) > 80 for x in out.values()):
+            raise ValueError("Keep each text under 80 characters.")
+        return out
+
+
+@router.put("/site")
+async def save_site(body: SiteIn, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
+    """The storefront website's look and content."""
+    s = await _require_shop(db, ctx)
+    ids = {sl.product_id for sl in body.hero if sl.product_id}
+    if ids:
+        found = set((await db.execute(select(ShopProduct.id).where(ShopProduct.tenant_id == ctx.tenant_id, ShopProduct.id.in_(ids)))).scalars())
+        if ids - found:
+            raise HTTPException(status_code=422, detail={"error": "A banner links to a product that doesn't exist."})
+    s.site = body.model_dump(mode="json")
+    await db.commit()
+    await db.refresh(s)
+    return shop_out(s)
+
+
+# ---- custom domain ------------------------------------------------------------------------------------------------------------
+
+class DomainIn(BaseModel):
+    domain: str = Field(default="", max_length=260)  # empty removes it
+
+
+@router.put("/domain")
+async def set_domain(body: DomainIn, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
+    s = await _require_shop(db, ctx)
+    try:
+        await shop_domains.set_domain(db, s, body.domain)
+    except shop_domains.DomainError as exc:
+        raise HTTPException(status_code=exc.status, detail={"error": exc.message})
+    await db.refresh(s)
+    return shop_out(s)
+
+
+@router.post("/domain/check")
+async def check_domain(request: Request, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
+    ratelimit.limit(request, "domain-check", 20, 600, str(ctx.tenant_id))
+    s = await _require_shop(db, ctx)
+    try:
+        message = await shop_domains.check(db, s)
+    except shop_domains.DomainError as exc:
+        raise HTTPException(status_code=exc.status, detail={"error": exc.message})
+    await db.refresh(s)
+    return {"shop": shop_out(s), "message": message}
+
+
+@public.get("/by-domain/{host}")
+async def store_for_domain(host: str, db: AsyncSession = Depends(get_db)) -> dict:
+    """The web app's proxy asks this to serve a store on its own domain."""
+    s = await shop_domains.shop_for_host(db, host[:253])
+    if s is None:
+        raise HTTPException(status_code=404, detail={"error": "No store on this domain."})
+    return {"slug": s.slug}

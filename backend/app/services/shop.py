@@ -98,6 +98,9 @@ def _frontend() -> str:
 
 
 def store_url(shop: Shop) -> str:
+    """The store's home. On a connected custom domain every store link (DMs, checkout, Razorpay's return) uses that domain."""
+    if shop.custom_domain and shop.domain_status == "active":
+        return f"https://{shop.custom_domain}"
     return f"{_frontend()}/s/{shop.slug}"
 
 
@@ -107,6 +110,69 @@ def product_url(shop: Shop, product: ShopProduct, ref: str | None = None) -> str
 
 def order_url(shop: Shop, order: ShopOrder) -> str:
     return f"{store_url(shop)}/order/{order.id}?t={order.access_token}"
+
+
+# ---- storefront website ------------------------------------------------------------------------------------------
+# Every store renders the same white template; `Shop.site` only holds what the seller changed. Anything left empty is
+# filled from the store's own settings, so a brand-new store already looks complete.
+
+DEFAULT_ACCENT = "#e11d48"
+SITE_SECTIONS = ("best_sellers", "new_arrivals", "all_products", "instagram", "about", "faq")
+# Page colours (the accent above colours buttons and badges); the template derives muted text and lines from these.
+DEFAULT_COLORS = {"background": "#ffffff", "text": "#171717", "surface": "#f6f6f4", "button_text": "#ffffff"}
+# Every heading and button label on the website, so a store can speak in its own words (or language).
+DEFAULT_TEXTS = {
+    "hero_button": "Shop now", "best_sellers_title": "Best sellers", "best_sellers_subtitle": "What everyone's ordering",
+    "new_arrivals_title": "New arrivals", "new_arrivals_subtitle": "Just landed in the store", "all_products_title": "Shop all",
+    "instagram_title": "Shop our Instagram", "instagram_subtitle": "Seen it on our feed? Tap to buy.", "faq_title": "Questions? Answers.",
+    "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "empty_store": "New products are coming soon.",
+}
+DEFAULT_SITE: dict = {
+    "accent": DEFAULT_ACCENT,
+    "colors": DEFAULT_COLORS,
+    "texts": DEFAULT_TEXTS,
+    "announcement": "",
+    "hero": [],  # [{image_url, title, subtitle, cta_label, product_id}]
+    "about": {"title": "", "text": "", "image_url": None},
+    "faq": [],  # [{q, a}]
+    "sections": {k: True for k in SITE_SECTIONS},
+    "policies": {"shipping": "", "returns": ""},
+}
+
+
+def site_settings(shop: Shop) -> dict:
+    """What the seller saved, on top of the defaults (what the dashboard edits)."""
+    saved = shop.site or {}
+    merged = {**DEFAULT_SITE, **saved}
+    for key in ("about", "sections", "policies", "colors"):
+        merged[key] = {**DEFAULT_SITE[key], **(saved.get(key) or {})}
+    merged["texts"] = {**DEFAULT_TEXTS, **{k: v for k, v in (saved.get("texts") or {}).items() if v}}  # an emptied field falls back to the default
+    return merged
+
+
+def public_site(shop: Shop, methods: list[str], products: list[ShopProduct] | None = None) -> dict:
+    """The site as the storefront renders it: saved settings plus sensible content generated from the store's settings."""
+    s = site_settings(shop)
+    perks = []
+    if shop.free_shipping_above is not None and shop.shipping_fee:
+        perks.append(f"Free delivery on orders above {inr(shop.free_shipping_above)}")
+    elif not shop.shipping_fee:
+        perks.append("Free delivery on every order")
+    if "cod" in methods:
+        perks.append("Cash on delivery available")
+    faq = s["faq"] or [x for x in (
+        {"q": "Do you offer cash on delivery?", "a": "Yes — choose “Cash on delivery” at checkout and pay when your order arrives." if "cod" in methods
+         else "We take online payments only (UPI, cards and netbanking), secured by Razorpay."},
+        {"q": "How do I pay online?", "a": "Pay by UPI, card or netbanking on the secure Razorpay page — the money goes straight to us."} if "online" in methods else None,
+        {"q": "How much is delivery?", "a": "Delivery is free." if not shop.shipping_fee else f"Delivery is {inr(shop.shipping_fee)}"
+         + (f", and free on orders above {inr(shop.free_shipping_above)}." if shop.free_shipping_above is not None else ".")},
+        {"q": "How do I track my order?", "a": "Use the link in your order confirmation" + (f", or DM us “track” on Instagram anytime." if shop.account_id else ".")},
+    ) if x]
+    hero = s["hero"]
+    if not hero and products:
+        hero = [{"image_url": p.image_url, "title": p.name, "subtitle": shop.tagline or "", "cta_label": s["texts"]["hero_button"], "product_id": str(p.id)}
+                for p in products if p.image_url][:3]
+    return {**s, "announcement": s["announcement"] or " · ".join(perks), "faq": faq, "hero": hero}
 
 
 def _sig(body: str) -> str:
@@ -640,8 +706,9 @@ async def _buy_tap(db: AsyncSession, account: InstagramAccount, conv: Conversati
                                      extra_payload={"auto": "shop_buy", "automation_id": str(automation.id)})
     choices = " · ".join(f"{g['name']}: {', '.join(g['values'][:8])}" for g in product.options or [])
     how = "Tap Checkout to order on our store" + (", or order right here in chat" if shop.chat_orders else "")
+    pay = {("online", "cod"): "UPI, card or cash on delivery", ("online",): "UPI or card", ("cod",): "cash on delivery"}.get(tuple(await payment_methods(db, shop)))
     await _say(db, account, conv, contact, f"{product.name}\n{_price_line(product, variants)}" + (f"\n{choices}" if choices else "") +
-               f"\n\n{how} — UPI, card{' or cash on delivery' if shop.cod_enabled else ''} 👇",
+               f"\n\n{how}" + (f" — {pay}" if pay else "") + " 👇",
                _cart_buttons(shop, product, cart, contact), automation_id=automation.id, product_id=product.id)
     return True
 

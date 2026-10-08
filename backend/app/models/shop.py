@@ -25,6 +25,10 @@ class Shop(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # The Instagram account whose DMs carry order updates (and whose profile picture the store shows).
     account_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("instagram_accounts.id", ondelete="SET NULL"), nullable=True)
     slug: Mapped[str] = mapped_column(String(40), nullable=False, unique=True)
+    # The seller's own domain (e.g. shop.priyaboutique.com): pending until its DNS points at us, then active.
+    custom_domain: Mapped[str | None] = mapped_column(String(253), nullable=True, unique=True)
+    domain_status: Mapped[str] = mapped_column(String(16), default="none")  # none|pending|active
+    domain_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     tagline: Mapped[str] = mapped_column(String(300), nullable=False, default="")
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -51,6 +55,9 @@ class Shop(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     business_address: Mapped[str] = mapped_column(Text, nullable=False, default="")
     gst_rate: Mapped[int] = mapped_column(Integer, default=0)  # percent: 0|5|12|18|28
     invoice_seq: Mapped[int] = mapped_column(Integer, default=0)
+    # The storefront website: brand colour, announcement bar, hero carousel, about, FAQ and which sections show.
+    # Missing keys fall back to services/shop.py DEFAULT_SITE, so older stores render the same template.
+    site: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
     order_seq: Mapped[int] = mapped_column(Integer, default=1000)  # last order number handed out
     views: Mapped[int] = mapped_column(Integer, default=0)
@@ -66,6 +73,7 @@ class ShopProduct(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     price: Mapped[int] = mapped_column(Integer, nullable=False)
     compare_at_price: Mapped[int | None] = mapped_column(Integer, nullable=True)  # struck-through "MRP"
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    images: Mapped[list] = mapped_column(JSON, nullable=False, default=list)  # more photos for the product page carousel
     # The Instagram post it was imported from (also lets a comment on that post find the product).
     media_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     permalink: Mapped[str | None] = mapped_column(String(500), nullable=True)
