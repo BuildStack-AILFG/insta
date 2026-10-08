@@ -752,6 +752,6 @@ async def check_domain(request: Request, ctx: Ctx = Depends(require_manager), db
 async def store_for_domain(host: str, db: AsyncSession = Depends(get_db)) -> dict:
     """The web app's proxy asks this to serve a store on its own domain."""
     s = await shop_domains.shop_for_host(db, host[:253])
-    if s is None:
+    if s is None or not await has_feature(db, s.tenant_id, "shop"):  # a downgraded plan takes the domain store down too
         raise HTTPException(status_code=404, detail={"error": "No store on this domain."})
     return {"slug": s.slug}

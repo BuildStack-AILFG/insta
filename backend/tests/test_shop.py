@@ -884,6 +884,16 @@ async def test_custom_domain_goes_live_once_dns_points_here(wsa, other, meta, ap
     assert live["message"] is None and live["shop"]["domain_status"] == "active" and live["shop"]["url"] == "https://shop.priyaboutique.com"
     assert calls and calls[0]["path"] == "/v10/projects/prj_123/domains" and b"shop.priyaboutique.com" in calls[0]["body"]
     assert (await app_client.get("/api/public/store/by-domain/SHOP.priyaboutique.com:443")).json() == {"slug": s_["slug"]}
+    # a plan without the shop takes the domain store down too (and back up on upgrade)
+    import uuid as _uuid
+    from sqlalchemy import update
+    from app.models.tenant import Tenant
+    from tests.conftest import db_session
+    for plan, code in (("starter", 404), ("growth", 200)):
+        async with await db_session() as db:
+            await db.execute(update(Tenant).where(Tenant.id == _uuid.UUID(wsa.tenant_id)).values(plan_id=plan))
+            await db.commit()
+        assert (await app_client.get("/api/public/store/by-domain/shop.priyaboutique.com")).status_code == code
 
     # store links in DMs now use the domain
     p = await _product(wsa, stock=None)
