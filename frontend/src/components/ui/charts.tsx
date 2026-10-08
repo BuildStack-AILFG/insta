@@ -21,7 +21,7 @@ export function BarChart({ data, series, height = 180 }: { data: ({ date: string
         <svg viewBox={`0 0 100 ${height / 4}`} preserveAspectRatio="none" className="h-full w-full" role="img" aria-label="Bar chart">
           {[0.25, 0.5, 0.75, 1].map((f) => <line key={f} x1="0" x2="100" y1={(height / 4) * (1 - f)} y2={(height / 4) * (1 - f)} stroke="color-mix(in srgb, var(--foreground) 8%, transparent)" strokeWidth="0.3" />)}
           {data.map((d, i) => (
-            <g key={d.date} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
+            <g key={d.date} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} onClick={() => setHover((h) => (h === i ? null : i))}>
               <rect x={i * w} y={0} width={w} height={height / 4} fill={hover === i ? "color-mix(in srgb, var(--foreground) 5%, transparent)" : "transparent"} />
               {series.map((s, si) => { const v = Number(d[s.key]) || 0; const h = (v / max) * (height / 4 - 2); return <rect key={s.key} x={i * w + w * 0.1 + si * bw} y={height / 4 - h} width={Math.max(bw - 0.15, 0.2)} height={h} rx={0.3} fill={s.color} opacity={hover === null || hover === i ? 1 : 0.5} />; })}
             </g>

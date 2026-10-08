@@ -91,7 +91,7 @@ function CommentAutomations() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
                     {([["Comments", a.stats.comments_matched], ["DMs sent", a.stats.dms_sent], a.gate !== "none" ? ["Unlocked", a.stats.gates_passed] : ["Replies", a.stats.public_replies_sent], ["Clicked", a.stats.link_clicks]] as [string, number][]).map(([l, v]) => (
                       <div key={l as string} className="rounded-xl bg-white/[0.04] py-2"><div className="text-[18px] font-bold text-white">{(v as number).toLocaleString()}</div><div className="text-[11px] text-white/40">{l}</div></div>
                     ))}
@@ -470,7 +470,7 @@ function Activity({ automations }: { automations: CommentAutomation[] }) {
         <EmptyState icon={<MessageCircle size={22} />} title="No comments yet" body="Every comment on your posts shows up here with what the automation did about it." />
       ) : (
         <Card className="overflow-hidden">
-          <table className="w-full text-left text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[13px]">
             <thead className="border-b border-white/10 text-[11.5px] uppercase tracking-wide text-white/40"><tr><th className="px-4 py-2.5">Comment</th><th className="px-4 py-2.5">Automation</th><th className="px-4 py-2.5">Result</th><th className="px-4 py-2.5 text-right">When</th></tr></thead>
             <tbody>{rows.map((r) => (
               <tr key={r.id} className="border-b border-white/5 align-top">
@@ -486,7 +486,7 @@ function Activity({ automations }: { automations: CommentAutomation[] }) {
                 <td className="whitespace-nowrap px-4 py-2.5 text-right text-white/40">{timeAgo(r.created_at)}</td>
               </tr>
             ))}</tbody>
-          </table>
+          </table></div>
           {total > rows.length && <div className="p-3 text-center text-[12px] text-white/35">Showing the latest {rows.length} of {total}.</div>}
         </Card>
       )}

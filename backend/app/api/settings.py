@@ -214,6 +214,8 @@ async def patch_settings(body: SettingsPatch, ctx: Ctx = Depends(get_ctx), db: A
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error": "Your role is read-only."})
     if "assignment" in body.settings:
         await ensure_feature(db, ctx.tenant_id, "assignment_rules")
+    if body.settings.get("intent_matching_enabled") is True:
+        await ensure_feature(db, ctx.tenant_id, "intent_matching")
     tenant = await db.get(Tenant, ctx.tenant_id)
     if tenant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Workspace not found."})

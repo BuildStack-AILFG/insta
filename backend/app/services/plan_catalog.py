@@ -6,7 +6,8 @@ missing, and migration 0004 moves existing databases onto it once. After that th
 re-deploying never overwrites them. `frontend/src/lib/site/plans.ts` holds the same numbers as a fallback for the public site.
 
 Commercial model (modelled on Interakt): the trial is the full product with very limited outbound messaging and a few advanced features
-locked. Every paid plan unlocks every feature and differs only in volume, so upgrading is a question of "how much", never "which features".
+locked. Starter also leaves out the growth-tier tools (shop, giveaways, intent matching, segments, pipeline); Growth and above unlock
+every feature and differ only in volume.
 """
 
 from __future__ import annotations
@@ -20,6 +21,11 @@ FEATURES: dict[str, dict[str, str]] = {
     "assignment_rules": {"label": "Auto-assignment rules", "blurb": "Route new chats to the right teammate automatically."},
     "api_access": {"label": "API keys & webhooks", "blurb": "Sync contacts and receive events in your own systems."},
     "integrations": {"label": "App integrations", "blurb": "Shopify, WooCommerce, Razorpay and other event triggers."},
+    "shop": {"label": "Instagram Shop", "blurb": "Sell from comments and DMs with your own storefront — no website needed."},
+    "giveaways": {"label": "Giveaways", "blurb": "Pick fair, verifiable winners from the comments on any post."},
+    "intent_matching": {"label": "Intent matching", "blurb": "AI works out which of your replies a customer meant, even without the exact keyword."},
+    "segments": {"label": "Segments", "blurb": "Saved audiences built from tags, traits and activity."},
+    "pipeline": {"label": "Sales pipeline", "blurb": "Track deals from first DM to payment on a drag-and-drop board."},
 }
 
 TRIAL_DAYS_DEFAULT = 14
@@ -29,7 +35,11 @@ _ALL_ON = {k: True for k in FEATURES}
 # Locked on the trial and on the free plan a lapsed trial falls back to. The AI agent deliberately stays on for the trial.
 _TRIAL_FEATURES = {**_ALL_ON, "conversation_analytics": False, "automation_reports": False, "sales_reports": False, "assignment_rules": False,
                    "api_access": False, "integrations": False}
+# Growth-tier features: off on the trial, the free plan and Starter; Growth and above get everything.
+_GROWTH_ONLY = {"shop": False, "giveaways": False, "intent_matching": False, "segments": False, "pipeline": False}
+_TRIAL_FEATURES = {**_TRIAL_FEATURES, **_GROWTH_ONLY}
 _FREE_FEATURES = {**_TRIAL_FEATURES, "ai_agent": False}
+_STARTER_FEATURES = {**_ALL_ON, **_GROWTH_ONLY}
 
 PLANS: list[dict] = [
     {
@@ -46,7 +56,7 @@ PLANS: list[dict] = [
     },
     {
         "id": "starter", "name": "Starter", "price_monthly": 79900, "price_quarterly": 71900, "price_yearly": 63900, "is_default_trial": False, "is_public": True,
-        "features": _ALL_ON,
+        "features": _STARTER_FEATURES,
         "quotas": {"max_instagram_accounts": 1, "max_team_members": 3, "max_automation_flows": 5, "max_contacts": 2000, "max_comment_automations": 20,
                    "ai_replies_included_per_month": 500, "max_knowledge_sources": 3},
     },
@@ -69,3 +79,10 @@ PLANS: list[dict] = [
                                            "ai_replies_included_per_month", "max_knowledge_sources")},
     },
 ]
+
+
+def default_feature(plan_id: str | None, feature: str) -> bool:
+    """Catalogue default for a feature the stored plan row doesn't mention yet (e.g. a feature added after the plan was seeded).
+    Custom plans that aren't in the catalogue default to on."""
+    plan = next((p for p in PLANS if p["id"] == plan_id), None)
+    return bool(plan["features"].get(feature, True)) if plan else True

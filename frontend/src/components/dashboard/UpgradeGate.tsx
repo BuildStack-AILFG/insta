@@ -4,17 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Check, Lock, Sparkles } from "lucide-react";
 import type { FeatureKey } from "@/lib/api";
-import { FEATURE_LABELS } from "@/lib/site/plans";
+import { FEATURE_LABELS, GROWTH_TIER_FEATURES } from "@/lib/site/plans";
 import { useWorkspace } from "./WorkspaceContext";
 
 /** Dashboard pages that need a plan feature. A page whose feature is switched off for the workspace's plan shows <UpgradeGate/> instead. */
 const ROUTE_FEATURES: [string, FeatureKey][] = [
   ["/dashboard/conversation-analytics", "conversation_analytics"],
-  ["/dashboard/conversation-analytics", "conversation_analytics"],
   ["/dashboard/sales-reports", "sales_reports"],
   ["/dashboard/assignment-rules", "assignment_rules"],
   ["/dashboard/integrations", "integrations"],
   ["/dashboard/ai-agent", "ai_agent"],
+  ["/dashboard/shop", "shop"],
+  ["/dashboard/giveaways", "giveaways"],
+  ["/dashboard/intent-matching", "intent_matching"],
+  ["/dashboard/segments", "segments"],
+  ["/dashboard/pipeline", "pipeline"],
 ];
 
 export function featureForPath(pathname: string): FeatureKey | null {
@@ -56,7 +60,7 @@ export function UpgradeGate({ feature, inline = false }: { feature: FeatureKey; 
         <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-white/60">{info.blurb}</p>
 
         <ul className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-2 text-[12.5px] text-white/70">
-          {["Starter", "Growth", "Enterprise"].map((p) => <li key={p} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1"><Check size={13} className="text-brand" strokeWidth={2.5} />{p}</li>)}
+          {(GROWTH_TIER_FEATURES.includes(feature) ? ["Growth", "Enterprise"] : ["Starter", "Growth", "Enterprise"]).map((p) => <li key={p} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1"><Check size={13} className="text-brand" strokeWidth={2.5} />{p}</li>)}
         </ul>
 
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">

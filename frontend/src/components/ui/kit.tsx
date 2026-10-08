@@ -109,21 +109,21 @@ export function statusTone(s: string): keyof typeof TONES {
 
 export function PageHeader({ title, subtitle, actions, icon }: { title: string; subtitle?: string; actions?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div className="flex items-start gap-3">
-        {icon && <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: accentTint(13), color: ACCENT }}>{icon}</div>}
-        <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-white">{title}</h1>
-          {subtitle && <p className="mt-1 max-w-2xl text-[13.5px] text-white/55">{subtitle}</p>}
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3 sm:mb-6 sm:gap-4">
+      <div className="flex min-w-0 items-start gap-3">
+        {icon && <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: accentTint(13), color: ACCENT }}>{icon}</div>}
+        <div className="min-w-0">
+          <h1 className="text-[19px] font-semibold sm:text-[22px] tracking-tight text-white">{title}</h1>
+          {subtitle && <p className="mt-1 max-w-2xl text-[13px] text-white/55 sm:text-[13.5px]">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{actions}</div>}
     </div>
   );
 }
 
 export function Page({ children, wide }: { children: ReactNode; wide?: boolean }) {
-  return <div className={cx("mx-auto w-full px-6 py-8", wide ? "max-w-[1400px]" : "max-w-6xl")}>{children}</div>;
+  return <div className={cx("mx-auto w-full px-4 py-5 sm:px-6 sm:py-8", wide ? "max-w-[1400px]" : "max-w-6xl")}>{children}</div>;
 }
 
 const fieldCls = "w-full rounded-lg border border-white/10 bg-field px-3 py-2 text-[13.5px] text-white placeholder:text-white/30 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50";
@@ -158,9 +158,9 @@ export function Toggle({ checked, onChange, disabled, label }: { checked: boolea
 
 export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div className="mb-5 flex flex-wrap gap-1 border-b border-white/10">
+    <div className="no-scrollbar -mx-4 mb-5 flex gap-1 overflow-x-auto border-b border-white/10 px-4 sm:mx-0 sm:flex-wrap sm:px-0">
       {tabs.map((t) => (
-        <button key={t.id} onClick={() => onChange(t.id)} className={cx("-mb-px border-b-2 px-4 py-2.5 text-[13.5px] font-medium transition", value === t.id ? "text-white" : "border-transparent text-white/50 hover:text-white/80")}
+        <button key={t.id} onClick={() => onChange(t.id)} className={cx("-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition sm:px-4 sm:text-[13.5px]", value === t.id ? "text-white" : "border-transparent text-white/50 hover:text-white/80")}
           style={value === t.id ? { borderColor: ACCENT } : undefined}>
           {t.label}
           {t.count !== undefined && <span className="ml-2 rounded-full bg-white/10 px-1.5 py-0.5 text-[11px]">{t.count}</span>}
@@ -180,7 +180,7 @@ export function Spinner({ label }: { label?: string }) {
 
 export function EmptyState({ icon, title, body, action }: { icon?: ReactNode; title: string; body?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 px-5 py-10 text-center sm:px-6 sm:py-14">
       {icon && <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06] text-white/60">{icon}</div>}
       <h3 className="text-[15px] font-semibold text-white">{title}</h3>
       {body && <p className="mt-1.5 max-w-md text-[13px] text-white/50">{body}</p>}
@@ -210,14 +210,14 @@ export function Modal({ open, onClose, title, children, footer, width = 560 }: {
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="flex max-h-[90vh] w-full flex-col rounded-2xl border border-white/10 bg-surface shadow-2xl" style={{ maxWidth: width }}>
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <h2 className="text-[16px] font-semibold text-white">{title}</h2>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="flex max-h-[92dvh] w-full flex-col rounded-t-2xl border border-white/10 bg-surface shadow-2xl sm:max-h-[90vh] sm:rounded-2xl" style={{ maxWidth: width }}>
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3.5 sm:px-5 sm:py-4">
+          <h2 className="min-w-0 text-[15px] font-semibold text-white sm:text-[16px]">{title}</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-md p-1 text-white/50 hover:bg-white/10 hover:text-white"><X size={18} /></button>
         </div>
-        <div className="overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-white/10 px-5 py-3.5">{footer}</div>}
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">{children}</div>
+        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-white/10 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-3.5">{footer}</div>}
       </div>
     </div>
   );
@@ -254,11 +254,11 @@ export function UiProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={{ toast, confirm }}>
       {children}
-      <div className="pointer-events-none fixed bottom-5 right-5 z-[200] flex flex-col gap-2">
+      <div className="pointer-events-none fixed inset-x-3 bottom-4 z-[200] flex flex-col items-stretch gap-2 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:items-end">
         {toasts.map((t) => (
           <div key={t.id} role="status" className={cx("pointer-events-auto flex max-w-sm items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] shadow-xl backdrop-blur-xl",
             t.tone === "error" ? "border-red-500/40 bg-red-950/90 text-red-100" : t.tone === "info" ? "border-sky-500/40 bg-sky-950/90 text-sky-100" : "border-emerald-500/40 bg-emerald-950/90 text-emerald-100")}>
-            {t.tone === "error" ? <AlertCircle size={16} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={16} className="mt-0.5 shrink-0" />}
+            {t.tone === "error" ? <AlertCircle size={16} className="mt-0.5 shrink-0" /> : t.tone === "info" ? <Info size={16} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={16} className="mt-0.5 shrink-0" />}
             <span>{t.text}</span>
           </div>
         ))}
@@ -276,7 +276,7 @@ export function CopyField({ value, label }: { value: string; label?: string }) {
   return (
     <div>
       {label && <span className="mb-1.5 block text-[12.5px] font-medium text-white/70">{label}</span>}
-      <div className="flex gap-2">
+      <div className="flex min-w-0 gap-2">
         <input readOnly value={value} onFocus={(e) => e.target.select()} className={cx(fieldCls, "font-mono text-[12.5px]")} />
         <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(value).then(() => toast("Copied to clipboard"), () => toast("Couldn't copy — select and copy manually", "error"))}>Copy</Button>
       </div>
@@ -288,7 +288,7 @@ export function Stat({ label, value, sub, tone }: { label: string; value: ReactN
   return (
     <Card className="p-4">
       <div className="text-[12px] text-white/50">{label}</div>
-      <div className={cx("mt-1 text-[24px] font-semibold", tone === "red" ? "text-red-300" : "text-white")}>{value}</div>
+      <div className={cx("mt-1 text-[20px] font-semibold sm:text-[24px]", tone === "red" ? "text-red-300" : "text-white")}>{value}</div>
       {sub && <div className="mt-0.5 text-[11.5px] text-white/40">{sub}</div>}
     </Card>
   );

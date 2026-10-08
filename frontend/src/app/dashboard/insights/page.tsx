@@ -99,7 +99,7 @@ function RecentPosts({ accountId }: { accountId: string }) {
       <h3 className="px-5 pt-5 text-[14.5px] font-semibold text-white">Recent posts</h3>
       {err ? <p className="p-5 text-[12.5px] text-red-300">{err}</p> : !items ? <Spinner /> : items.length === 0 ? <p className="p-5 text-[12.5px] text-white/45">No posts yet.</p> : (
         <div className="overflow-x-auto">
-          <table className="mt-3 w-full text-left text-[12.5px]">
+          <table className="mt-3 w-full min-w-[520px] text-left text-[12.5px]">
             <thead className="border-b border-white/10 text-[11px] uppercase tracking-wide text-white/40"><tr><th className="px-5 py-2">Post</th><th className="px-2 py-2 text-right">Reach</th><th className="px-2 py-2 text-right">Views</th><th className="px-2 py-2 text-right">Likes</th><th className="px-2 py-2 text-right">Comments</th><th className="px-2 py-2 text-right">Shares</th><th className="px-5 py-2 text-right">Saves</th></tr></thead>
             <tbody>{items.map((m) => (
               <tr key={m.id} className="border-b border-white/5">

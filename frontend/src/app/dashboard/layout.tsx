@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AuthGuard from "@/components/dashboard/AuthGuard";
+import { MobileNavProvider } from "@/components/dashboard/MobileNav";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { RouteGate } from "@/components/dashboard/UpgradeGate";
 import TopBar from "@/components/dashboard/TopBar";
@@ -13,13 +14,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <AuthGuard>
       <UiProvider>
-        <div className="flex h-screen flex-col overflow-hidden bg-black text-white">
-          <TopBar />
-          <div className="flex min-h-0 flex-1">
-            <Sidebar />
-            <main className="min-w-0 flex-1 overflow-y-auto"><RouteGate>{children}</RouteGate></main>
+        <MobileNavProvider>
+          {/* h-dvh so mobile browser toolbars don't push the inbox composer below the fold */}
+          <div className="flex h-dvh flex-col overflow-hidden bg-black text-white">
+            <TopBar />
+            <div className="flex min-h-0 flex-1">
+              <Sidebar />
+              <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden"><RouteGate>{children}</RouteGate></main>
+            </div>
           </div>
-        </div>
+        </MobileNavProvider>
       </UiProvider>
     </AuthGuard>
   );

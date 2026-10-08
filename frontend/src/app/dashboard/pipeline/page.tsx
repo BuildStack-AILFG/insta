@@ -136,10 +136,10 @@ function BoardView() {
         <Card className="p-2"><EmptyState icon={<UserRound size={22} />} title="Your pipeline is empty" body="Add your first deal, or let new Instagram contacts become deals automatically — turn that on under Stages."
           action={<div className="flex gap-2"><Button onClick={() => setOpen({ id: null })}><Plus size={14} /> Add a deal</Button><Button variant="ghost" onClick={() => setStagesOpen(true)}>Set up stages</Button></div>} /></Card>
       ) : (
-        <div className="-mx-6 overflow-x-auto px-6 pb-4">
+        <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6">
           <div className="flex min-w-max gap-3">
             {board.stages.map((s) => (
-              <section key={s.id} aria-label={s.name} className={cx("flex w-[286px] shrink-0 flex-col rounded-2xl border bg-white/[0.02] transition", over?.stage === s.id ? "border-brand/60 bg-brand/[0.04]" : "border-white/10")}
+              <section key={s.id} aria-label={s.name} className={cx("flex w-[min(286px,82vw)] shrink-0 flex-col rounded-2xl border bg-white/[0.02] transition", over?.stage === s.id ? "border-brand/60 bg-brand/[0.04]" : "border-white/10")}
                 onDragOver={(e) => { if (!drag) return; e.preventDefault(); setOver({ stage: s.id, index: slotFor(e, s) }); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null); }}
                 onDrop={(e) => { e.preventDefault(); drop(s, slotFor(e, s)); }}>

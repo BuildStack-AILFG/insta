@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, BadgeCheck, Check, FileText, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, FileText, Minus, ShieldCheck, Sparkles } from "lucide-react";
 import {
-  ENTERPRISE_EXTRAS, FEATURE_LABELS, fmtLimit, GST_PERCENT, inr, limitBullets, monthsOf, perDay, PERIODS, savingPercent,
+  ENTERPRISE_EXTRAS, FEATURE_LABELS, fmtLimit, GROWTH_TIER_FEATURES, GST_PERCENT, inr, limitBullets, monthsOf, perDay, PERIODS, savingPercent,
   type FeatureKey, type Limits, type Period, type PlanInfo, type TrialInfo,
 } from "@/lib/site/plans";
 
@@ -83,7 +83,8 @@ function PlanCard({ plan, period }: { plan: PlanInfo; period: Period }) {
           </>
         ) : (
           <>
-            <Li strong>{plan.id === "starter" ? "Every feature included" : "Everything in Starter, with more room"}</Li>
+            <Li strong>{plan.id === "starter" ? "All core automation features" : "Everything in Starter, with more room"}</Li>
+            {plan.id !== "starter" && <Li>Plus {GROWTH_TIER_FEATURES.map((k) => FEATURE_LABELS[k].label).join(", ")}</Li>}
             {limitBullets(plan.limits).map((f) => <Li key={f}>{f}</Li>)}
           </>
         )}
@@ -140,9 +141,9 @@ const LIMIT_ROWS: { label: string; key: keyof Limits }[] = [
   { label: "AI replies / month", key: "ai" },
   { label: "AI knowledge sources", key: "knowledge" },
 ];
-const CORE_ROWS = ["Comment → DM & story automation", "Shared DM inbox", "Keyword replies, ice breakers & DM flows", "Sales pipeline & payment links"];
+const CORE_ROWS = ["Comment → DM & story automation", "Shared DM inbox", "Keyword replies, ice breakers & DM flows", "Payment links"];
 
-/** Volume and features side by side for the plans on sale. Every paid plan has every feature; only the limits differ. */
+/** Volume and features side by side for the plans on sale. Starter leaves out the growth-tier tools; everything else is in every plan. */
 export function CompareTable({ plans }: Pick<Props, "plans">) {
   const cols = plans.map((p) => ({ id: p.id, name: p.name, limits: p.limits }));
   return (
@@ -158,8 +159,12 @@ export function CompareTable({ plans }: Pick<Props, "plans">) {
             <tr key={r.key} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{r.label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3 text-white/70">{fmtLimit(c.limits[r.key])}</td>)}</tr>
           ))}
           <SectionRow label="Included in every plan" span={cols.length + 1} />
-          {[...CORE_ROWS, ...(Object.keys(FEATURE_LABELS) as FeatureKey[]).map((k) => FEATURE_LABELS[k].label)].map((label) => (
+          {[...CORE_ROWS, ...(Object.keys(FEATURE_LABELS) as FeatureKey[]).filter((k) => !GROWTH_TIER_FEATURES.includes(k)).map((k) => FEATURE_LABELS[k].label)].map((label) => (
             <tr key={label} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3"><Check size={16} className="text-brand" strokeWidth={2.5} /></td>)}</tr>
+          ))}
+          <SectionRow label="Growth and above" span={cols.length + 1} />
+          {GROWTH_TIER_FEATURES.map((k) => (
+            <tr key={k} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{FEATURE_LABELS[k].label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3">{c.id === "starter" ? <Minus size={16} className="text-white/30" aria-label="Not included" /> : <Check size={16} className="text-brand" strokeWidth={2.5} />}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -177,9 +182,9 @@ export default function PricingTable({ plans, trial }: Props) {
       <PlanCards plans={plans} />
       <TrustStrip trialDays={trial.days} />
       <div className="mt-16">
-        <h2 className="text-center text-[24px] font-extrabold tracking-tight text-white sm:text-[28px]">Every plan has every feature</h2>
+        <h2 className="text-center text-[24px] font-extrabold tracking-tight text-white sm:text-[28px]">Compare plans</h2>
         <p className="mx-auto mb-8 mt-2 max-w-2xl text-center text-[14.5px] leading-relaxed text-white/55">
-          You only pay for volume: contacts, team members, automations and AI replies. Every feature is unlocked the day you subscribe.
+          Every plan has the core automation tools. Growth adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline, with more room on every limit.
         </p>
         <CompareTable plans={plans} />
       </div>

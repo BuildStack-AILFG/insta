@@ -90,6 +90,7 @@ async def test_contact_validation_duplicates_and_plan_quota(wsa):
     assert over.status_code == 402 and "plan allows 2 contacts" in over.json()["detail"]["error"]
 
 
+@pytest.mark.paid
 async def test_segments_by_trait_tag_and_event(wsa):
     await wsa.post("/contacts", json={"name": "A", "phone": "919811100001", "tags": ["vip"], "traits": {"city": "Pune"}})
     await wsa.post("/contacts", json={"name": "B", "phone": "919811100002", "traits": {"city": "Delhi"}})

@@ -158,4 +158,4 @@ export function findNavItemByHref(href: string): NavItem | undefined {
   return undefined;
 }
 
-export const SIDEBAR_WIDTH = { rail: 72, panel: 260 } as const;
+export const SIDEBAR_WIDTH = { rail: 72, expanded: 264 } as const;

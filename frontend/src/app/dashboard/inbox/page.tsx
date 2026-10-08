@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { AlertTriangle, AtSign, Bot, Check, CheckCheck, Clock, ExternalLink, FileText, Heart, IndianRupee, Inbox as InboxIcon, Link2, MessageCircleReply, Paperclip, Plus, Search, Send, StickyNote, Trash2, UserRound, X, Zap } from "lucide-react";
+import { AlertTriangle, AtSign, Bot, Check, CheckCheck, ChevronLeft, Clock, ExternalLink, FileText, Heart, IndianRupee, Inbox as InboxIcon, Link2, MessageCircleReply, Paperclip, Plus, Search, Send, StickyNote, Trash2, UserRound, X, Zap } from "lucide-react";
 import { ACCENT, accentTint, Alert, Badge, Button, cx, EmptyState, Field, fmtDateTime, Input, Modal, Select, Spinner, timeAgo, Toggle, useDebounced, usePoll, useUi } from "@/components/ui/kit";
 import {
   contacts as contactsApi, errorMessage, getSettings, inbox, instagram, team,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import PaymentLinkModal from "@/components/sales/PaymentLinkModal";
 import ContactDeals from "@/components/sales/ContactDeals";
+import { useHasFeature } from "@/components/dashboard/UpgradeGate";
 import { useWorkspace } from "@/components/dashboard/WorkspaceContext";
 
 type Filter = "open" | "mine" | "unassigned" | "resolved";
@@ -64,7 +65,7 @@ function Inbox() {
 
   if (hasAccount === false) {
     return (
-      <div className="mx-auto max-w-xl px-6 py-20">
+      <div className="mx-auto max-w-xl px-4 py-10 sm:px-6 sm:py-20">
         <EmptyState icon={<InboxIcon size={22} />} title="Connect Instagram to start chatting" body="Your shared team inbox shows every Instagram DM, story reply and comment-automation conversation. Connect your account first."
           action={<Link href="/dashboard/instagram"><Button>Connect Instagram</Button></Link>} />
       </div>
@@ -85,7 +86,7 @@ function Inbox() {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or @username" className="pl-9" aria-label="Search conversations" />
           </div>
-          <div className="mt-3 flex gap-1 overflow-x-auto">
+          <div className="no-scrollbar mt-3 flex gap-1 overflow-x-auto">
             {tabs.map((t) => (
               <button key={t.id} onClick={() => setFilter(t.id)} className={cx("shrink-0 rounded-full px-3 py-1 text-[12.5px] transition", filter === t.id ? "text-white" : "text-white/50 hover:text-white/80")} style={filter === t.id ? { background: accentTint(20), color: "var(--foreground)" } : undefined}>
                 {t.label}{t.count ? <span className="ml-1.5 text-white/40">{t.count}</span> : null}
@@ -98,7 +99,7 @@ function Inbox() {
           {!list && !error && <Spinner />}
           {list && list.length === 0 && <div className="px-6 py-16 text-center text-[13px] text-white/40">{dq ? "No conversations match your search." : filter === "resolved" ? "No resolved conversations yet." : "No conversations here yet. DMs, story replies and comment DMs appear here instantly."}</div>}
           {list?.map((c) => (
-            <button key={c.id} onClick={() => open(c.id)} className={cx("flex w-full items-start gap-3 border-b border-white/5 px-4 py-3 text-left transition hover:bg-white/[0.04]", activeId === c.id && "bg-white/[0.07]")}>
+            <button key={c.id} onClick={() => open(c.id)} className={cx("flex w-full items-start gap-3 border-b border-white/5 px-3 py-3 text-left sm:px-4 transition hover:bg-white/[0.04]", activeId === c.id && "bg-white/[0.07]")}>
               <Avatar name={c.contact.name} src={c.contact.profile_pic_url} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -150,7 +151,8 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
   const [showButtons, setShowButtons] = useState(false);
   const [showPay, setShowPay] = useState(false);
   const [quick, setQuick] = useState<{ id: string; shortcut: string; text: string }[]>([]);
-  const [panel, setPanel] = useState(true);
+  const [panel, setPanel] = useState(true); // desktop side column
+  const [mobilePanel, setMobilePanel] = useState(false); // slide-over below lg
   const bottomRef = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -212,9 +214,9 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
   return (
     <div className="flex min-w-0 flex-1">
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center gap-3 border-b border-white/10 px-4 py-3">
-          <button onClick={onBack} className="rounded-md p-1 text-white/60 hover:bg-white/10 md:hidden" aria-label="Back to conversations"><X size={18} /></button>
-          <Avatar name={c.name} src={c.profile_pic_url} size={36} />
+        <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/10 px-3 py-2.5 sm:px-4 sm:py-3">
+          <button onClick={onBack} className="-ml-1 rounded-md p-1 text-white/60 hover:bg-white/10 md:hidden" aria-label="Back to conversations"><ChevronLeft size={22} /></button>
+          <button onClick={() => setMobilePanel(true)} className="shrink-0 lg:pointer-events-none" aria-label="Contact details" tabIndex={-1}><Avatar name={c.name} src={c.profile_pic_url} size={36} /></button>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14.5px] font-semibold text-white">{c.name}</div>
             <div className="truncate text-[12px] text-white/45">
@@ -224,23 +226,24 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
             </div>
           </div>
           {canWrite && (
-            <>
-              <Select value={conv.assigned_user?.id ?? "none"} onChange={(e) => patch({ assigned_user_id: e.target.value === "none" ? null : e.target.value }, "Assignment updated")} className="!w-40 !py-1.5 text-[12.5px]" aria-label="Assign to">
+            // On phones the actions drop to their own full-width row under the contact name.
+            <div className="order-last flex w-full items-center gap-2 sm:order-none sm:w-auto sm:gap-3">
+              <Select value={conv.assigned_user?.id ?? "none"} onChange={(e) => patch({ assigned_user_id: e.target.value === "none" ? null : e.target.value }, "Assignment updated")} className="min-w-0 flex-1 !py-1.5 text-[12.5px] sm:!w-40 sm:flex-none" aria-label="Assign to">
                 <option value="none">Unassigned</option>
                 {members.map((m) => <option key={m.user_id} value={m.user_id}>{m.user_id === userId ? "Me" : m.full_name || m.email}</option>)}
               </Select>
-              <label className="flex items-center gap-2 text-[12px] text-white/55" title="When on, your automations, flows and AI agent can reply in this chat">
+              <label className="flex shrink-0 items-center gap-2 text-[12px] text-white/55" title="When on, your automations, flows and AI agent can reply in this chat">
                 <Bot size={14} /> Bot <Toggle checked={conv.inbox_status === "bot"} onChange={(v) => patch({ inbox_status: v ? "bot" : "intervened" })} label="Automation for this conversation" />
               </label>
-              <Button size="sm" variant={conv.status === "open" ? "soft" : "ghost"} onClick={() => patch({ status: conv.status === "open" ? "resolved" : "open" }, conv.status === "open" ? "Marked resolved" : "Reopened")}>
+              <Button size="sm" className="shrink-0" variant={conv.status === "open" ? "soft" : "ghost"} onClick={() => patch({ status: conv.status === "open" ? "resolved" : "open" }, conv.status === "open" ? "Marked resolved" : "Reopened")}>
                 {conv.status === "open" ? <><Check size={14} /> Resolve</> : "Reopen"}
               </Button>
-            </>
+            </div>
           )}
-          <button onClick={() => setPanel((p) => !p)} className="hidden rounded-md p-1.5 text-white/50 hover:bg-white/10 lg:block" aria-label="Toggle contact panel"><UserRound size={16} /></button>
+          <button onClick={() => (window.matchMedia("(min-width: 1024px)").matches ? setPanel((p) => !p) : setMobilePanel(true))} className="rounded-md p-1.5 text-white/50 hover:bg-white/10" aria-label="Toggle contact panel"><UserRound size={18} /></button>
         </header>
 
-        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(236,72,153,0.06),transparent_60%)] px-4 py-4"
+        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(236,72,153,0.06),transparent_60%)] px-3 py-3 sm:px-4 sm:py-4"
           onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120; }}>
           {!msgs && <Spinner />}
           {msgs?.length === 0 && <div className="py-16 text-center text-[13px] text-white/40">No messages yet. Say hello 👋</div>}
@@ -248,10 +251,10 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
           <div ref={bottomRef} />
         </div>
 
-        {err && <div className="px-4 pt-3"><Alert onClose={() => setErr(null)}>{err}</Alert></div>}
+        {err && <div className="px-3 pt-3 sm:px-4"><Alert onClose={() => setErr(null)}>{err}</Alert></div>}
 
         {canWrite ? (
-          <footer className="border-t border-white/10 p-3">
+          <footer className="border-t border-white/10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-3">
             {blocked && (
               <div className="mb-2 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12.5px] text-amber-200">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
@@ -277,11 +280,11 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
                   ))}
                 </div>
               )}
-              <div className={cx("flex items-end gap-2 rounded-xl border p-2", mode === "note" ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-white/10 bg-white/[0.03]")}>
+              <div className={cx("flex items-end gap-0.5 rounded-xl border p-1.5 sm:gap-2 sm:p-2", mode === "note" ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-white/10 bg-white/[0.03]")}>
                 <textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} disabled={blocked || sending} aria-label={mode === "note" ? "Private note" : "Message"}
                   placeholder={blocked ? "Waiting for them to message again" : mode === "note" ? "Only your team can see this note…" : "Type a message… (type / for quick replies)"}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void submit(); } }}
-                  className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-1 text-[13.5px] text-white placeholder:text-white/30 focus:outline-none disabled:opacity-50" />
+                  className="max-h-40 min-h-[44px] min-w-0 flex-1 resize-none bg-transparent px-2 py-1 text-[13.5px] text-white placeholder:text-white/30 focus:outline-none disabled:opacity-50" />
                 <button onClick={() => setShowAttach(true)} disabled={blocked || sending || mode === "note"} className="rounded-md p-2 text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Attach media" title="Send a photo, video or file"><Paperclip size={17} /></button>
                 <button onClick={() => setShowButtons(true)} disabled={blocked || sending || mode === "note"} className="rounded-md p-2 text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Send link buttons" title="Message with link buttons"><Link2 size={17} /></button>
                 <button onClick={() => setShowPay(true)} disabled={sending || mode === "note"} className="rounded-md p-2 text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Request payment" title="Request payment"><IndianRupee size={17} /></button>
@@ -289,10 +292,22 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
               </div>
             </div>
           </footer>
-        ) : <footer className="border-t border-white/10 p-3 text-center text-[12.5px] text-white/40">Your role is read-only.</footer>}
+        ) : <footer className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-center text-[12.5px] text-white/40">Your role is read-only.</footer>}
       </section>
 
-      {panel && <ContactPanel conv={conv} onChanged={async () => { await loadConv(); onChanged(); }} canWrite={canWrite} />}
+      {panel && <ContactPanel conv={conv} onChanged={async () => { await loadConv(); onChanged(); }} canWrite={canWrite} className="hidden w-[300px] shrink-0 border-l border-white/10 lg:block" />}
+      {mobilePanel && (
+        <div className="fixed inset-0 z-[90] lg:hidden" role="dialog" aria-modal="true" aria-label="Contact details">
+          <button type="button" aria-label="Close contact details" onClick={() => setMobilePanel(false)} className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-y-0 right-0 flex w-[90vw] max-w-sm flex-col bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <span className="text-[14.5px] font-semibold text-white">Contact details</span>
+              <button onClick={() => setMobilePanel(false)} aria-label="Close" className="rounded-md p-1 text-white/50 hover:bg-white/10 hover:text-white"><X size={18} /></button>
+            </div>
+            <ContactPanel conv={conv} onChanged={async () => { await loadConv(); onChanged(); }} canWrite={canWrite} className="min-h-0 flex-1 pb-[max(1rem,env(safe-area-inset-bottom))]" />
+          </div>
+        </div>
+      )}
       <PaymentLinkModal open={showPay} onClose={() => setShowPay(false)} contact={{ id: c.id, name: c.name }} onInsert={(t) => { setMode("reply"); setText((prev) => (prev ? `${prev}
 ${t}` : t)); }} />
       <AttachModal open={showAttach} onClose={() => setShowAttach(false)} onSend={async (b) => { await send(b); setShowAttach(false); toast("Sent"); }} />
@@ -347,7 +362,7 @@ function Bubble({ m, prev, members }: { m: ChatMessage; prev?: ChatMessage; memb
     <>
       {newDay && <div className="my-3 text-center text-[11px] text-white/30">{new Date(m.created_at).toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" })}</div>}
       <div className={cx("mb-1.5 flex", out ? "justify-end" : "justify-start")}>
-        <div className={cx("max-w-[78%] rounded-2xl px-3 py-2 text-[13.5px] shadow-sm", m.is_internal ? "border border-amber-500/30 bg-amber-500/10 text-amber-100" : out ? "theme-fixed rounded-br-md text-white" : "rounded-bl-md bg-white/[0.08] text-white")}
+        <div className={cx("max-w-[85%] rounded-2xl px-3 py-2 text-[13.5px] shadow-sm sm:max-w-[78%]", m.is_internal ? "border border-amber-500/30 bg-amber-500/10 text-amber-100" : out ? "theme-fixed rounded-br-md text-white" : "rounded-bl-md bg-white/[0.08] text-white")}
           style={out && !m.is_internal ? { background: "#9d174d" } : undefined}>
           {m.is_internal && <div className="mb-0.5 flex items-center gap-1 text-[11px] font-medium text-amber-300"><StickyNote size={11} /> Private note</div>}
           {out && !m.is_internal && sender && <div className="mb-0.5 text-[11px] font-medium text-pink-200/80">{sender}</div>}
@@ -425,10 +440,10 @@ function ButtonsModal({ open, onClose, onSend, initialText }: { open: boolean; o
       <div className="space-y-3">
         <Field label="Message"><textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={640} className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13.5px] text-white focus:outline-none" /></Field>
         {buttons.map((b, i) => (
-          <div key={i} className="flex items-end gap-2">
-            <Field label={i === 0 ? "Button text (max 20)" : undefined}><Input value={b.title} maxLength={20} onChange={(e) => set(i, "title", e.target.value)} placeholder="Shop now" /></Field>
+          <div key={i} className="flex flex-col gap-2 rounded-lg border border-white/5 p-2 sm:flex-row sm:items-end sm:border-0 sm:p-0">
+            <Field label={i === 0 ? "Button text (max 20)" : undefined} className="sm:w-40"><Input value={b.title} maxLength={20} onChange={(e) => set(i, "title", e.target.value)} placeholder="Shop now" /></Field>
             <div className="flex-1"><Field label={i === 0 ? "Opens this link" : undefined}><Input value={b.url} onChange={(e) => set(i, "url", e.target.value)} placeholder="https://…" /></Field></div>
-            {buttons.length > 1 && <button onClick={() => setButtons((bs) => bs.filter((_, j) => j !== i))} className="mb-2 rounded-md p-1.5 text-white/40 hover:bg-white/10 hover:text-white" aria-label="Remove button"><Trash2 size={14} /></button>}
+            {buttons.length > 1 && <button onClick={() => setButtons((bs) => bs.filter((_, j) => j !== i))} className="self-end rounded-md p-1.5 text-white/40 hover:bg-white/10 hover:text-white sm:mb-2" aria-label="Remove button"><Trash2 size={14} /></button>}
           </div>
         ))}
         {buttons.length < 3 && <Button size="sm" variant="ghost" onClick={() => setButtons((bs) => [...bs, { title: "", url: "" }])}><Plus size={13} /> Add button</Button>}
@@ -439,8 +454,9 @@ function ButtonsModal({ open, onClose, onSend, initialText }: { open: boolean; o
 
 // ---- contact side panel -----------------------------------------------------------------------------------------------------------------------------------------
 
-function ContactPanel({ conv, onChanged, canWrite }: { conv: ConversationDetail; onChanged: () => void; canWrite: boolean }) {
+function ContactPanel({ conv, onChanged, canWrite, className }: { conv: ConversationDetail; onChanged: () => void; canWrite: boolean; className?: string }) {
   const { toast } = useUi();
+  const hasPipeline = useHasFeature("pipeline");
   const c = conv.contact;
   const [tag, setTag] = useState("");
   const [label, setLabel] = useState("");
@@ -452,7 +468,7 @@ function ContactPanel({ conv, onChanged, canWrite }: { conv: ConversationDetail;
   const ad = c.ad_attribution ?? {};
 
   return (
-    <aside className="hidden w-[300px] shrink-0 overflow-y-auto border-l border-white/10 p-4 lg:block">
+    <aside className={cx("overflow-y-auto p-4", className)}>
       <div className="text-center">
         <div className="flex justify-center"><Avatar name={c.name} src={c.profile_pic_url} size={64} /></div>
         <div className="mt-2 text-[15px] font-semibold text-white">{c.name}</div>
@@ -469,7 +485,7 @@ function ContactPanel({ conv, onChanged, canWrite }: { conv: ConversationDetail;
         <Chips items={conv.labels} onRemove={canWrite ? (l) => saveLabels(conv.labels.filter((x) => x !== l)) : undefined} />
         {canWrite && <Input value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addLabel()} placeholder="Add label + Enter" className="mt-2 !py-1.5 text-[12.5px]" />}
       </Section>
-      <Section title="Deals"><ContactDeals contact={{ id: c.id, name: c.name }} canWrite={canWrite} /></Section>
+      {hasPipeline && <Section title="Deals"><ContactDeals contact={{ id: c.id, name: c.name }} canWrite={canWrite} /></Section>}
       <Section title="Contact tags">
         <Chips items={c.tags} onRemove={canWrite ? (t) => saveTags(c.tags.filter((x) => x !== t)) : undefined} />
         {canWrite && <Input value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTag()} placeholder="Add tag + Enter" className="mt-2 !py-1.5 text-[12.5px]" />}

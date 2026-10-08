@@ -362,13 +362,18 @@ async def ws(app_client, request) -> Workspace:
     r = await app_client.post("/api/auth/register", json={"company_name": f"Acme {_counter}", "full_name": "Owner", "email": email, "password": "Str0ng!Passw0rd#42"})
     assert r.status_code == 201, r.text
     workspace = Workspace(app_client, r.json())
+    await _maybe_paid(request, workspace)
+    return workspace
+
+
+async def _maybe_paid(request, workspace: Workspace) -> None:
+    """`@pytest.mark.paid` puts the workspace on the Growth plan (every feature unlocked)."""
     if request.node.get_closest_marker("paid"):
         from sqlalchemy import update
         from app.models.tenant import Tenant
         async with await db_session() as db:
             await db.execute(update(Tenant).where(Tenant.id == uuid.UUID(workspace.tenant_id)).values(plan_id="growth"))
             await db.commit()
-    return workspace
 
 
 @pytest_asyncio.fixture
@@ -379,11 +384,13 @@ async def wsa(ws, meta) -> Workspace:
 
 
 @pytest_asyncio.fixture
-async def other(app_client) -> Workspace:
+async def other(app_client, request) -> Workspace:
     global _counter
     _counter += 1
     r = await app_client.post("/api/auth/register", json={"company_name": f"Other {_counter}", "email": f"other{_counter}-{uuid.uuid4().hex[:6]}@example.com", "password": "Str0ng!Passw0rd#42"})
-    return Workspace(app_client, r.json())
+    workspace = Workspace(app_client, r.json())
+    await _maybe_paid(request, workspace)
+    return workspace
 
 
 async def db_session():

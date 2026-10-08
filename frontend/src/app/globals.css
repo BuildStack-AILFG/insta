@@ -276,3 +276,23 @@ body {
 :root[data-theme="light"] .text-amber-100 { color: #6b4500; }
 /* Trial banner: a soft red strip in the light theme (its text uses the deep red above). Toasts stay dark and use *-100 text, untouched. */
 :root[data-theme="light"] .bg-red-950\/60 { background-color: #f4dcd4; }
+
+/* ------------------------------------------------------------------------------------------------
+   Mobile helpers
+------------------------------------------------------------------------------------------------ */
+/* Horizontal chip/tab strips that scroll sideways on phones without showing a scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS Safari zooms the page when a field under 16px gets focus — keep form fields at 16px on touch phones. */
+@media (max-width: 639px) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

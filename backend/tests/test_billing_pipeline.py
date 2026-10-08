@@ -364,6 +364,7 @@ async def test_payment_links_are_tenant_scoped(wsa, other, rzp):
 
 # ---- pipeline ------------------------------------------------------------------------------------------------------------------------------
 
+@pytest.mark.paid
 async def test_pipeline_starts_with_default_stages_and_board(ws):
     stages = (await ws.get("/pipeline/stages")).json()
     assert [s["kind"] for s in stages] == ["open", "open", "open", "open", "won", "lost"] and stages[0]["name"] == "New lead"
@@ -371,6 +372,7 @@ async def test_pipeline_starts_with_default_stages_and_board(ws):
     assert len(board["stages"]) == 6 and all(s["count"] == 0 and s["deals"] == [] for s in board["stages"])
 
 
+@pytest.mark.paid
 async def test_deal_lifecycle_move_won_lost_reopen_and_activity(ws):
     stages = {s["name"]: s["id"] for s in (await ws.get("/pipeline/stages")).json()}
     d = (await ws.post("/pipeline/deals", json={"title": "Acme rollout", "value": 1200000, "notes": "big one"})).json()
@@ -393,6 +395,7 @@ async def test_deal_lifecycle_move_won_lost_reopen_and_activity(ws):
     assert (await ws.get(f"/pipeline/deals/{d['id']}")).status_code == 404
 
 
+@pytest.mark.paid
 async def test_dragging_reorders_the_column(ws):
     first = (await ws.get("/pipeline/stages")).json()[0]["id"]
     ids = [(await ws.post("/pipeline/deals", json={"title": t, "stage_id": first})).json()["id"] for t in ("A", "B", "C")]
@@ -402,6 +405,7 @@ async def test_dragging_reorders_the_column(ws):
     assert col["count"] == 3
 
 
+@pytest.mark.paid
 async def test_board_search_and_filters_and_export(ws):
     await ws.inbound("hi", from_="909822200001", name="Meera Shah") if hasattr(ws, "account") and ws.account else None
     a = (await ws.post("/pipeline/deals", json={"title": "Hospital chain", "value": 100})).json()
@@ -413,6 +417,7 @@ async def test_board_search_and_filters_and_export(ws):
     assert "Hospital chain" in csv_text and "'=cmd" in csv_text and a["id"]  # formula cells are neutralised
 
 
+@pytest.mark.paid
 async def test_stage_management_rules(ws):
     stages = (await ws.get("/pipeline/stages")).json()
     new = (await ws.post("/pipeline/stages", json={"name": "Negotiation", "color": "#0ea5e9", "probability": 60})).json()
@@ -434,6 +439,7 @@ async def test_stage_management_rules(ws):
     assert (await ws.put("/pipeline/stages/order", json={"ids": order[:-1]})).status_code == 422
 
 
+@pytest.mark.paid
 async def test_pipeline_is_tenant_scoped_and_validates_references(ws, other):
     d = (await ws.post("/pipeline/deals", json={"title": "Mine"})).json()
     other_stage = (await other.get("/pipeline/stages")).json()[0]["id"]
@@ -462,6 +468,7 @@ async def test_report_numbers(ws):
     assert r["lost_reasons"][0]["reason"] == "No reason given" and [f["stage"] for f in r["funnel"]][0] == "New lead"
 
 
+@pytest.mark.paid
 async def test_new_instagram_contacts_can_become_deals_automatically(wsa):
     await wsa.inbound("hello", from_="909833300001", name="Before")
     assert (await wsa.get("/pipeline/deals")).json()["total"] == 0  # off by default
@@ -478,6 +485,7 @@ def _graph(*nodes, edges):
     return {"nodes": [{"id": i, "type": t, "position": {"x": 0, "y": 0}, "data": d} for i, t, d in nodes], "edges": [{"id": f"{s}-{t}", "source": s, "target": t} for s, t in edges]}
 
 
+@pytest.mark.paid
 async def test_flow_nodes_create_and_move_deals_and_send_payment_links(wsa, meta, rzp):
     stages = {s["name"]: s["id"] for s in (await wsa.get("/pipeline/stages")).json()}
     await wsa.put("/payments/settings", json={"key_id": OWN_KEYS[0], "key_secret": OWN_KEYS[1]})

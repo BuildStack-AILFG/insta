@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, Bell, CheckCircle2, MessageSquare } from "lucide-react";
 import { analytics, type NotificationItem } from "@/lib/api";
@@ -32,6 +32,9 @@ export default function NotificationBell() {
     }
   }, 20_000);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<() => void>(() => {});
+
   const unseen = (data?.items ?? []).filter((i) => !seen.includes(i.id));
   const badge = (data?.unread_conversations ?? 0) + unseen.length;
 
@@ -49,18 +52,36 @@ export default function NotificationBell() {
     }
   };
 
+  toggleRef.current = toggle;
+
+  // Close on an outside tap or Escape. A document listener instead of a fixed overlay, because the top bar's
+  // backdrop-blur traps `position: fixed` inside the bar's bounds (same approach as the profile menu).
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) toggleRef.current();
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && toggleRef.current();
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button type="button" onClick={toggle} aria-label={`Notifications${badge ? ` (${badge} new)` : ""}`} className="relative flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white">
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {badge > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{badge > 9 ? "9+" : badge}</span>}
       </button>
       {open && (
         <>
-          <button type="button" aria-label="Close notifications" onClick={toggle} className="fixed inset-0 z-40 cursor-default" />
-          <div className="absolute right-0 top-full z-50 mt-2 w-[360px] max-w-[92vw] overflow-hidden rounded-xl border border-white/10 bg-surface/95 shadow-2xl backdrop-blur-xl">
+          {/* On phones the panel spans the bar (its fixed containing block, see above) instead of hanging off the bell, which would clip off-screen left. */}
+          <div className="fixed inset-x-3 top-full z-50 mt-1 overflow-hidden sm:absolute sm:inset-x-auto sm:right-0 sm:mt-2 sm:w-[360px] rounded-xl border border-white/10 bg-surface/95 shadow-2xl backdrop-blur-xl">
             <div className="border-b border-white/10 px-4 py-3 text-[13.5px] font-semibold text-white">Notifications</div>
-            <div className="max-h-[420px] overflow-y-auto">
+            <div className="max-h-[min(420px,70dvh)] overflow-y-auto">
               {(data?.unread_conversations ?? 0) > 0 && (
                 <Link href="/dashboard/inbox" onClick={toggle} className="flex items-start gap-3 border-b border-white/5 px-4 py-3 hover:bg-white/[0.04]">
                   <MessageSquare size={16} className="mt-0.5 text-sky-400" />

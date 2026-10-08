@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Background, BackgroundVariant, Controls, Handle, MiniMap, Position, ReactFlow, ReactFlowProvider, addEdge, useEdgesState, useNodesState, useReactFlow, type Connection, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { ArrowLeft, CheckCircle2, ListChecks, Loader2, Play, Rocket, Undo2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ListChecks, Loader2, Pencil, Play, Plus, Rocket, Undo2 } from "lucide-react";
 import { Alert, Badge, Button, cx, Field, Input, Modal, Select, Spinner, statusTone, timeAgo, useUi } from "@/components/ui/kit";
 import { contacts as contactsApi, errorMessage, flows as api, team, type Contact, type FlowExecution, type FlowFull, type Member } from "@/lib/api";
 import Inspector from "@/components/flow/Inspector";
@@ -65,6 +65,9 @@ function Editor() {
   const [runs, setRuns] = useState<FlowExecution[]>([]);
   const [runDetail, setRunDetail] = useState<{ id: string; status: string; events: { at: string; node: string; type: string; detail: string }[]; context: Record<string, unknown>; error: string | null } | null>(null);
   const [showRun, setShowRun] = useState(false);
+  // Below md the step palette, and below lg the inspector, live in bottom sheets instead of side columns.
+  const [paletteSheet, setPaletteSheet] = useState(false);
+  const [inspectorSheet, setInspectorSheet] = useState(false);
   const loaded = useRef(false);
   const dirtySeq = useRef(0);
 
@@ -142,13 +145,26 @@ function Editor() {
   const groups = useMemo(() => (["Messages", "Logic", "Contact", "Sales", "Advanced"] as const).map((g) => [g, Object.entries(STEP_META).filter(([k, m]) => m.group === g && k !== "start")] as const), []);
   if (!flow) return err ? <div className="p-6"><Alert>{err}</Alert></div> : <Spinner />;
   const trig = TRIGGERS.find((t) => t.id === trigger);
+  const palette = (
+    <>
+      <div className="mb-3 flex rounded-lg bg-white/[0.05] p-0.5 text-[12px]">{(["steps", "runs"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={cx("flex-1 rounded-md py-1.5 capitalize", tab === t ? "bg-white/15 text-white" : "text-white/50")}>{t === "steps" ? "Add step" : "Runs"}</button>)}</div>
+      {tab === "steps" ? groups.map(([g, items]) => (
+        <div key={g} className="mb-4"><div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-white/35">{g}</div>
+          {items.map(([k, m]) => <button key={k} onClick={() => { addStep(k); setPaletteSheet(false); }} title={m.description} className="mb-1 flex w-full items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-left text-[12.5px] text-white/80 hover:bg-white/[0.08]"><span className="h-2.5 w-2.5 rounded-full" style={{ background: m.color }} />{m.label}</button>)}</div>
+      )) : (
+        <div className="space-y-1.5">{runs.length === 0 ? <p className="text-[12px] text-white/40">No runs yet. When contacts enter this flow they appear here.</p> : runs.map((r) => (
+          <button key={r.id} onClick={() => api.execution(id, r.id).then((d) => { setPaletteSheet(false); setRunDetail(d); }).catch((e) => setErr(errorMessage(e)))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] p-2 text-left hover:bg-white/[0.07]">
+            <div className="flex items-center justify-between"><span className="truncate text-[12.5px] text-white">{r.contact.name}</span><Badge tone={statusTone(r.status)}>{r.status}</Badge></div><div className="text-[11px] text-white/35">{timeAgo(r.created_at)}</div></button>))}</div>
+      )}
+    </>
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex flex-wrap items-center gap-3 border-b border-white/10 px-4 py-2.5">
+      <header className="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2.5 sm:gap-3 sm:px-4">
         <Link href="/dashboard/flow-builder" className="rounded-md p-1.5 text-white/60 hover:bg-white/10" aria-label="Back to flows"><ArrowLeft size={18} /></Link>
-        <Input value={name} onChange={(e) => { setName(e.target.value); markDirty(); }} className="!w-64 !bg-transparent font-semibold" aria-label="Flow name" />
-        <Select value={trigger} onChange={(e) => { setTrigger(e.target.value); markDirty(); }} className="!w-56 !py-1.5 text-[12.5px]" aria-label="Trigger">{TRIGGERS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</Select>
+        <Input value={name} onChange={(e) => { setName(e.target.value); markDirty(); }} className="min-w-0 flex-1 !bg-transparent font-semibold sm:!w-64 sm:flex-none" aria-label="Flow name" />
+        <Select value={trigger} onChange={(e) => { setTrigger(e.target.value); markDirty(); }} className="!py-1.5 text-[12.5px] sm:!w-56" aria-label="Trigger">{TRIGGERS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</Select>
         <Badge tone={statusTone(flow.status)}>{flow.status}{flow.has_unpublished_changes && " · edits not live"}</Badge>
         <span className="flex items-center gap-1.5 text-[12px] text-white/40">{save === "saving" ? <><Loader2 size={12} className="animate-spin" /> Saving…</> : save === "dirty" ? "Unsaved changes" : save === "error" ? <span className="text-red-300">Save failed</span> : <><CheckCircle2 size={12} className="text-emerald-400" /> Saved</>}</span>
         <div className="ml-auto flex items-center gap-2">
@@ -161,27 +177,21 @@ function Editor() {
       {problems.length > 0 && <div className="mx-4 mt-3"><Alert tone="yellow"><div className="mb-1 font-medium">{problems.length} thing{problems.length === 1 ? "" : "s"} to fix before this flow can go live:</div><ul className="list-disc space-y-0.5 pl-5">{problems.slice(0, 6).map((p, i) => <li key={i}>{p}</li>)}</ul></Alert></div>}
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[210px] shrink-0 overflow-y-auto border-r border-white/10 p-3 md:block">
-          <div className="mb-3 flex rounded-lg bg-white/[0.05] p-0.5 text-[12px]">{(["steps", "runs"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={cx("flex-1 rounded-md py-1.5 capitalize", tab === t ? "bg-white/15 text-white" : "text-white/50")}>{t === "steps" ? "Add step" : "Runs"}</button>)}</div>
-          {tab === "steps" ? groups.map(([g, items]) => (
-            <div key={g} className="mb-4"><div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-white/35">{g}</div>
-              {items.map(([k, m]) => <button key={k} onClick={() => addStep(k)} title={m.description} className="mb-1 flex w-full items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-left text-[12.5px] text-white/80 hover:bg-white/[0.08]"><span className="h-2.5 w-2.5 rounded-full" style={{ background: m.color }} />{m.label}</button>)}</div>
-          )) : (
-            <div className="space-y-1.5">{runs.length === 0 ? <p className="text-[12px] text-white/40">No runs yet. When contacts enter this flow they appear here.</p> : runs.map((r) => (
-              <button key={r.id} onClick={() => api.execution(id, r.id).then(setRunDetail).catch((e) => setErr(errorMessage(e)))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] p-2 text-left hover:bg-white/[0.07]">
-                <div className="flex items-center justify-between"><span className="truncate text-[12.5px] text-white">{r.contact.name}</span><Badge tone={statusTone(r.status)}>{r.status}</Badge></div><div className="text-[11px] text-white/35">{timeAgo(r.created_at)}</div></button>))}</div>
-          )}
-        </aside>
+        <aside className="hidden w-[210px] shrink-0 overflow-y-auto border-r border-white/10 p-3 md:block">{palette}</aside>
 
         <div className="relative min-w-0 flex-1">
           <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3, maxZoom: 1 }} minZoom={0.2} colorMode={isDark ? "dark" : "light"} deleteKeyCode={["Backspace", "Delete"]}
             onNodesChange={(c) => { onNodesChange(c); if (c.some((x) => x.type === "position" && x.dragging === false) || c.some((x) => x.type === "remove")) markDirty(); }}
             onEdgesChange={(c) => { onEdgesChange(c); if (c.some((x) => x.type === "remove")) markDirty(); }} onConnect={onConnect}
-            onNodeClick={(_, n) => setSelected(n.id)} onPaneClick={() => setSelected(null)} onNodesDelete={(ns) => { if (ns.some((n) => n.data.stepType === "start")) { setNodes((cur) => (cur.some((n) => n.data.stepType === "start") ? cur : [...cur, ns.find((n) => n.data.stepType === "start")!])); } }}>
+            onNodeClick={(_, n) => { setSelected(n.id); if (!window.matchMedia("(min-width: 1024px)").matches) setInspectorSheet(true); }} onPaneClick={() => setSelected(null)} onNodesDelete={(ns) => { if (ns.some((n) => n.data.stepType === "start")) { setNodes((cur) => (cur.some((n) => n.data.stepType === "start") ? cur : [...cur, ns.find((n) => n.data.stepType === "start")!])); } }}>
             <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="color-mix(in srgb, var(--foreground) 14%, transparent)" />
             <Controls showInteractive={false} /><MiniMap pannable zoomable nodeColor={(n) => STEP_META[(n as StepNode).data.stepType]?.color ?? "#555"} maskColor="color-mix(in srgb, var(--background) 65%, transparent)" className="!hidden lg:!block" />
           </ReactFlow>
-          {trig && <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg bg-black/60 px-3 py-2 text-[11.5px] text-white/55 backdrop-blur"><ListChecks size={12} className="mr-1 inline" />{trig.hint}</div>}
+          <div className="absolute bottom-3 right-3 z-10 flex gap-2 lg:hidden">
+            {sel && <Button size="sm" variant="ghost" onClick={() => setInspectorSheet(true)}><Pencil size={13} /> Edit step</Button>}
+            <Button size="sm" className="md:hidden" onClick={() => setPaletteSheet(true)}><Plus size={13} /> Add step</Button>
+          </div>
+          {trig && <div className="pointer-events-none absolute left-3 top-3 hidden max-w-xs rounded-lg bg-black/60 px-3 py-2 text-[11.5px] text-white/55 backdrop-blur sm:block"><ListChecks size={12} className="mr-1 inline" />{trig.hint}</div>}
         </div>
 
         <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-white/10 p-4 lg:block">
@@ -189,6 +199,10 @@ function Editor() {
         </aside>
       </div>
 
+      <Modal open={paletteSheet} onClose={() => setPaletteSheet(false)} title="Steps & runs" width={420}>{palette}</Modal>
+      <Modal open={inspectorSheet && !!sel} onClose={() => setInspectorSheet(false)} title="Edit step" width={480}>
+        {sel && <Inspector key={sel.id} type={sel.data.stepType} data={sel.data.config} onChange={updateSel} onDelete={() => { deleteSel(); setInspectorSheet(false); }} members={members} trigger={trigger} />}
+      </Modal>
       <RunModal open={showRun} onClose={() => setShowRun(false)} flowId={id} onStarted={() => { setTab("runs"); void loadRuns(); }} />
       <Modal open={!!runDetail} onClose={() => setRunDetail(null)} title="Run details" width={620}>
         {runDetail && <div className="space-y-3"><div className="flex items-center gap-2"><Badge tone={statusTone(runDetail.status)}>{runDetail.status}</Badge>{runDetail.error && <span className="text-[12.5px] text-red-300">{runDetail.error}</span>}</div>

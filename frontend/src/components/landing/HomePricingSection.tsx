@@ -11,10 +11,10 @@ export default async function HomePricingSection() {
       <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Pricing</p>
         <h2 className="mt-3 text-[1.75rem] font-extrabold leading-[1.12] tracking-[-0.03em] text-white sm:text-[2.35rem]" style={{ fontFamily: "var(--font-plus-jakarta)" }}>
-          Start free. Pay only for volume.
+          Start free. Grow into more.
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-white/60">
-          Every paid plan includes every feature — comment-to-DM, DM inbox, flows, AI agent, pipeline and payments. Pick the size that fits your team and upgrade any time.
+          Every paid plan includes comment-to-DM, the DM inbox, flows, the AI agent and payments. Growth adds the Instagram Shop, giveaways and the sales pipeline. Upgrade any time.
         </p>
       </div>
       <div className="mx-auto mt-12 max-w-6xl px-4 sm:px-6 lg:px-8">

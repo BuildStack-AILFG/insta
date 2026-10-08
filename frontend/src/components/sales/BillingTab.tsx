@@ -118,7 +118,7 @@ export default function BillingTab() {
 
       {state.kind === "trial" && !state.expired && (
         <p className="rounded-xl border border-brand/25 bg-brand/[0.07] px-4 py-3 text-[13px] text-white/75">
-          You&apos;re on the free trial: comment automations are capped and analytics, reports, auto-assignment, API &amp; webhooks and integrations are locked. Every paid plan unlocks all of them.
+          You&apos;re on the free trial: comment automations are capped and analytics, reports, auto-assignment, API &amp; webhooks and integrations are locked. Every paid plan unlocks those; Growth also adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline.
         </p>
       )}
 
@@ -148,7 +148,7 @@ export default function BillingTab() {
                 </>
               ) : <p className="mt-3 text-[24px] font-bold text-white">Let&apos;s talk</p>}
               <ul className="mt-4 flex-1 space-y-1.5 text-[13px] text-white/65">
-                {p.purchasable && <li className="flex gap-2 font-semibold text-white"><Check size={14} className="mt-0.5 shrink-0 text-brand" />Every feature included</li>}
+                {p.purchasable && <li className="flex gap-2 font-semibold text-white"><Check size={14} className="mt-0.5 shrink-0 text-brand" />{p.id === "starter" ? "All core features" : "Every feature included"}</li>}
                 {QUOTA_LINES.map((l) => p.quotas[l.key] !== undefined && <li key={l.key} className="flex gap-2"><Check size={14} className="mt-0.5 shrink-0 text-brand" />{p.quotas[l.key] >= 999999 ? l.label(0).replace(/^0/, "Unlimited") : l.label(p.quotas[l.key])}</li>)}
               </ul>
               {q && (

@@ -7,7 +7,7 @@ import { pageMetadata, softwareLd, type Faq } from "@/lib/site/seo";
 
 export const metadata = pageMetadata({
   title: "Pricing — Instagram Automation Plans in ₹",
-  description: "Two simple plans for Instagram automation: Starter ₹799 and Growth ₹1,299 per month plus GST, with every feature included. Enterprise on request. Start with a free trial, pay with UPI or card, get GST invoices.",
+  description: "Two simple plans for Instagram automation: Starter ₹799 and Growth ₹1,299 per month plus GST. Growth adds the Instagram Shop, giveaways, segments and the sales pipeline. Enterprise on request. Start with a free trial, pay with UPI or card, get GST invoices.",
   path: "/pricing",
   ogTitle: "Simple pricing, built for Indian businesses",
   ogKind: "Pricing",
@@ -15,11 +15,11 @@ export const metadata = pageMetadata({
 });
 
 const faqs = (days: number): Faq[] => [
-  { q: "How does the free trial work?", a: `Every new workspace gets a ${days}-day free trial with no credit card. You get the core product — comment-to-DM, the DM inbox, keyword replies, flows, the sales pipeline and the AI agent — with a small number of comment automations. A few advanced features (analytics, reports, auto-assignment, API & webhooks, app integrations) unlock when you subscribe.` },
-  { q: "What's the difference between Starter and Growth?", a: "Only volume. Both plans include every feature. Growth gives you more Instagram accounts, team members, contacts, comment automations, flows and AI replies, so you never have to choose between features and price." },
+  { q: "How does the free trial work?", a: `Every new workspace gets a ${days}-day free trial with no credit card. You get the core product — comment-to-DM, the DM inbox, keyword replies, flows and the AI agent — with a small number of comment automations. Analytics, reports, auto-assignment, API & webhooks and app integrations unlock on any paid plan; the Instagram Shop, giveaways, intent matching, segments and the sales pipeline unlock on Growth.` },
+  { q: "What's the difference between Starter and Growth?", a: "Growth adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline, and gives you more Instagram accounts, team members, contacts, comment automations, flows and AI replies. Everything else is in both plans." },
   { q: "Are the prices inclusive of GST?", a: "No. Prices are shown before GST. 18% GST is added at checkout and shown on your invoice with a CGST/SGST or IGST breakup." },
   { q: "Do plans renew automatically?", a: "No. Plans are prepaid and don't auto-debit. We email you before your plan ends so you can renew when you're ready." },
-  { q: "Are there per-message charges from Meta?", a: "No. Instagram messaging through the official API has no per-message fee from Meta. Your plan covers everything: automations, inbox, AI, pipeline and payments." },
+  { q: "Are there per-message charges from Meta?", a: "No. Instagram messaging through the official API has no per-message fee from Meta. Your plan covers everything it includes: automations, inbox, AI and payments." },
   { q: "What payment methods can I use?", a: "UPI, credit and debit cards, netbanking and wallets through Razorpay. You'll get a GST invoice for every payment." },
   { q: "Can I change plans later?", a: "Yes. Upgrade or switch any time; the unused time on your current plan is credited toward the new one, shown before you pay." },
   { q: "Is there a money-back guarantee?", a: "If you're unhappy within 7 days of your first paid purchase, contact us and we'll refund it in full. See the refund policy for details." },
@@ -42,7 +42,7 @@ export default async function PricingPage() {
         center
         overline="Pricing"
         title="Simple pricing that grows with your conversations"
-        lead={`Start free for ${trial.days} days. Then ${starter ? `from ${inr(starter)} a month` : "pick a plan"} with every feature included — you only pay for volume. Pay in rupees and get a GST invoice every time.`}
+        lead={`Start free for ${trial.days} days. Then ${starter ? `from ${inr(starter)} a month` : "pick a plan"} — Growth adds the Shop, pipeline and more room. Pay in rupees and get a GST invoice every time.`}
       />
       <Section>
         <PricingTable plans={plans} trial={trial} />

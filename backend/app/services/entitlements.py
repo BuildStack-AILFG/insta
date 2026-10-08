@@ -12,15 +12,17 @@ from app.api.deps import Ctx, get_ctx, get_db
 from app.models.plan import Plan
 from app.models.platform import PlatformSetting
 from app.models.tenant import Tenant
-from app.services.plan_catalog import FEATURES, TRIAL_DAYS_DEFAULT
+from app.services.plan_catalog import FEATURES, TRIAL_DAYS_DEFAULT, default_feature
 
 TRIAL_DAYS_KEY = "trial_days"
 
 
 def features_of(plan: Plan | None) -> dict[str, bool]:
-    """Every catalogue feature -> on/off for this plan. A feature the plan doesn't mention is on."""
+    """Every catalogue feature -> on/off for this plan. A feature the stored plan doesn't mention takes the catalogue default for that
+    plan id, so features added later lock correctly on existing plans without a data migration (and stay on for custom plans)."""
     stored = (plan.features if plan else None) or {}
-    return {key: bool(stored.get(key, True)) for key in FEATURES}
+    plan_id = plan.id if plan else None
+    return {key: bool(stored[key]) if key in stored else default_feature(plan_id, key) for key in FEATURES}
 
 
 async def features_for(db: AsyncSession, tenant: Tenant) -> dict[str, bool]:

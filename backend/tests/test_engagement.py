@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import json
 
 from app.services.ai import agent as ai_agent
@@ -64,6 +66,7 @@ def _comments(n: int, **extra) -> list[dict]:
              "timestamp": f"2026-09-2{i % 9}T10:00:00+0000"} for i in range(n)]
 
 
+@pytest.mark.paid
 async def test_giveaway_draw_applies_entry_rules(wsa, meta):
     media = "18000000000000999"
     comments = _comments(60)  # spans two pages of comments
@@ -90,6 +93,7 @@ async def test_giveaway_draw_applies_entry_rules(wsa, meta):
     assert len(replies) == 3 and replies[0]["message"]["text"].startswith("Congrats @user")
 
 
+@pytest.mark.paid
 async def test_giveaway_keyword_rule_no_entries_and_scoping(wsa, other, meta):
     meta.media_comments["18000000000000888"] = _comments(5, text="nice")
     g = (await wsa.post("/giveaways", json={"account_id": wsa.account["id"], "name": "Keyword", "media_id": "18000000000000888", "keyword": "WIN"})).json()

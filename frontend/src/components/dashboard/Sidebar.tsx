@@ -1,26 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, Menu, X } from "lucide-react";
-import { useIsLocked } from "./UpgradeGate";
+import { ChevronDown, ChevronsUpDown, Lock, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
+import { useUi } from "@/components/ui/kit";
+import { GROWTH_TIER_FEATURES } from "@/lib/site/plans";
+import { featureForPath, useIsLocked } from "./UpgradeGate";
+import { useMobileNav } from "./MobileNav";
+import { useWorkspace } from "./WorkspaceContext";
 import { QUICK_LINKS, NAV_GROUPS, RAIL_LINKS, SIDEBAR_WIDTH, type NavItem, type NavGroup } from "./navConfig";
 
-// Black + glass in the dark theme, cream + green in the light one — every colour below is a theme variable
-// (see globals.css), so this file doesn't care which is active. Row layout/spacing (16px/500 Inter, 8px
-// padding/gap, 4px radius) is kept from the earlier verified-against-Interakt pass; only colors changed here.
+// Accordion sidebar: a tinted "Quick links" block, collapsible groups (the open one sits on a tinted panel) and the workspace/plan card
+// at the bottom. Every colour is a theme variable (see globals.css), so it follows dark (black + pink) and light (blush + pink) alike.
 const mix = (v: string, pct: number) => `color-mix(in srgb, var(${v}) ${pct}%, transparent)`;
-const ACCENT = "var(--brand)";
-const ACCENT_SOFT = mix("--brand", 18);
-const TEXT_DEFAULT = mix("--foreground", 70);
-const TEXT_ACTIVE = "var(--foreground)";
-const ROW_HOVER_BG = mix("--foreground", 7);
-const SECTION_TITLE_COLOR = "var(--ink-faint)";
-const SUBSECTION_TITLE_COLOR = "var(--ink-fainter)";
-
-const GLASS_BG = mix("--sidebar", 82);
-const GLASS_BORDER = mix("--foreground", 10);
+const PANEL_BG = mix("--brand", 7);
+const HOVER_BG = mix("--foreground", 6);
+const BORDER = mix("--foreground", 10);
+const TEXT = mix("--foreground", 78);
+const TEXT_MUTED = mix("--foreground", 45);
+const COLLAPSED_KEY = "gfg_sidebar_collapsed";
 
 function isItemActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -31,289 +31,285 @@ function groupHasActiveChild(pathname: string, group: NavGroup) {
   return group.sections.some((section) => section.items.some((item) => isItemActive(pathname, item.href)));
 }
 
-function PanelRow({ item, active, onNavigate }: { item: NavItem; active: boolean; onNavigate?: () => void }) {
-  const [hovered, setHovered] = useState(false);
+/** Toast for a locked item — at most once every few seconds per item, so sweeping the mouse over the list doesn't stack toasts. */
+function useLockedToast() {
+  const { toast } = useUi();
+  const last = useRef<Record<string, number>>({});
+  return useCallback(
+    (label: string, href: string) => {
+      const now = Date.now();
+      if (now - (last.current[label] ?? 0) < 3000) return;
+      last.current[label] = now;
+      const feature = featureForPath(href);
+      const tier = feature && GROWTH_TIER_FEATURES.includes(feature) ? "on Growth and above" : "on every paid plan";
+      toast(`Upgrade your plan to access this — ${label} is available ${tier}.`, "info");
+    },
+    [toast],
+  );
+}
+
+function NavRow({ item, pathname, collapsed, onNavigate }: { item: NavItem; pathname: string; collapsed?: boolean; onNavigate?: () => void }) {
   const Icon = item.icon;
   const locked = useIsLocked(item.href);
+  const active = !locked && isItemActive(pathname, item.href);
+  const notifyLocked = useLockedToast();
+
+  const onClick = (e: MouseEvent) => {
+    if (locked) {
+      e.preventDefault();
+      notifyLocked(item.label, item.href);
+      return;
+    }
+    onNavigate?.();
+  };
 
   return (
     <Link
       href={item.href}
-      onClick={onNavigate}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="flex items-center rounded"
+      onClick={onClick}
+      onMouseEnter={locked ? () => notifyLocked(item.label, item.href) : undefined}
+      aria-disabled={locked || undefined}
+      aria-current={active ? "page" : undefined}
+      title={collapsed ? (locked ? `${item.label} — upgrade to unlock` : item.label) : locked ? "Upgrade your plan to access this" : undefined}
+      className={`group flex items-center gap-3 rounded-lg text-[14.5px] font-medium transition-colors ${collapsed ? "h-10 w-10 justify-center" : "px-3 py-2.5"} ${active ? "" : "hover:[background:var(--row-hover)]"} ${locked ? "cursor-not-allowed" : ""}`}
       style={{
-        gap: 8,
-        padding: 8,
-        borderRadius: 4,
-        backgroundColor: active ? ACCENT_SOFT : hovered ? ROW_HOVER_BG : "transparent",
-        borderLeft: active ? `3px solid ${ACCENT}` : "3px solid transparent",
-        color: active || hovered ? TEXT_ACTIVE : TEXT_DEFAULT,
-        fontFamily: "Inter, sans-serif",
-        fontSize: 16,
-        fontWeight: 500,
-        lineHeight: "20px",
+        ["--row-hover" as string]: HOVER_BG,
+        background: active ? "var(--brand)" : undefined,
+        color: active ? "#ffffff" : locked ? TEXT_MUTED : TEXT,
       }}
     >
-      <Icon className="h-5 w-5 shrink-0" style={{ color: active ? ACCENT : TEXT_DEFAULT }} strokeWidth={1.75} />
-      <span className="truncate">{item.label}</span>
-      {locked && <Lock className="ml-auto h-3.5 w-3.5 shrink-0" style={{ color: TEXT_DEFAULT }} strokeWidth={2} aria-label="Upgrade to unlock" />}
+      <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={1.75} style={{ color: active ? "#ffffff" : locked ? TEXT_MUTED : "var(--brand-bright)" }} />
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+      {!collapsed && locked && (
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md" style={{ background: mix("--brand", 14) }}>
+          <Lock className="h-3 w-3" style={{ color: "var(--brand-bright)" }} strokeWidth={2.25} aria-label="Locked — upgrade your plan" />
+        </span>
+      )}
     </Link>
   );
 }
 
-function RailButton({
-  icon: Icon,
-  label,
-  active,
-  href,
-  onClick,
-  onHoverChange,
-}: {
-  icon: NavItem["icon"];
-  label: string;
-  active: boolean;
-  href?: string;
-  onClick?: () => void;
-  onHoverChange?: (hovering: boolean) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  const handleEnter = () => {
-    setHovered(true);
-    onHoverChange?.(true);
-  };
-  const handleLeave = () => {
-    setHovered(false);
-    onHoverChange?.(false);
-  };
-
-  const content = <Icon className="h-5 w-5" style={{ color: active ? "#F8F9F2" : TEXT_DEFAULT }} strokeWidth={1.75} />;
-  const sharedProps = {
-    title: label,
-    onMouseEnter: handleEnter,
-    onMouseLeave: handleLeave,
-    className: "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-    style: { backgroundColor: active ? ACCENT : hovered ? ROW_HOVER_BG : "transparent" },
-  };
-
-  if (href) {
-    return (
-      <Link href={href} onClick={onClick} {...sharedProps}>
-        {content}
-      </Link>
-    );
-  }
-
+function GroupBlock({ group, pathname, open, onToggle, onNavigate }: { group: NavGroup; pathname: string; open: boolean; onToggle: () => void; onNavigate?: () => void }) {
+  const Icon = group.icon;
   return (
-    <button type="button" onClick={onClick} {...sharedProps}>
-      {content}
-    </button>
+    <div className="rounded-xl transition-colors" style={{ background: open ? PANEL_BG : undefined }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14.5px] font-medium transition-colors hover:[background:var(--row-hover)]"
+        style={{ ["--row-hover" as string]: open ? "transparent" : HOVER_BG, color: TEXT }}
+      >
+        <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={1.75} style={{ color: "var(--brand-bright)" }} />
+        <span className="min-w-0 flex-1 truncate">{group.label}</span>
+        {group.badge === "new" && <span className="rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">New</span>}
+        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} style={{ color: TEXT_MUTED }} />
+      </button>
+      {open && (
+        <div className="space-y-0.5 pb-2">
+          {group.sections.map((section, i) => (
+            <div key={section.label ?? i} className={i > 0 ? "pt-1.5" : undefined}>
+              {section.label && (
+                <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--ink-fainter)" }}>
+                  {section.label}
+                </p>
+              )}
+              {section.items.map((item) => (
+                <NavRow key={item.id} item={item} pathname={pathname} onNavigate={onNavigate} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-function GroupPanel({ group, pathname, onNavigate }: { group: NavGroup; pathname: string; onNavigate?: () => void }) {
+function WorkspaceCard({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+  const { workspace } = useWorkspace();
+  const initial = (workspace.name.trim()[0] ?? "?").toUpperCase();
   return (
-    <div
-      className="flex h-full w-[260px] flex-col overflow-y-auto px-3 py-4 backdrop-blur-xl"
-      style={{ backgroundColor: GLASS_BG }}
+    <Link
+      href="/dashboard/settings?tab=billing"
+      onClick={onNavigate}
+      title={collapsed ? `${workspace.name} · ${workspace.plan_name} plan` : undefined}
+      className={`flex items-center gap-3 rounded-xl transition-colors hover:[background:var(--row-hover)] ${collapsed ? "justify-center p-1.5" : "p-2"}`}
+      style={{ ["--row-hover" as string]: HOVER_BG }}
     >
-      <p className="mb-2 flex items-center gap-1.5 px-2" style={{ fontSize: 12, fontWeight: 500, color: SECTION_TITLE_COLOR }}>
-        {group.label}
-        {group.badge === "new" && (
-          <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">New</span>
-        )}
-      </p>
-      <div className="space-y-3">
-        {group.sections.map((section, i) => (
-          <div key={section.label ?? i}>
-            {section.label && (
-              <p className="mb-1 px-2" style={{ fontSize: 12, fontWeight: 500, color: SUBSECTION_TITLE_COLOR }}>
-                {section.label}
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <PanelRow key={item.id} item={item} active={isItemActive(pathname, item.href)} onNavigate={onNavigate} />
-              ))}
-            </div>
-          </div>
+      <span className="btn-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[15px] font-bold text-white" style={{ background: "var(--brand)" }}>
+        {initial}
+      </span>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold" style={{ color: "var(--foreground)" }}>{workspace.name}</span>
+            <span className="block truncate text-[11.5px] font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>{workspace.plan_name} plan</span>
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0" style={{ color: TEXT_MUTED }} />
+        </>
+      )}
+    </Link>
+  );
+}
+
+/** The expanded nav list — shared by the desktop sidebar and the mobile drawer. */
+function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(NAV_GROUPS.filter((g) => groupHasActiveChild(pathname, g)).map((g) => g.id)));
+
+  // Navigating into a group (e.g. from a dashboard card) opens it; groups the user opened stay open.
+  useEffect(() => {
+    const active = NAV_GROUPS.find((g) => groupHasActiveChild(pathname, g));
+    if (active) setOpenGroups((s) => (s.has(active.id) ? s : new Set(s).add(active.id)));
+  }, [pathname]);
+
+  const toggle = (id: string) =>
+    setOpenGroups((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  return (
+    <div className="space-y-1.5">
+      <div className="rounded-xl p-1.5" style={{ background: PANEL_BG }}>
+        <p className="px-2.5 pb-1 pt-1.5 text-[12px] font-medium" style={{ color: "var(--ink-faint)" }}>Quick links</p>
+        <div className="space-y-0.5">
+          {QUICK_LINKS.map((item) => (
+            <NavRow key={item.id} item={item} pathname={pathname} onNavigate={onNavigate} />
+          ))}
+        </div>
+      </div>
+      {NAV_GROUPS.map((group) => (
+        <GroupBlock key={group.id} group={group} pathname={pathname} open={openGroups.has(group.id)} onToggle={() => toggle(group.id)} onNavigate={onNavigate} />
+      ))}
+      <div className="space-y-0.5">
+        {RAIL_LINKS.map((item) => (
+          <NavRow key={item.id} item={item} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Icon-only list for the collapsed desktop sidebar. A group icon re-expands the sidebar. */
+function CollapsedList({ pathname, onExpand }: { pathname: string; onExpand: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {QUICK_LINKS.map((item) => (
+        <NavRow key={item.id} item={item} pathname={pathname} collapsed />
+      ))}
+      <div className="my-2 h-px w-8" style={{ background: BORDER }} />
+      {NAV_GROUPS.map((group) => {
+        const active = groupHasActiveChild(pathname, group);
+        return (
+          <button
+            key={group.id}
+            type="button"
+            title={group.label}
+            onClick={onExpand}
+            className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:[background:var(--row-hover)]"
+            style={{ ["--row-hover" as string]: HOVER_BG, background: active ? PANEL_BG : undefined }}
+          >
+            <group.icon className="h-[19px] w-[19px]" strokeWidth={1.75} style={{ color: "var(--brand-bright)" }} />
+          </button>
+        );
+      })}
+      <div className="my-2 h-px w-8" style={{ background: BORDER }} />
+      {RAIL_LINKS.map((item) => (
+        <NavRow key={item.id} item={item} pathname={pathname} collapsed />
+      ))}
     </div>
   );
 }
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null);
+  const { open: mobileOpen, setOpen: setMobileOpen } = useMobileNav();
+  const [collapsed, setCollapsed] = useState(false);
+  const closeMobile = () => setMobileOpen(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    try {
+      setCollapsed(window.localStorage.getItem(COLLAPSED_KEY) === "1");
+    } catch {
+      /* storage unavailable */
+    }
   }, []);
-
-  const activeGroup =
-    NAV_GROUPS.find((g) => g.id === hoveredGroupId) ?? NAV_GROUPS.find((g) => groupHasActiveChild(pathname, g)) ?? null;
-
-  const clearHover = () => setHoveredGroupId(null);
-  const handleQuickLinkClick = () => {
-    setMobileOpen(false);
+  const setCollapsedPersist = (v: boolean) => {
+    setCollapsed(v);
+    try {
+      window.localStorage.setItem(COLLAPSED_KEY, v ? "1" : "0");
+    } catch {
+      /* storage unavailable */
+    }
   };
 
-  const rail = (
-    <div className="flex h-full w-[72px] shrink-0 flex-col items-center border-r py-4" style={{ backgroundColor: "var(--sidebar)", borderColor: GLASS_BORDER }}>
-      <Link href="/dashboard" className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg text-white btn-accent" style={{ backgroundColor: ACCENT }}>
-        <span className="text-[13px] font-extrabold">G</span>
-      </Link>
-
-      <div className="flex flex-col gap-1">
-        {QUICK_LINKS.map((item) => (
-          <RailButton
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-            active={isItemActive(pathname, item.href) && !activeGroup}
-            onClick={handleQuickLinkClick}
-            onHoverChange={(hovering) => hovering && clearHover()}
-          />
-        ))}
-      </div>
-
-      <div className="my-3 h-px w-8" style={{ backgroundColor: GLASS_BORDER }} />
-
-      <div className="flex flex-col gap-1">
-        {NAV_GROUPS.map((group) => {
-          const firstHref = group.sections[0]?.items[0]?.href ?? "#";
-          return (
-            <RailButton
-              key={group.id}
-              icon={group.icon}
-              label={group.label}
-              href={firstHref}
-              active={activeGroup?.id === group.id}
-              onClick={handleQuickLinkClick}
-              onHoverChange={(hovering) => setHoveredGroupId(hovering ? group.id : null)}
-            />
-          );
-        })}
-      </div>
-
-      <div className="my-3 h-px w-8" style={{ backgroundColor: GLASS_BORDER }} />
-
-      <div className="flex flex-col gap-1">
-        {RAIL_LINKS.map((item) => (
-          <RailButton
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-            active={isItemActive(pathname, item.href)}
-            onClick={handleQuickLinkClick}
-            onHoverChange={(hovering) => hovering && clearHover()}
-          />
-        ))}
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <>
-        {!mobileOpen && (
+  return (
+    <>
+      {/* Desktop (lg+) */}
+      <aside
+        aria-label="Main navigation"
+        className="hidden h-full shrink-0 flex-col border-r transition-[width] duration-200 ease-out lg:flex"
+        style={{ width: collapsed ? SIDEBAR_WIDTH.rail : SIDEBAR_WIDTH.expanded, backgroundColor: "var(--sidebar)", borderColor: BORDER }}
+      >
+        <div className={`flex shrink-0 items-center pt-3 ${collapsed ? "justify-center" : "justify-end px-3"}`}>
           <button
             type="button"
-            onClick={() => setMobileOpen(true)}
-            className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-lg text-white shadow-md btn-accent"
-            style={{ backgroundColor: ACCENT }}
-            aria-label="Open menu"
+            onClick={() => setCollapsedPersist(!collapsed)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:[background:var(--row-hover)]"
+            style={{ ["--row-hover" as string]: HOVER_BG, color: TEXT_MUTED }}
           >
-            <Menu className="h-5 w-5" />
+            {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={1.75} />}
           </button>
-        )}
-        {mobileOpen && (
-          <button
-            type="button"
-            aria-label="Close menu backdrop"
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px]"
-          />
-        )}
+        </div>
+        <nav className={`min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 ${collapsed ? "px-2" : "px-3"}`}>
+          {collapsed ? <CollapsedList pathname={pathname} onExpand={() => setCollapsedPersist(false)} /> : <NavList pathname={pathname} />}
+        </nav>
+        <div className={`shrink-0 border-t ${collapsed ? "p-2" : "p-3"}`} style={{ borderColor: BORDER }}>
+          <WorkspaceCard collapsed={collapsed} />
+        </div>
+      </aside>
+
+      {/* Mobile / tablet (< lg): off-canvas drawer, opened from the hamburger in the top bar */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          aria-label="Close menu"
+          tabIndex={mobileOpen ? 0 : -1}
+          onClick={closeMobile}
+          className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] transition-opacity duration-200 ${mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        />
         <aside
-          className="fixed left-0 top-0 z-50 flex h-full w-[300px] flex-col shadow-2xl backdrop-blur-xl transition-transform duration-200 ease-out"
-          style={{ backgroundColor: GLASS_BG, transform: mobileOpen ? "translateX(0)" : "translateX(-100%)" }}
+          aria-label="Main navigation"
+          aria-hidden={!mobileOpen}
+          inert={!mobileOpen}
+          className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-[320px] flex-col shadow-2xl transition-transform duration-200 ease-out"
+          style={{ backgroundColor: "var(--sidebar)", transform: mobileOpen ? "translateX(0)" : "translateX(-100%)" }}
         >
-          <div className="flex items-center justify-end p-3" style={{ borderBottom: `1px solid ${GLASS_BORDER}` }}>
-            <button type="button" onClick={() => setMobileOpen(false)} className="text-white/60 hover:text-white">
+          <div className="flex h-14 shrink-0 items-center justify-between px-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <Link href="/dashboard" onClick={closeMobile} className="flex items-center">
+              <BrandLogo size={28} textClassName="text-[16px]" />
+            </Link>
+            <button
+              type="button"
+              onClick={closeMobile}
+              aria-label="Close menu"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex flex-1 overflow-hidden">
-            <div className="w-[64px] shrink-0 overflow-y-auto">{rail}</div>
-            <div className="flex-1 overflow-y-auto p-3">
-              <div className="space-y-0.5">
-                {QUICK_LINKS.map((item) => (
-                  <PanelRow key={item.id} item={item} active={isItemActive(pathname, item.href)} onNavigate={() => setMobileOpen(false)} />
-                ))}
-                {RAIL_LINKS.map((item) => (
-                  <PanelRow key={item.id} item={item} active={isItemActive(pathname, item.href)} onNavigate={() => setMobileOpen(false)} />
-                ))}
-              </div>
-              <div className="mt-3 space-y-3">
-                {NAV_GROUPS.map((group) => (
-                  <div key={group.id}>
-                    <p className="mb-1 flex items-center gap-1.5 px-2" style={{ fontSize: 12, fontWeight: 500, color: SECTION_TITLE_COLOR }}>
-                      {group.label}
-                      {group.badge === "new" && (
-                        <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">New</span>
-                      )}
-                    </p>
-                    <div className="space-y-2">
-                      {group.sections.map((section, i) => (
-                        <div key={section.label ?? i}>
-                          {section.label && (
-                            <p className="mb-1 px-2" style={{ fontSize: 12, fontWeight: 500, color: SUBSECTION_TITLE_COLOR }}>
-                              {section.label}
-                            </p>
-                          )}
-                          <div className="space-y-0.5">
-                            {section.items.map((item) => (
-                              <PanelRow key={item.id} item={item} active={isItemActive(pathname, item.href)} onNavigate={() => setMobileOpen(false)} />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+            <NavList pathname={pathname} onNavigate={closeMobile} />
+          </nav>
+          <div className="shrink-0 border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" style={{ borderColor: BORDER }}>
+            <WorkspaceCard onNavigate={closeMobile} />
           </div>
         </aside>
-      </>
-    );
-  }
-
-  const panelWidth = activeGroup ? SIDEBAR_WIDTH.panel : 0;
-
-  return (
-    <div
-      className="flex h-full shrink-0 transition-[width] duration-150 ease-out"
-      style={{ width: SIDEBAR_WIDTH.rail + panelWidth }}
-      onMouseLeave={clearHover}
-    >
-      {rail}
-      {activeGroup && (
-        <div style={{ borderRight: `1px solid ${GLASS_BORDER}` }}>
-          <GroupPanel group={activeGroup} pathname={pathname} />
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

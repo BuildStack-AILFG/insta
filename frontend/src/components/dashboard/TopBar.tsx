@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, ShieldCheck } from "lucide-react";
+import { LogOut, Menu, Settings, ShieldCheck } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { clearSession, getRefreshToken, logout } from "@/lib/api";
 import { useWorkspace } from "./WorkspaceContext";
 import BrandLogo from "@/components/ui/BrandLogo";
+import { useMobileNav } from "./MobileNav";
 
 const ACCENT = "var(--brand)";
 const GLASS_BORDER = "color-mix(in srgb, var(--foreground) 10%, transparent)";
@@ -50,6 +51,7 @@ export default function TopBar() {
   const router = useRouter();
   const banner = usePlanBanner();
   const { workspace, full_name, email, is_platform_admin } = useWorkspace();
+  const { setOpen: setNavOpen } = useMobileNav();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   // Avatar initials from the signed-in user's name (e.g. "Riya Singh" → "RS"), falling back to their email, then the workspace.
@@ -96,25 +98,36 @@ export default function TopBar() {
   return (
     <div className="sticky top-0 z-30">
       {banner && (
-        <div className={`flex items-center justify-between gap-3 px-4 py-2 text-[13px] sm:px-6 ${BANNER_STYLE[banner.tone].bar}`}>
-          <span>{banner.text}</span>
-          <Link href="/dashboard/settings?tab=billing" className={`shrink-0 rounded px-3 py-1 text-[12.5px] font-semibold ${BANNER_STYLE[banner.tone].btn}`}>{banner.cta} →</Link>
+        <div className={`flex items-center justify-between gap-3 px-3 py-1.5 text-[12px] sm:px-6 sm:py-2 sm:text-[13px] ${BANNER_STYLE[banner.tone].bar}`}>
+          <span className="line-clamp-2 min-w-0">{banner.text}</span>
+          <Link href="/dashboard/settings?tab=billing" className={`shrink-0 whitespace-nowrap rounded px-2.5 py-1 text-[12px] font-semibold sm:px-3 sm:text-[12.5px] ${BANNER_STYLE[banner.tone].btn}`}>{banner.cta} →</Link>
         </div>
       )}
       <div
-        className="flex h-14 items-center justify-between px-4 backdrop-blur-xl sm:px-6"
+        className="flex h-14 items-center justify-between gap-2 px-3 backdrop-blur-xl sm:px-6"
         style={{ backgroundColor: "color-mix(in srgb, var(--background) 85%, transparent)", borderBottom: `1px solid ${GLASS_BORDER}` }}
       >
-        <Link href="/dashboard" className="flex items-center">
-          <BrandLogo size={30} textClassName="text-[16px]" />
-        </Link>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="Open menu"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white lg:hidden"
+          >
+            <Menu className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+          <Link href="/dashboard" className="flex min-w-0 items-center">
+            <BrandLogo size={30} textClassName="text-[15px] sm:text-[16px]" />
+          </Link>
+        </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <NotificationBell />
           <ThemeToggle />
           <Link
             href="/dashboard/settings"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white"
+            aria-label="Settings"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white sm:flex"
           >
             <Settings className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </Link>
@@ -133,7 +146,7 @@ export default function TopBar() {
             {menuOpen && (
               <>
                 <div
-                  className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl p-3 shadow-2xl backdrop-blur-xl"
+                  className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-1.5rem)] rounded-xl p-3 shadow-2xl backdrop-blur-xl"
                   style={{ backgroundColor: "color-mix(in srgb, var(--surface) 94%, transparent)", border: `1px solid ${GLASS_BORDER}` }}
                 >
                   <Link href="/dashboard/settings?tab=workspace" onClick={() => setMenuOpen(false)} className="-mx-1 block rounded-lg px-1 py-1 hover:bg-white/10">
@@ -144,6 +157,10 @@ export default function TopBar() {
                   <Link href="/dashboard/settings?tab=account" onClick={() => setMenuOpen(false)} className="-mx-1 block rounded-lg px-1 py-1 hover:bg-white/10">
                     <p className="truncate text-[12.5px] text-white/80">{full_name || email}</p>
                     <p className="truncate text-[11.5px] text-white/40">{email} · View account</p>
+                  </Link>
+                  <Link href="/dashboard/settings" onClick={() => setMenuOpen(false)} className="mt-3 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] font-semibold text-white/80 hover:bg-white/10 sm:hidden">
+                    <Settings className="h-3.5 w-3.5" />
+                    Settings
                   </Link>
                   {is_platform_admin && (
                     <Link href="/admin" onClick={() => setMenuOpen(false)} className="mt-3 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] font-semibold text-white/80 hover:bg-white/10">

@@ -32,7 +32,7 @@ from app.models.conversation import Conversation, Message
 from app.models.custom_reply import CustomReply
 from app.models.tenant import Tenant
 from app.models.instagram_account import InstagramAccount
-from app.services import assignment, templating
+from app.services import assignment, entitlements, templating
 from app.services.ai import agent as ai_agent
 from app.services.automation import flow_engine
 from app.services.instagram import comments as comment_automation
@@ -177,7 +177,8 @@ async def run(db: AsyncSession, tenant: Tenant, account: InstagramAccount, conv:
             hit = next((r for r in replies if r.match_type == mode and _text_matches(_keywords(r.trigger), text, mode)), None)
             if hit:
                 break
-        if hit is None and settings.get("intent_matching_enabled") and replies:
+        # The toggle can still be on from before a downgrade, so check the plan too.
+        if hit is None and settings.get("intent_matching_enabled") and replies and (await entitlements.features_for(db, tenant)).get("intent_matching", True):
             hit = await _intent_match(db, tenant, replies, text)
         if hit is not None:
             await _apply_reply(db, tenant, account, conv, contact, hit)

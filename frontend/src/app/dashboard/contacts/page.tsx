@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ClipboardCheck, Download, MessageSquare, Plus, Search, Trash2, Upload, UserX, UserCheck, X } from "lucide-react";
 import { Alert, Badge, Button, Card, cx, EmptyState, Field, fmtDateTime, Input, Modal, Page, PageHeader, Select, Spinner, timeAgo, Toggle, useDebounced, useUi } from "@/components/ui/kit";
 import { contacts as api, errorMessage, getSettings, inbox, segments as segApi, type Contact, type ContactDetail, type Segment } from "@/lib/api";
+import { useHasFeature } from "@/components/dashboard/UpgradeGate";
 
 const PAGE = 25;
 
@@ -20,6 +21,7 @@ export default function ContactsPage() {
   const [segment, setSegment] = useState("");
   const [tags, setTags] = useState<{ tag: string; count: number }[]>([]);
   const [segs, setSegs] = useState<Segment[]>([]);
+  const hasSegments = useHasFeature("segments");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -38,7 +40,7 @@ export default function ContactsPage() {
   }, [dq, tag, optOut, segment, page]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { setPage(0); setSelected(new Set()); }, [dq, tag, optOut, segment]);
-  const loadMeta = useCallback(() => { api.tags().then(setTags).catch(() => {}); segApi.list().then(setSegs).catch(() => {}); }, []);
+  const loadMeta = useCallback(() => { api.tags().then(setTags).catch(() => {}); if (hasSegments) segApi.list().then(setSegs).catch(() => {}); }, [hasSegments]);
   useEffect(loadMeta, [loadMeta]);
 
   const allSelected = !!rows?.length && rows.every((r) => selected.has(r.id));
@@ -74,7 +76,7 @@ export default function ContactsPage() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone or email" className="pl-9" aria-label="Search contacts" />
         </div>
         <Select value={tag} onChange={(e) => setTag(e.target.value)} className="!w-44" aria-label="Filter by tag"><option value="">All tags</option>{tags.map((t) => <option key={t.tag} value={t.tag}>{t.tag} ({t.count})</option>)}</Select>
-        <Select value={segment} onChange={(e) => setSegment(e.target.value)} className="!w-44" aria-label="Filter by segment"><option value="">All segments</option>{segs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
+        {hasSegments && <Select value={segment} onChange={(e) => setSegment(e.target.value)} className="!w-44" aria-label="Filter by segment"><option value="">All segments</option>{segs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>}
         <Select value={optOut} onChange={(e) => setOptOut(e.target.value)} className="!w-40" aria-label="Filter by consent"><option value="">Any consent</option><option value="no">Subscribed</option><option value="yes">Opted out</option></Select>
       </Card>
 
@@ -95,7 +97,7 @@ export default function ContactsPage() {
           action={!dq && !tag && !segment && !optOut ? <Button onClick={() => setShowImport(true)}><Upload size={15} /> Import CSV</Button> : undefined} />
       ) : (
         <Card className="overflow-hidden">
-          <table className="w-full text-left text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[480px] text-left text-[13px]">
             <thead className="border-b border-white/10 text-[11.5px] uppercase tracking-wide text-white/40">
               <tr>
                 <th className="w-10 px-4 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all on this page" className="accent-brand" /></th>
@@ -116,7 +118,7 @@ export default function ContactsPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           <div className="flex items-center justify-between border-t border-white/10 px-4 py-3 text-[12.5px] text-white/50">
             <span>{page * PAGE + 1}–{Math.min(total, (page + 1) * PAGE)} of {total.toLocaleString()}</span>
             <div className="flex gap-2"><Button size="sm" variant="ghost" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button><Button size="sm" variant="ghost" disabled={(page + 1) * PAGE >= total} onClick={() => setPage((p) => p + 1)}>Next</Button></div>

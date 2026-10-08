@@ -12,9 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Ctx, get_ctx, get_db, require_writer
 from app.models.comment_automation import Giveaway
 from app.models.instagram_account import InstagramAccount
+from app.services.entitlements import require_feature
 from app.services.instagram import giveaways as svc
 
-router = APIRouter(prefix="/giveaways", tags=["giveaways"])
+router = APIRouter(prefix="/giveaways", tags=["giveaways"], dependencies=[Depends(require_feature("giveaways"))])
 
 
 class GiveawayIn(BaseModel):

@@ -12,8 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Ctx, get_ctx, get_db, require_writer
 from app.models.segment import Segment
 from app.services import segments as svc
+from app.services.entitlements import require_feature
 
-router = APIRouter(prefix="/segments", tags=["segments"])
+router = APIRouter(prefix="/segments", tags=["segments"], dependencies=[Depends(require_feature("segments"))])
 
 
 class RuleIn(BaseModel):

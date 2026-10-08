@@ -16,6 +16,9 @@ from tests.conftest import ROOT, db_session
 
 LOCKED_ON_TRIAL = ("conversation_analytics", "automation_reports", "sales_reports", "assignment_rules", "api_access", "integrations")
 LOCKED_ENDPOINTS = [("get", "/developer/keys"), ("get", "/integrations"), ("get", "/analytics/overview"), ("get", "/pipeline/report")]
+# Growth-tier tools: locked on the trial, the free plan and Starter.
+GROWTH_ONLY = ("shop", "giveaways", "intent_matching", "segments", "pipeline")
+GROWTH_ENDPOINTS = [("get", "/giveaways"), ("get", "/segments"), ("get", "/pipeline/stages")]
 
 
 @pytest.fixture
@@ -63,11 +66,26 @@ async def test_assignment_rules_are_locked_on_trial_but_other_settings_still_sav
     assert (await ws.patch("/settings", json={"settings": {"default_country_code": "91"}})).status_code == 200
 
 
-async def test_paid_plans_unlock_everything(ws):
+async def test_starter_unlocks_the_trial_locks_but_not_growth_tier_tools(ws):
     await set_plan(ws, "starter")
     f = (await ws.get("/auth/me")).json()["workspace"]["features"]
-    assert all(f.values())
+    assert all(f[k] for k in LOCKED_ON_TRIAL)
+    assert not any(f[k] for k in GROWTH_ONLY)
     for method, path in LOCKED_ENDPOINTS:
+        if path != "/pipeline/report":  # the report lives under the pipeline, which Starter doesn't include
+            assert (await getattr(ws, method)(path)).status_code == 200, path
+    for method, path in GROWTH_ENDPOINTS:
+        r = await getattr(ws, method)(path)
+        assert r.status_code == 402 and r.json()["detail"]["upgrade"] is True, path
+    r = await ws.patch("/settings", json={"settings": {"intent_matching_enabled": True}})
+    assert r.status_code == 402 and r.json()["detail"]["feature"] == "intent_matching"
+
+
+async def test_growth_unlocks_everything(ws):
+    await set_plan(ws, "growth")
+    f = (await ws.get("/auth/me")).json()["workspace"]["features"]
+    assert all(f.values())
+    for method, path in LOCKED_ENDPOINTS + GROWTH_ENDPOINTS:
         assert (await getattr(ws, method)(path)).status_code == 200, path
 
 

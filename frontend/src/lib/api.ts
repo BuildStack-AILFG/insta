@@ -35,7 +35,8 @@ export type Workspace = { id: string; name: string; slug: string; plan_id: strin
 export type PlanKind = "trial" | "free" | "active" | "grace" | "custom";
 export type PlanState = { kind: PlanKind; ends_at: string | null; days_left: number; expired: boolean };
 /** Keys of the plan feature switches (see backend/app/services/plan_catalog.py). */
-export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations";
+export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations"
+  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline";
 export type MeWorkspace = Workspace & { plan_name: string; plan_state: PlanState; features: Record<FeatureKey, boolean> };
 export type MeResponse = {
   user_id: string;

@@ -16,7 +16,7 @@ from app.api.deps import Ctx, get_ctx, get_db, require_manager, require_writer
 from app.services.entitlements import require_feature
 from app.services import pipeline as svc
 
-router = APIRouter(prefix="/pipeline", tags=["pipeline"])
+router = APIRouter(prefix="/pipeline", tags=["pipeline"], dependencies=[Depends(require_feature("pipeline"))])
 
 
 def _http(exc: svc.PipelineError) -> HTTPException:

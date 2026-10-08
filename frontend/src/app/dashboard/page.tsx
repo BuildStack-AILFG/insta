@@ -46,16 +46,16 @@ export default function DashboardHome() {
 
   return (
     <Page>
-      <h1 className="text-[22px] font-bold text-white">Hello 👋 Welcome, {name}!</h1>
-      <p className="mt-1 text-[14px] text-white/50">{s && doneCount === steps.length ? "You're all set up. Here's how things are going." : s?.username ? `Let's put @${s.username} on autopilot.` : "Let's get your Instagram on autopilot."}</p>
+      <h1 className="text-[20px] font-bold text-white sm:text-[22px]">Hello 👋 Welcome, {name}!</h1>
+      <p className="mt-1 text-[13px] text-white/50 sm:text-[14px]">{s && doneCount === steps.length ? "You're all set up. Here's how things are going." : s?.username ? `Let's put @${s.username} on autopilot.` : "Let's get your Instagram on autopilot."}</p>
 
       {s?.unread ? (
-        <Link href="/dashboard/inbox" className="mt-5 flex items-center justify-between rounded-2xl border border-sky-500/30 bg-sky-500/10 px-5 py-4 hover:bg-sky-500/15">
-          <span className="flex items-center gap-3 text-[14px] font-medium text-white"><Inbox size={18} className="text-sky-300" /> {s.unread} conversation{s.unread === 1 ? "" : "s"} waiting for a reply</span><ArrowRight size={16} className="text-sky-300" /></Link>
+        <Link href="/dashboard/inbox" className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-4 py-3.5 sm:px-5 sm:py-4 hover:bg-sky-500/15">
+          <span className="flex items-center gap-3 text-[14px] font-medium text-white"><Inbox size={18} className="text-sky-300" /> {s.unread} conversation{s.unread === 1 ? "" : "s"} waiting for a reply</span><ArrowRight size={16} className="shrink-0 text-sky-300" /></Link>
       ) : null}
 
       {!s ? <Spinner /> : doneCount < steps.length && (
-        <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/10 p-6" style={{ backgroundImage: `linear-gradient(90deg, var(--background), ${accentTint(20)})` }}>
+        <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/10 p-4 sm:p-6" style={{ backgroundImage: `linear-gradient(90deg, var(--background), ${accentTint(20)})` }}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div><p className="text-[16px] font-bold text-white">Setup progress · {doneCount} of {steps.length}</p><p className="mt-1 text-[13px] text-white/50">{next ? `Next: ${next.title}` : ""}</p></div>
             {next && <Link href={next.href} className="flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-semibold text-white btn-accent" style={{ background: ACCENT }}>{next.title} <ArrowRight size={14} /></Link>}
@@ -78,11 +78,11 @@ export default function DashboardHome() {
       {a && (
         <div className="mt-8">
           <div className="mb-3 flex items-center justify-between"><h2 className="text-[15px] font-semibold text-white">Last 7 days</h2><Link href="/dashboard/conversation-analytics" className="flex items-center gap-1 text-[12.5px] text-sky-300 hover:underline"><BarChart3 size={13} /> Full analytics</Link></div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat label="DMs received" value={week("inbound").toLocaleString()} /><Stat label="DMs sent" value={week("outbound").toLocaleString()} sub={`${a.delivery.read_pct}% seen`} />
             <Stat label="Comments automated" value={a.comments.matched.toLocaleString()} sub={`${a.comments.dms_sent} DMs · ${a.comments.received} comments`} /><Stat label="Avg. first response" value={fmtDuration(a.first_response.avg_seconds)} />
           </div>
-          <Card className="mt-4 p-5"><BarChart height={150} data={a.messages} series={[{ key: "inbound", label: "Received", color: "#38bdf8" }, { key: "outbound", label: "Sent", color: "var(--brand)" }]} /></Card>
+          <Card className="mt-4 p-3 sm:p-5"><BarChart height={150} data={a.messages} series={[{ key: "inbound", label: "Received", color: "#38bdf8" }, { key: "outbound", label: "Sent", color: "var(--brand)" }]} /></Card>
         </div>
       )}
     </Page>

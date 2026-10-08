@@ -3,8 +3,8 @@
  * reached. Keep in step with backend/app/services/plan_catalog.py; the platform admin edits the live values in the admin console.
  * Prices are rupees per month, before 18% GST, for each billing period.
  *
- * Commercial model: the free trial is the whole product with tiny outbound-messaging limits and a few advanced features locked. Both paid
- * plans unlock every feature and differ only in volume, so choosing a plan is a question of "how much", never "which features".
+ * Commercial model: the free trial is the whole product with tiny outbound-messaging limits and a few advanced features locked. Starter
+ * also leaves out the growth-tier tools (GROWTH_TIER_FEATURES); Growth and Enterprise unlock every feature and differ only in volume.
  */
 
 export type PlanId = "starter" | "growth" | "enterprise";
@@ -31,7 +31,8 @@ export type PlanInfo = {
   limits: Limits;
 };
 
-export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations";
+export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations"
+  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline";
 
 /** What the free trial can and can't do (mirrors the trial row in the database). */
 export type TrialInfo = { days: number; limits: Limits; features: Record<FeatureKey, boolean> };
@@ -44,7 +45,15 @@ export const FEATURE_LABELS: Record<FeatureKey, { label: string; blurb: string }
   assignment_rules: { label: "Auto-assignment rules", blurb: "Route new chats to the right teammate automatically." },
   api_access: { label: "API keys & webhooks", blurb: "Sync contacts and receive events in your own systems." },
   integrations: { label: "App integrations", blurb: "Slack, Shopify, WooCommerce, Razorpay and other event triggers." },
+  shop: { label: "Instagram Shop", blurb: "Sell from comments and DMs with your own storefront — no website needed." },
+  giveaways: { label: "Giveaways", blurb: "Pick fair, verifiable winners from the comments on any post." },
+  intent_matching: { label: "Intent matching", blurb: "AI works out which of your replies a customer meant, even without the exact keyword." },
+  segments: { label: "Segments", blurb: "Saved audiences built from tags, traits and activity." },
+  pipeline: { label: "Sales pipeline", blurb: "Track deals from first DM to payment on a drag-and-drop board." },
 };
+
+/** Features that Starter leaves out — only Growth and above include them (mirrors backend plan_catalog._GROWTH_ONLY). */
+export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "giveaways", "intent_matching", "segments", "pipeline"];
 
 export const PLANS: PlanInfo[] = [
   {
@@ -74,7 +83,8 @@ export const PLANS: PlanInfo[] = [
 export const TRIAL: TrialInfo = {
   days: TRIAL_DAYS,
   limits: { numbers: 1, seats: 3, contacts: 1000, automations: 5, flows: 5, ai: 200, knowledge: 2 },
-  features: { ai_agent: true, conversation_analytics: false, automation_reports: false, sales_reports: false, assignment_rules: false, api_access: false, integrations: false },
+  features: { ai_agent: true, conversation_analytics: false, automation_reports: false, sales_reports: false, assignment_rules: false, api_access: false, integrations: false,
+    shop: false, giveaways: false, intent_matching: false, segments: false, pipeline: false },
 };
 
 /** Everything both paid plans and Enterprise include, whatever the volume. */
