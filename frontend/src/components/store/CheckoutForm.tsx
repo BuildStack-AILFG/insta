@@ -8,7 +8,7 @@ import { fmtMoney } from "@/lib/money";
 import { clearCart, type CartLine } from "./cart";
 
 const SAVED = "gfg_buyer"; // remembers the buyer's details on this device for their next order
-const field = "w-full rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2.5 text-[14px] text-white placeholder:text-white/35 focus:border-pink-400/70 focus:outline-none";
+const field = "w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2.5 text-[14px] text-[var(--fg)] placeholder:text-[var(--faint)] focus:border-[var(--accent)] focus:outline-none";
 
 type Buyer = { name: string; phone: string; email: string; address: ShopAddress };
 const EMPTY: Buyer = { name: "", phone: "", email: "", address: { line1: "", line2: "", city: "", state: "", pincode: "" } };
@@ -62,7 +62,7 @@ export default function CheckoutForm({ store, lines, refToken }: { store: Public
   };
 
   if (store.payment_methods.length === 0) {
-    return <div className="rounded-xl border border-white/15 px-4 py-3 text-[14px] text-white/70">This store isn&apos;t taking orders right now.{store.instagram && <> DM <b>@{store.instagram}</b> to order.</>}</div>;
+    return <div className="rounded-xl border border-[var(--line)] px-4 py-3 text-[14px] text-[var(--muted)]">This store isn&apos;t taking orders right now.{store.instagram && <> DM <b>@{store.instagram}</b> to order.</>}</div>;
   }
 
   return (
@@ -90,30 +90,30 @@ export default function CheckoutForm({ store, lines, refToken }: { store: Public
           <div className="grid gap-2 sm:grid-cols-2">
             {([["online", "Pay now", "UPI, cards, netbanking", Smartphone], ["cod", "Cash on delivery", "Pay when it arrives", Banknote]] as const).map(([m, title, hint, Icon]) => (
               <button key={m} onClick={() => setMethod(m)}
-                className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition ${method === m ? "border-pink-400 bg-pink-500/10" : "border-white/15 hover:border-white/30"}`}>
-                <Icon size={18} className="shrink-0 text-pink-300" />
-                <span><span className="block text-[13.5px] font-semibold">{title}</span><span className="block text-[11.5px] text-white/50">{hint}</span></span>
+                className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition ${method === m ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg))]" : "border-[var(--line)] hover:border-[var(--muted)]"}`}>
+                <Icon size={18} className="shrink-0 text-[var(--accent)]" />
+                <span><span className="block text-[13.5px] font-semibold">{title}</span><span className="block text-[11.5px] text-[var(--muted)]">{hint}</span></span>
               </button>
             ))}
           </div>
         </section>
       )}
 
-      <section className="space-y-1.5 rounded-xl bg-white/[0.05] px-4 py-3 text-[13.5px]">
+      <section className="space-y-1.5 rounded-xl bg-[var(--surface)] px-4 py-3 text-[13.5px]">
         {lines.map((l) => (
-          <div key={`${l.product_id}:${l.variant_id ?? ""}`} className="flex justify-between gap-3 text-white/70"><span className="min-w-0 truncate">{itemLabel(l)} × {l.qty}</span><span>{fmtMoney(l.price * l.qty)}</span></div>
+          <div key={`${l.product_id}:${l.variant_id ?? ""}`} className="flex justify-between gap-3 text-[var(--muted)]"><span className="min-w-0 truncate">{itemLabel(l)} × {l.qty}</span><span>{fmtMoney(l.price * l.qty)}</span></div>
         ))}
-        <div className="flex justify-between text-white/70"><span>Delivery</span><span>{shipping ? fmtMoney(shipping) : "Free"}</span></div>
-        <div className="flex justify-between border-t border-white/10 pt-1.5 text-[15px] font-bold"><span>Total</span><span>{fmtMoney(total)}</span></div>
+        <div className="flex justify-between text-[var(--muted)]"><span>Delivery</span><span>{shipping ? fmtMoney(shipping) : "Free"}</span></div>
+        <div className="flex justify-between border-t border-[var(--line)] pt-1.5 text-[15px] font-bold"><span>Total</span><span>{fmtMoney(total)}</span></div>
       </section>
 
-      {err && <div className="rounded-xl bg-red-500/15 px-4 py-2.5 text-[13px] text-red-200">{err}</div>}
+      {err && <div className="rounded-xl bg-red-50 px-4 py-2.5 text-[13px] text-red-700">{err}</div>}
       <button onClick={submit} disabled={busy || lines.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-500 to-fuchsia-600 px-5 py-4 text-[15.5px] font-semibold shadow-[0_10px_30px_rgba(236,72,153,0.35)] transition hover:brightness-110 disabled:opacity-60">
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-[var(--accent-fg)] px-5 py-4 text-[15.5px] font-semibold transition hover:brightness-95 disabled:opacity-60">
         {busy && <Loader2 size={17} className="animate-spin" />}
         {method === "online" ? `Pay ${fmtMoney(total)}` : `Place order · ${fmtMoney(total)}`}
       </button>
-      {method === "online" && <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-white/45"><ShieldCheck size={12} /> Secure payment by Razorpay, straight to {store.name}</p>}
+      {method === "online" && <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--muted)]"><ShieldCheck size={12} /> Secure payment by Razorpay, straight to {store.name}</p>}
     </div>
   );
 }

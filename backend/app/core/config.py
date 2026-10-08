@@ -87,6 +87,21 @@ class Settings(BaseSettings):
     # Where marketing-site contact / demo requests are emailed (optional; they are always stored).
     contact_notify_email: str = ""
 
+    # Shop custom domains. Sellers point a CNAME (subdomain) or A record (root domain) at the web app's host; the frontend's proxy maps
+    # the domain to the store. Defaults are Vercel's. With a Vercel token + project id, domains are also added to the project automatically.
+    store_domain_cname: str = "cname.vercel-dns.com"
+    store_domain_ips: Annotated[list[str], NoDecode] = ["76.76.21.21"]
+    vercel_api_token: str = ""
+    vercel_project_id: str = ""
+    vercel_team_id: str = ""
+
+    @field_validator("store_domain_ips", mode="before")
+    @classmethod
+    def _split_ips(cls, v):
+        if isinstance(v, str):
+            v = json.loads(v) if v.strip().startswith("[") else v.split(",")
+        return [ip.strip() for ip in v if ip.strip()]
+
     # In-process scheduler (flow waits, delayed replies, token refresh). See lib/PHASES.md — single instance only.
     scheduler_enabled: bool = True
     scheduler_interval_seconds: int = 15

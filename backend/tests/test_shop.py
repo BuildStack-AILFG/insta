@@ -776,3 +776,134 @@ async def test_ordering_a_variant_in_chat(wsa, meta):
     order = (await wsa.get("/shop/orders")).json()["items"][0]
     assert order["source"] == "chat" and order["items"][0]["variant"] == "L / Red" and order["items"][0]["qty"] == 2 and order["total"] == 299800
     assert _variant(next(x for x in (await wsa.get("/shop/products")).json() if x["id"] == k["id"]), "L / Red")["stock"] == 2
+
+
+# ---- the storefront website ---------------------------------------------------------------------------------------------------
+
+async def test_a_new_store_gets_a_complete_website_from_its_settings(ws, app_client):
+    s = await _store(ws, tagline="Fresh cakes, Pune")
+    assert s["site"]["accent"] == "#e11d48" and s["site"]["hero"] == [] and all(s["site"]["sections"].values())
+    cake = await _product(ws, images=["https://cdn.test/cake-2.jpg", "https://cdn.test/cake-2.jpg", " "])
+    await _product(ws, name="Brownie box", price=39900, image_url="https://cdn.test/brownie.jpg")
+    assert cake["images"] == ["https://cdn.test/cake-2.jpg"]  # blanks and repeats dropped
+    assert (await ws.post("/shop/products", json={"name": "X", "price": 10000, "images": ["ftp://nope"]})).status_code == 422
+
+    home = (await app_client.get(f"/api/public/store/{s['slug']}")).json()
+    site = home["store"]["site"]
+    assert site["announcement"] == "Free delivery on orders above ₹1,000 · Cash on delivery available"
+    assert [h["title"] for h in site["hero"]] == ["Brownie box", "Chocolate truffle cake"] and site["hero"][0]["subtitle"] == "Fresh cakes, Pune"
+    assert [f["q"] for f in site["faq"]] == ["Do you offer cash on delivery?", "How much is delivery?", "How do I track my order?"]
+    assert home["new_arrivals"][0] != cake["id"] and home["best_sellers"] == []
+    page = (await app_client.get(f"/api/public/store/{s['slug']}/products/{cake['id']}")).json()
+    assert page["product"]["images"] == ["https://cdn.test/cake.jpg", "https://cdn.test/cake-2.jpg"] and [r["name"] for r in page["related"]] == ["Brownie box"]
+
+    await app_client.post(f"/api/public/store/{s['slug']}/checkout", json=_checkout(cake["id"]))
+    assert (await app_client.get(f"/api/public/store/{s['slug']}")).json()["best_sellers"] == [cake["id"]]
+
+
+async def test_the_seller_customises_the_website(ws, other, app_client):
+    s = await _store(ws)
+    p = await _product(ws)
+    body = {"accent": "#0F766E", "announcement": "Diwali sale — 20% off till Sunday 🪔",
+            "hero": [{"image_url": "https://cdn.test/banner.jpg", "title": "Festive edit", "subtitle": "Handmade in Pune", "cta_label": "Shop the edit", "product_id": p["id"]}],
+            "about": {"title": "Our story", "text": "Two sisters, one oven.", "image_url": "https://cdn.test/us.jpg"},
+            "faq": [{"q": "Do you deliver outside Pune?", "a": "Yes, all over India."}], "sections": {"instagram": False, "bogus": True},
+            "policies": {"shipping": "Ships in 2 days.", "returns": "No returns on food."}}
+    r = await ws.put("/shop/site", json=body)
+    assert r.status_code == 200, r.text
+    saved = r.json()["site"]
+    assert saved["sections"]["instagram"] is False and saved["sections"]["faq"] is True and "bogus" not in saved["sections"]
+
+    site = (await app_client.get(f"/api/public/store/{s['slug']}")).json()["store"]["site"]
+    assert site["accent"] == "#0F766E" and site["announcement"].startswith("Diwali sale") and site["hero"][0]["product_id"] == p["id"]
+    assert site["faq"] == [{"q": "Do you deliver outside Pune?", "a": "Yes, all over India."}] and site["policies"]["returns"] == "No returns on food."
+    # the site also reaches the other pages (header, footer, brand colour)
+    assert (await app_client.get(f"/api/public/store/{s['slug']}/products/{p['id']}")).json()["store"]["site"]["accent"] == "#0F766E"
+
+    assert (await ws.put("/shop/site", json={**body, "accent": "teal"})).status_code == 422
+    foreign = await _product(other)
+    assert (await ws.put("/shop/site", json={**body, "hero": [{"image_url": "https://cdn.test/b.jpg", "product_id": foreign["id"]}]})).status_code == 422
+    assert (await other.put("/shop/site", json=body)).status_code == 409  # no store yet
+
+
+async def test_colours_and_texts_are_the_sellers_to_choose(ws, app_client):
+    s = await _store(ws)
+    assert s["site"]["colors"] == {"background": "#ffffff", "text": "#171717", "surface": "#f6f6f4", "button_text": "#ffffff"}
+    assert s["site"]["texts"]["add_to_cart"] == "Add to cart" and s["default_texts"]["buy_now"] == "Buy now"
+    site = {**s["site"], "colors": {"background": "#0b0b0f", "text": "#fafafa", "surface": "#16161d", "button_text": "#111111"},
+            "texts": {"best_sellers_title": "Sabse zyada bikne wale", "add_to_cart": "Cart mein daalo", "buy_now": "", "unknown": "x"}}
+    saved = (await ws.put("/shop/site", json=site)).json()["site"]
+    assert saved["colors"]["background"] == "#0b0b0f"
+    assert saved["texts"]["best_sellers_title"] == "Sabse zyada bikne wale" and saved["texts"]["buy_now"] == "Buy now"  # emptied -> default
+    assert "unknown" not in saved["texts"]
+    public = (await app_client.get(f"/api/public/store/{s['slug']}")).json()["store"]["site"]
+    assert public["colors"]["text"] == "#fafafa" and public["texts"]["add_to_cart"] == "Cart mein daalo"
+    bad = await ws.put("/shop/site", json={**site, "colors": {**site["colors"], "text": "white"}})
+    assert bad.status_code == 422
+    assert (await ws.put("/shop/site", json={**site, "texts": {"faq_title": "x" * 81}})).status_code == 422
+
+
+def test_domains_are_cleaned_up_and_get_the_right_dns_record():
+    from app.services import shop_domains as d
+    assert d.normalize("https://Shop.PriyaBoutique.com/collections?x=1") == "shop.priyaboutique.com"
+    assert d.instructions("shop.priyaboutique.com") == {"type": "CNAME", "name": "shop", "value": "cname.vercel-dns.com"}
+    assert d.instructions("priyaboutique.com") == {"type": "A", "name": "@", "value": "76.76.21.21"}
+    assert d.instructions("priyaboutique.co.in")["type"] == "A" and d.instructions("store.priyaboutique.co.in")["name"] == "store"
+    for bad in ("", "localhost", "priya", "my shop.com", "-bad.com", "gramforgrow.in", "x.gramforgrow.in", "me.vercel.app", "1.2.3.4"):
+        try:
+            d.normalize(bad)
+            raise AssertionError(bad)
+        except d.DomainError:
+            pass
+
+
+async def test_custom_domain_goes_live_once_dns_points_here(wsa, other, meta, app_client, monkeypatch):
+    from app.core.config import get_settings
+    from app.services import shop_domains
+    dns = {"cname.vercel-dns.com": {"76.76.21.21"}}
+    monkeypatch.setattr(shop_domains, "resolve", lambda host: dns.get(host, set()))
+    calls: list[dict] = []
+    vercel = httpx.AsyncClient(transport=httpx.MockTransport(lambda r: (calls.append({"path": r.url.path, "body": r.content}), httpx.Response(200, json={"name": "x"}))[1]))
+    monkeypatch.setattr(shop_domains, "_http_factory", lambda: vercel)
+    s = get_settings()
+    monkeypatch.setattr(s, "vercel_api_token", "vc-token")
+    monkeypatch.setattr(s, "vercel_project_id", "prj_123")
+
+    s_ = await _store(wsa)
+    assert s_["custom_domain"] is None and s_["url"] == s_["default_url"]
+    r = (await wsa.put("/shop/domain", json={"domain": "https://Shop.PriyaBoutique.com/"})).json()
+    assert r["custom_domain"] == "shop.priyaboutique.com" and r["domain_status"] == "pending"
+    assert r["domain_dns"] == {"type": "CNAME", "name": "shop", "value": "cname.vercel-dns.com"} and r["url"] == r["default_url"]
+
+    not_yet = (await wsa.post("/shop/domain/check")).json()
+    assert not_yet["shop"]["domain_status"] == "pending" and "doesn't point to us yet" in not_yet["message"] and calls == []
+    assert (await app_client.get("/api/public/store/by-domain/shop.priyaboutique.com")).status_code == 404
+
+    dns["shop.priyaboutique.com"] = {"76.76.21.21"}
+    live = (await wsa.post("/shop/domain/check")).json()
+    assert live["message"] is None and live["shop"]["domain_status"] == "active" and live["shop"]["url"] == "https://shop.priyaboutique.com"
+    assert calls and calls[0]["path"] == "/v10/projects/prj_123/domains" and b"shop.priyaboutique.com" in calls[0]["body"]
+    assert (await app_client.get("/api/public/store/by-domain/SHOP.priyaboutique.com:443")).json() == {"slug": s_["slug"]}
+    # a plan without the shop takes the domain store down too (and back up on upgrade)
+    import uuid as _uuid
+    from sqlalchemy import update
+    from app.models.tenant import Tenant
+    from tests.conftest import db_session
+    for plan, code in (("starter", 404), ("growth", 200)):
+        async with await db_session() as db:
+            await db.execute(update(Tenant).where(Tenant.id == _uuid.UUID(wsa.tenant_id)).values(plan_id=plan))
+            await db.commit()
+        assert (await app_client.get("/api/public/store/by-domain/shop.priyaboutique.com")).status_code == code
+
+    # store links in DMs now use the domain
+    p = await _product(wsa, stock=None)
+    a = (await wsa.post("/comment-automations", json={"account_id": wsa.account["id"], "name": "D", "media_scope": "all", "match_type": "any",
+                                                      "public_reply_enabled": False, "dm_text": "Hi", "product_id": p["id"]})).json()
+    await _tap_buy(wsa, meta, a, "910000000901")
+    assert _buttons(meta)[0]["url"].startswith(f"https://shop.priyaboutique.com/p/{p['id']}?r=")
+
+    other_store = await _store(other)
+    taken = await other.put("/shop/domain", json={"domain": "shop.priyaboutique.com"})
+    assert taken.status_code == 409 and other_store["slug"]
+    cleared = (await wsa.put("/shop/domain", json={"domain": ""})).json()
+    assert cleared["custom_domain"] is None and cleared["domain_status"] == "none" and cleared["url"] == cleared["default_url"]

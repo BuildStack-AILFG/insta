@@ -684,7 +684,23 @@ export type ShopInput = {
   chat_orders: boolean; cod_confirmation: boolean; reminders_enabled: boolean; reminder_after_minutes: number; reminder_message: string;
   gstin: string; legal_name: string; business_address: string; gst_rate: 0 | 5 | 12 | 18 | 28;
 };
-export type Shop = ShopInput & { id: string; url: string; views: number; default_confirmation_message: string; default_reminder_message: string };
+export type SiteSection = "best_sellers" | "new_arrivals" | "all_products" | "instagram" | "about" | "faq";
+export type HeroSlide = { image_url: string; title: string; subtitle: string; cta_label: string; product_id: string | null };
+/** The storefront website's look and content (white template). Empty fields are filled from the store's settings when shown. */
+export type SiteColors = { background: string; text: string; surface: string; button_text: string };
+export type SiteTextKey =
+  | "hero_button" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
+  | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store";
+export type ShopSite = {
+  accent: string; colors: SiteColors; texts: Record<SiteTextKey, string>; announcement: string; hero: HeroSlide[];
+  about: { title: string; text: string; image_url: string | null }; faq: { q: string; a: string }[]; sections: Record<SiteSection, boolean>;
+  policies: { shipping: string; returns: string };
+};
+export type Shop = ShopInput & {
+  id: string; url: string; default_url: string; views: number; default_confirmation_message: string; default_reminder_message: string; site: ShopSite;
+  default_texts: Record<SiteTextKey, string>; default_colors: SiteColors;
+  custom_domain: string | null; domain_status: "none" | "pending" | "active"; domain_dns: { type: "A" | "CNAME"; name: string; value: string } | null; domain_checked_at: string | null;
+};
 export type ShopOverview = {
   shop: Shop | null; payments: { connected: boolean; test_mode: boolean };
   stats: {
@@ -697,7 +713,7 @@ export type VariantInput = { options: Record<string, string>; price: number | nu
 export type Variant = VariantInput & { id: string; title: string };
 export type ProductInput = {
   name: string; description: string; price: number; compare_at_price: number | null; image_url: string | null; status: "active" | "hidden"; stock: number | null; sort: number;
-  options: OptionGroup[]; variants: VariantInput[];
+  options: OptionGroup[]; variants: VariantInput[]; images: string[];
 };
 export type Product = Omit<ProductInput, "variants"> & {
   id: string; media_id: string | null; permalink: string | null; orders_count: number; revenue: number; created_at: string | null; variants: Variant[];
@@ -754,17 +770,20 @@ export const shop = {
     request<ShiprocketStatus>("/shop/shiprocket", { method: "PUT", body: b }),
   disconnectShiprocket: () => request<void>("/shop/shiprocket", { method: "DELETE" }),
   reports: (days: number) => request<ShopReports>(`/shop/reports${qs({ days })}`),
+  saveSite: (b: ShopSite) => request<Shop>("/shop/site", { method: "PUT", body: b }),
+  setDomain: (domain: string) => request<Shop>("/shop/domain", { method: "PUT", body: { domain } }),
+  checkDomain: () => request<{ shop: Shop; message: string | null }>("/shop/domain/check", { method: "POST" }),
 };
 
 /** What the public store pages read (no login). */
 export type PublicStore = {
   slug: string; name: string; tagline: string; logo_url: string | null; instagram: string | null; support_phone: string; shipping_fee: number;
-  free_shipping_above: number | null; payment_methods: ("online" | "cod")[];
+  free_shipping_above: number | null; payment_methods: ("online" | "cod")[]; site: ShopSite;
 };
 export type PublicVariant = { id: string; title: string; options: Record<string, string>; price: number; sold_out: boolean };
 export type PublicProduct = {
   id: string; name: string; description: string; price: number; price_varies: boolean; compare_at_price: number | null; image_url: string | null; permalink: string | null;
-  sold_out: boolean; options: OptionGroup[]; variants: PublicVariant[];
+  sold_out: boolean; options: OptionGroup[]; variants: PublicVariant[]; images: string[];
 };
 export type PublicOrder = {
   number: number; items: OrderItem[]; subtotal: number; shipping: number; total: number; customer_name: string; address: ShopAddress; payment_method: "online" | "cod";
