@@ -18,7 +18,7 @@ from app.models.conversation import Conversation, Message
 from app.models.tenant import Tenant
 from app.models.webhook import WebhookIngress
 from app.models.instagram_account import InstagramAccount
-from app.services import billing, jobs, payment_links
+from app.services import billing, jobs, payment_links, shop
 from app.services.automation import dispatcher, flow_engine
 from app.services.instagram import accounts as ig_accounts
 from app.services.instagram import growth, publishing
@@ -69,6 +69,10 @@ async def tick() -> dict[str, int]:
         stats["click_reminders"] = await growth.run_reminders()
     except Exception:  # noqa: BLE001
         log.exception("click reminders failed")
+    try:
+        stats["shop_reminders"] = await shop.send_reminders()
+    except Exception:  # noqa: BLE001
+        log.exception("shop reminders failed")
     stats["delayed_replies"] = await _send_delayed_replies()
     stats["accounts"], stats["tokens_refreshed"] = await _refresh_accounts()
     stats["payment_links"] = await payment_links.poll_open_links()

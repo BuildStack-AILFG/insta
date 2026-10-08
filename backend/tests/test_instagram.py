@@ -162,7 +162,7 @@ async def test_keyword_comment_gets_public_reply_and_dm_with_button(wsa, meta):
     assert button["type"] == "web_url" and button["title"] == "See prices" and button["url"].startswith("https://api.test/api/l/")  # click-tracked redirect
 
     stats = (await wsa.get(f"/comment-automations/{a['id']}")).json()["stats"]
-    assert stats == {"comments_matched": 1, "public_replies_sent": 1, "dms_sent": 1, "gates_passed": 0, "link_clicks": 0, "reminders_sent": 0}
+    assert stats == {"comments_matched": 1, "public_replies_sent": 1, "dms_sent": 1, "gates_passed": 0, "link_clicks": 0, "reminders_sent": 0, "orders": 0, "revenue": 0}
     act = (await wsa.get("/comment-automations/activity/comments")).json()["items"][0]
     assert act["outcome"] == "matched" and act["public_reply"] and act["dm_sent"] and act["automation"]["name"] == "Price DM" and act["username"] == "asha.rao"
 

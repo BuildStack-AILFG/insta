@@ -32,7 +32,7 @@ from app.models.conversation import Conversation, Message
 from app.models.custom_reply import CustomReply
 from app.models.tenant import Tenant
 from app.models.instagram_account import InstagramAccount
-from app.services import assignment, entitlements, templating
+from app.services import assignment, entitlements, shop, templating
 from app.services.ai import agent as ai_agent
 from app.services.automation import flow_engine
 from app.services.instagram import comments as comment_automation
@@ -123,6 +123,9 @@ async def run(db: AsyncSession, tenant: Tenant, account: InstagramAccount, conv:
     # 0 — a comment automation is waiting on this person (unlock tap, or the email/phone it asked for)
     if await comment_automation.handle_gate_reply(db, account, conv, contact, msg):
         return "gate"
+    # 0b — buying: "Buy now" taps, ordering in chat (delivery details, UPI / COD), COD confirmations
+    if await entitlements.has_feature(db, tenant.id, "shop") and await shop.handle_message(db, account, conv, contact, msg):
+        return "shop"
 
     # 1 — opt-out / opt-in acknowledgements
     if (msg.payload or {}).get("opt_out"):

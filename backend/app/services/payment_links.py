@@ -96,7 +96,8 @@ def out(link: PaymentLink, contact: Contact | None = None) -> dict:
 
 
 async def create(db: AsyncSession, tenant_id: uuid.UUID, user_id: uuid.UUID | None, *, amount: int, currency: str, description: str, contact_id: uuid.UUID | None,
-                 deal_id: uuid.UUID | None, expire_days: int = 7) -> PaymentLink:
+                 deal_id: uuid.UUID | None, expire_days: int = 7, customer: dict | None = None, callback_url: str | None = None) -> PaymentLink:
+    """`customer` ({name, contact, email}) overrides what is read from the contact, e.g. details typed at a shop checkout."""
     keys = await get_keys(db, tenant_id)
     if keys is None:
         raise LinkError("Connect your Razorpay account first (Settings → Payments).", 409)
@@ -115,8 +116,8 @@ async def create(db: AsyncSession, tenant_id: uuid.UUID, user_id: uuid.UUID | No
     try:
         rp = await razorpay.create_payment_link(
             keys[0], keys[1], amount=amount, currency=currency.upper(), description=description or "Payment", reference_id=reference,
-            customer={"name": contact.name if contact and not contact.name.startswith("+") else None, "contact": f"+{contact.phone}" if contact and contact.phone else None, "email": contact.email if contact else None},
-            expire_by=int((utcnow() + timedelta(days=max(1, min(expire_days, 180)))).timestamp()) if expire_days else None)
+            customer=customer or {"name": contact.name if contact and not contact.name.startswith("+") else None, "contact": f"+{contact.phone}" if contact and contact.phone else None, "email": contact.email if contact else None},
+            expire_by=int((utcnow() + timedelta(days=max(1, min(expire_days, 180)))).timestamp()) if expire_days else None, callback_url=callback_url)
     except razorpay.RazorpayError as exc:
         raise LinkError(f"Razorpay: {exc.message}", 502 if exc.status >= 500 or exc.status == 0 else 422)
     link = PaymentLink(tenant_id=tenant_id, contact_id=contact_id, deal_id=deal_id, created_by=user_id, razorpay_link_id=rp["id"], reference_id=reference, short_url=rp["short_url"],
@@ -144,6 +145,8 @@ async def mark_paid(db: AsyncSession, link: PaymentLink) -> bool:
         contact = await db.get(Contact, link.contact_id)
         if contact is not None:
             await events.process(db, link.tenant_id, contact, "payment_received", props, "razorpay-payments")
+    from app.services import shop  # local: shop builds on this module
+    await shop.on_link_paid(db, link)
     return True
 
 

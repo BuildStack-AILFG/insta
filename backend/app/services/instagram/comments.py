@@ -25,7 +25,7 @@ from app.models.contact import Contact
 from app.models.conversation import Conversation, Message
 from app.models.instagram_account import InstagramAccount
 from app.models.tenant import Tenant
-from app.services import outbound_webhooks
+from app.services import entitlements, outbound_webhooks, shop
 from app.services.instagram import links, messaging, moderation
 from app.services.phone import InvalidPhone, normalize_phone
 from app.services.instagram.accounts import client_for
@@ -254,9 +254,15 @@ async def _send_private_reply(db: AsyncSession, account: InstagramAccount, autom
         if variant:
             payload["variant"] = variant
         shown = await _dm_buttons(db, automation, contact, variant)
+        logged = [{"title": b["title"], "url": b.get("target_url") or b.get("url")} for b in shown]
+        if automation.product_id and await entitlements.has_feature(db, automation.tenant_id, "shop"):
+            # A postback, not a link: tapping it counts as a message, which opens the window for the product card and order updates.
+            buy = shop.buy_button(automation)
+            shown, logged = [buy, *shown], [{"title": buy["title"], "url": None}, *logged]
+            payload["product_id"] = str(automation.product_id)
         graph_buttons = messaging.link_buttons(shown)
         if shown:
-            payload["buttons"] = [{"title": b["title"], "url": b.get("target_url") or b.get("url")} for b in shown]
+            payload["buttons"] = logged[:messaging.MAX_BUTTONS]
         if automation.flow_id:
             payload["follow_up_flow_id"] = str(automation.flow_id)  # started by the dispatcher when they reply
     try:
@@ -319,6 +325,8 @@ async def deliver(db: AsyncSession, account: InstagramAccount, automation: Comme
     """Send the automation's real DM (text + link buttons) now that the conversation is open."""
     variant = variant_for(automation, contact)
     buttons = await _dm_buttons(db, automation, contact, variant)
+    if automation.product_id and await entitlements.has_feature(db, automation.tenant_id, "shop"):
+        buttons = [shop.buy_button(automation), *buttons]
     extra = {"auto": "comment", "automation_id": str(automation.id), "delivery": True}
     if variant:
         extra["variant"] = variant

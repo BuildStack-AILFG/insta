@@ -37,6 +37,11 @@ def upgrade_error(feature: str) -> HTTPException:
     )
 
 
+async def has_feature(db: AsyncSession, tenant_id: uuid.UUID, feature: str) -> bool:
+    tenant = await db.get(Tenant, tenant_id)
+    return tenant is None or (await features_for(db, tenant)).get(feature, True)
+
+
 async def ensure_feature(db: AsyncSession, tenant_id: uuid.UUID, feature: str) -> None:
     tenant = await db.get(Tenant, tenant_id)
     if tenant is not None and not (await features_for(db, tenant)).get(feature, True):

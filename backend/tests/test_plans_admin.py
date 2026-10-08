@@ -18,7 +18,7 @@ LOCKED_ON_TRIAL = ("conversation_analytics", "automation_reports", "sales_report
 LOCKED_ENDPOINTS = [("get", "/developer/keys"), ("get", "/integrations"), ("get", "/analytics/overview"), ("get", "/pipeline/report")]
 # Growth-tier tools: locked on the trial, the free plan and Starter.
 GROWTH_ONLY = ("shop", "giveaways", "intent_matching", "segments", "pipeline")
-GROWTH_ENDPOINTS = [("get", "/giveaways"), ("get", "/segments"), ("get", "/pipeline/stages")]
+GROWTH_ENDPOINTS = [("get", "/giveaways"), ("get", "/segments"), ("get", "/pipeline/stages"), ("get", "/shop")]
 
 
 @pytest.fixture
