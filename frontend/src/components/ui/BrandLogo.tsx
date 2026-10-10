@@ -12,7 +12,7 @@ export default function BrandLogo({ size = 28, className = "", textClassName = "
         mark
       )}
       <span className={`landing-logo ${textClassName}`}>
-        GramFor<span className="text-[#e91e78]">Grow</span>
+        DMFor<span className="text-[#e91e78]">Grow</span>
       </span>
     </span>
   );

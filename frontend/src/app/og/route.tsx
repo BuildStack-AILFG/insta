@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={await logoMark()} width={60} height={60} alt="" />
-          <div style={{ display: "flex", fontSize: 34, fontWeight: 700, letterSpacing: -1 }}><span>GramFor</span><span style={{ color: "#e91e78", marginLeft: -8 }}>Grow</span></div>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 700, letterSpacing: -1 }}><span>DMFor</span><span style={{ color: "#e91e78", marginLeft: -8 }}>Grow</span></div>
           {kind && <div style={{ marginLeft: 12, padding: "6px 16px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.25)", fontSize: 22, color: "#ff8fbf" }}>{kind}</div>}
         </div>
         <div style={{ fontSize: size, fontWeight: 800, lineHeight: 1.1, letterSpacing: -2, maxWidth: 1000 }}>{title}</div>

@@ -1,10 +1,9 @@
 "use client";
 
 import { Anton } from "next/font/google";
-import { ArrowUpRight, AtSign, MessageCircle, MousePointer2, Zap } from "lucide-react";
-import { InstagramIcon } from "@/components/icons/BrandIcons";
+import { ArrowUpRight, AtSign, MessageCircle, MousePointer2, Zap, Heart, Send } from "lucide-react";
 import { useTheme } from "@/lib/theme";
-import { MetaIcon, ZapierIcon, ShopifyIcon, SlackColorIcon } from "@/components/icons/IntegrationBrandIcons";
+import { ZapierIcon, ShopifyIcon, SlackColorIcon } from "@/components/icons/IntegrationBrandIcons";
 
 const anton = Anton({ subsets: ["latin"], weight: "400" });
 
@@ -21,9 +20,9 @@ type CardSpec = {
 // Bare Instagram-automation icon marks (no card chrome), cascading right-and-down —
 // comments, mentions, DMs and the automation bolt that ties them together.
 const LEFT_CARDS: CardSpec[] = [
-  { key: "meta", left: "5%", top: "5.2%", rotate: -6, color: "#1877F2", icon: <MetaIcon className="h-full w-full" /> },
+  { key: "meta", left: "5%", top: "5.2%", rotate: -6, color: "#F43F5E", icon: <Heart className="h-full w-full" /> },
   { key: "bolt", left: "12.8%", top: "11.2%", rotate: -5, color: "#111827", darkColor: "#F5F6F2", icon: <Zap className="h-full w-full" /> },
-  { key: "ig", left: "20.6%", top: "17.2%", rotate: -4, color: "#e1306c", icon: <InstagramIcon className="h-full w-full" /> },
+  { key: "ig", left: "20.6%", top: "17.2%", rotate: -4, color: "#e1306c", icon: <Send className="h-full w-full" /> },
   { key: "comment", left: "28.4%", top: "21.2%", rotate: -2, color: "#f472b6", icon: <MessageCircle className="h-full w-full" /> },
   { key: "mention", left: "36.2%", top: "24.2%", rotate: 24, color: "#F59E0B", icon: <AtSign className="h-full w-full" /> },
 ];
@@ -231,9 +230,9 @@ function MobileHero({ onGetStarted, onBookDemo }: { onGetStarted?: () => void; o
   const { isDark, toggle } = useTheme();
 
   const mobileCards: CardSpec[] = [
-    { key: "meta", left: "0%", top: "6%", rotate: -10, color: "#1877F2", icon: <MetaIcon className="h-full w-full" /> },
+    { key: "meta", left: "0%", top: "6%", rotate: -10, color: "#F43F5E", icon: <Heart className="h-full w-full" /> },
     { key: "bolt", left: "19%", top: "0%", rotate: -5, color: "#111827", darkColor: "#F5F6F2", icon: <Zap className="h-full w-full" /> },
-    { key: "ig", left: "38%", top: "4%", rotate: 3, color: "#e1306c", icon: <InstagramIcon className="h-full w-full" /> },
+    { key: "ig", left: "38%", top: "4%", rotate: 3, color: "#e1306c", icon: <Send className="h-full w-full" /> },
     { key: "comment", left: "57%", top: "2%", rotate: 8, color: "#f472b6", icon: <MessageCircle className="h-full w-full" /> },
     { key: "mention", left: "76%", top: "8%", rotate: 16, color: "#F59E0B", icon: <AtSign className="h-full w-full" /> },
   ];
