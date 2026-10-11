@@ -10,22 +10,22 @@ const STORIES = [
   {
     quote: "Every “price?” under our reels now gets a DM with the link in seconds — even at 2 am.",
     role: "Owner, D2C Retail Brand",
-    image: "https://images.pexels.com/photos/36729529/pexels-photo-36729529.jpeg?auto=compress&cs=tinysrgb&w=200",
+    image: "/images/site/3d/avatar-sweater.webp",
   },
   {
     quote: "All our clients' DMs and story replies land in one inbox now — nothing falls through the cracks.",
     role: "Marketing Lead, Growing Agency",
-    image: "https://images.pexels.com/photos/3855619/pexels-photo-3855619.jpeg?auto=compress&cs=tinysrgb&w=200",
+    image: "/images/site/3d/avatar-tshirt.webp",
   },
   {
     quote: "People who comment on our menu reels get the booking link instantly, so the team can focus on guests.",
     role: "Manager, Restaurant Chain",
-    image: "https://images.pexels.com/photos/28703287/pexels-photo-28703287.jpeg?auto=compress&cs=tinysrgb&w=200",
+    image: "/images/site/3d/avatar-bucket-hat.webp",
   },
   {
     quote: "Comments on walkthrough reels turn into qualified leads — the DM flow asks budget and area for us.",
     role: "Broker, Real Estate Team",
-    image: "https://images.pexels.com/photos/8815878/pexels-photo-8815878.jpeg?auto=compress&cs=tinysrgb&w=200",
+    image: "/images/site/3d/avatar-brown-shirt.webp",
   },
 ];
 
@@ -46,7 +46,7 @@ export default function SuccessStoriesSection() {
               <div className="min-w-0">
                 <p className="text-[15px] leading-relaxed text-white">&ldquo;{story.quote}&rdquo;</p>
                 <div className="mt-4 flex items-center gap-3">
-                  <img src={story.image} alt="" aria-hidden="true" className="h-9 w-9 rounded-full object-cover" loading="lazy" />
+                  <img src={story.image} alt="" aria-hidden="true" className="h-11 w-11 rounded-full bg-brand/20 object-cover object-top" loading="lazy" />
                   <p className="text-[13px] font-semibold text-white/60">{story.role}</p>
                 </div>
               </div>

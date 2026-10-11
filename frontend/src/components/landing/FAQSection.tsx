@@ -40,6 +40,13 @@ export default function FAQSection({ onBookDemo }: { onBookDemo?: () => void }) 
 
       <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center sm:mb-12">
+          <img
+            src="/images/site/3d/faq-character.webp"
+            alt=""
+            aria-hidden="true"
+            className="mx-auto mb-4 h-36 w-auto object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.4)] sm:h-40"
+            loading="lazy"
+          />
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">FAQ</p>
           <h2
             className="mt-3 text-[1.75rem] font-extrabold leading-[1.12] tracking-[-0.03em] text-white sm:text-[2.15rem]"

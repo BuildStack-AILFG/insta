@@ -145,6 +145,18 @@ export default function Footer() {
               {SITE.address ? ` Registered office: ${SITE.address}.` : ""}
               {SITE.gstin ? ` GSTIN: ${SITE.gstin}.` : ""}
             </p>
+            <p className="mt-1 text-xs text-white/40">
+              3D illustrations from{" "}
+              <a
+                href="https://iconscout.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-white transition-colors"
+              >
+                IconScout
+              </a>
+              .
+            </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {FOOTER_LEGAL.map((l) => (
                 <Link key={l.label} href={l.href} className="text-xs text-white/60 hover:text-white transition-colors">
