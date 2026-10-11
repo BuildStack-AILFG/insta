@@ -15,7 +15,7 @@ import CreateShopWizard from "@/components/shop/CreateShopWizard";
 import SiteEditor from "@/components/shop/SiteEditor";
 import PhotoUpload from "@/components/shop/PhotoUpload";
 import {
-  errorMessage, instagram, itemLabel, shop as api, type IgAccount, type OrderStatus, type Product, type ProductInput, type ShiprocketStatus, type ShopInput, type ShopOrder,
+  errorMessage, instagram, itemLabel, shop as api, type IgAccount, type OrderStatus, type Product, type ProductInput, type ProductSection, type ShiprocketStatus, type ShopInput, type ShopOrder,
   type ShopOverview, type Shop,
 } from "@/lib/api";
 import { fmtMoney, fromMinor, toMinor } from "@/lib/money";
@@ -209,6 +209,9 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
                 {p.image_url ? <img src={p.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-white/25"><ImageIcon size={24} /></div>}
                 {p.status === "hidden" && <span className="absolute left-2 top-2"><Badge tone={p.price < 100 ? "yellow" : "gray"}>{p.price < 100 ? "Add a price" : "Hidden"}</Badge></span>}
                 {p.stock === 0 && <span className="absolute right-2 top-2"><Badge tone="red">Sold out</Badge></span>}
+                {p.sections.length > 0 && (
+                  <span className="absolute bottom-2 left-2 flex gap-1">{SECTION_PICKS.filter((x) => p.sections.includes(x.id)).map((x) => <Badge key={x.id} tone="blue">{x.label}</Badge>)}</span>
+                )}
               </div>
               <div className="p-3">
                 <div className="truncate text-[13.5px] font-medium text-white">{p.name}</div>
@@ -234,11 +237,14 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
   );
 }
 
+const SECTION_PICKS: { id: ProductSection; label: string }[] = [{ id: "new_arrivals", label: "New arrivals" }, { id: "best_sellers", label: "Best sellers" }];
+
 function ProductEditor({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState({
     name: product?.name ?? "", description: product?.description ?? "", price: product && product.price >= 100 ? fromMinor(product.price) : "",
     mrp: product?.compare_at_price ? fromMinor(product.compare_at_price) : "", image_url: product?.image_url ?? "", visible: product ? product.status === "active" : true,
     track: product ? product.stock !== null : false, stock: String(product?.stock ?? 10), images: (product?.images ?? []).join("\n"),
+    sections: (product?.sections ?? []) as ProductSection[],
   });
   const extra = f.images.split(/\s+/).map((u) => u.trim()).filter(Boolean);
   const [draft, setDraft] = useState<VariantDraft>(() => draftFrom(product));
@@ -256,7 +262,7 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
     setBusy(true); setErr(null);
     const body: ProductInput = { name: f.name.trim(), description: f.description.trim(), price: price!, compare_at_price: mrp, image_url: f.image_url.trim() || null,
       status: f.visible ? "active" : "hidden", stock: f.track && !hasVariants ? Math.max(0, parseInt(f.stock, 10) || 0) : null, sort: product?.sort ?? 0,
-      options: variants.options, variants: variants.variants, images: extra };
+      sections: f.sections, options: variants.options, variants: variants.variants, images: extra };
     try { if (product) await api.updateProduct(product.id, body); else await api.createProduct(body); onSaved(); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
 
@@ -293,6 +299,14 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
         </div>
         <Field label="Description"><Textarea rows={4} maxLength={2000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
         <VariantsEditor value={draft} onChange={setDraft} basePrice={f.price} />
+        <Field label="Feature on the home page" hint="A section you haven't picked any products for fills itself with your newest / most-ordered products.">
+          <div className="flex flex-wrap gap-6">{SECTION_PICKS.map((x) => (
+            <label key={x.id} className="flex items-center gap-2 text-[13px] text-white/75">
+              <Toggle checked={f.sections.includes(x.id)} label={x.label}
+                onChange={(v) => setF({ ...f, sections: v ? [...f.sections, x.id] : f.sections.filter((s) => s !== x.id) })} /> {x.label}
+            </label>
+          ))}</div>
+        </Field>
         <div className="flex flex-wrap items-center gap-6">
           <label className="flex items-center gap-2 text-[13px] text-white/75"><Toggle checked={f.visible} label="Visible" onChange={(v) => setF({ ...f, visible: v })} /> Show in store</label>
           {!hasVariants && <label className="flex items-center gap-2 text-[13px] text-white/75"><Toggle checked={f.track} label="Track stock" onChange={(v) => setF({ ...f, track: v })} /> Track stock</label>}

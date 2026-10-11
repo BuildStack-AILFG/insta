@@ -82,6 +82,8 @@ class ShopProduct(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Up to two option groups, e.g. [{"name": "Size", "values": ["S", "M", "L"]}, {"name": "Colour", "values": ["Red", "Black"]}]
     options: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     sort: Mapped[int] = mapped_column(Integer, default=0)
+    # Home-page rails the seller put this product in ("best_sellers", "new_arrivals"). A rail with no picks fills itself.
+    sections: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
 
     orders_count: Mapped[int] = mapped_column(Integer, default=0)  # paid / COD orders
     revenue: Mapped[int] = mapped_column(Integer, default=0)

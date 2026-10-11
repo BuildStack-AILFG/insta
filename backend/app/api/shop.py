@@ -123,6 +123,8 @@ class ProductIn(BaseModel):
     status: Literal["active", "hidden"] = "active"
     stock: int | None = Field(default=None, ge=0, le=1_000_000)
     sort: int = 0
+    # Home-page rails to feature it in; a rail nobody picked products for shows the newest / most-ordered ones.
+    sections: list[Literal["best_sellers", "new_arrivals"]] = Field(default_factory=list, max_length=2)
     # Size / colour etc. With options, every combination is a variant with its own stock (and optionally price).
     options: list[OptionGroup] = Field(default_factory=list, max_length=2)
     variants: list[VariantIn] = Field(default_factory=list, max_length=100)
@@ -226,8 +228,8 @@ def variant_out(v: ShopVariant) -> dict:
 
 def product_out(p: ShopProduct, variants: list[ShopVariant] | None = None) -> dict:
     return {"id": str(p.id), "name": p.name, "description": p.description, "price": p.price, "compare_at_price": p.compare_at_price, "image_url": p.image_url,
-            "images": p.images or [], "media_id": p.media_id, "permalink": p.permalink, "status": p.status, "stock": p.stock, "sort": p.sort, "options": p.options or [],
-            "variants": [variant_out(v) for v in variants or []], "orders_count": p.orders_count, "revenue": p.revenue, "created_at": _iso(p.created_at)}
+            "images": p.images or [], "media_id": p.media_id, "permalink": p.permalink, "status": p.status, "stock": p.stock, "sort": p.sort, "sections": p.sections or [],
+            "options": p.options or [], "variants": [variant_out(v) for v in variants or []], "orders_count": p.orders_count, "revenue": p.revenue, "created_at": _iso(p.created_at)}
 
 
 def _order_path(o: ShopOrder, slug: str | None) -> dict:
@@ -326,6 +328,7 @@ async def list_products(ctx: Ctx = Depends(get_ctx), db: AsyncSession = Depends(
 
 async def _save_product(db: AsyncSession, p: ShopProduct, body: ProductIn) -> dict:
     data = body.model_dump(exclude={"options", "variants"})
+    data["sections"] = list(dict.fromkeys(data["sections"]))
     for k, v in data.items():
         setattr(p, k, v)
     await db.flush()
@@ -452,8 +455,11 @@ async def view_store(slug: str, request: Request, db: AsyncSession = Depends(get
     products = (await db.execute(select(ShopProduct).where(ShopProduct.tenant_id == s.tenant_id, ShopProduct.status == "active", ShopProduct.price >= 100)
                                  .order_by(ShopProduct.sort, ShopProduct.created_at.desc()))).scalars().all()
     variants = await svc.variants_of(db, [p.id for p in products])
-    best = sorted((p for p in products if p.orders_count > 0), key=lambda p: (-p.orders_count, -p.revenue))[:8]
-    newest = sorted(products, key=lambda p: p.created_at, reverse=True)[:8]
+    # Each rail shows the products the seller picked for it; with no picks it fills itself (most ordered / newest).
+    def picked(section: str) -> list[ShopProduct]:
+        return [p for p in products if section in (p.sections or [])][:12]
+    best = picked("best_sellers") or sorted((p for p in products if p.orders_count > 0), key=lambda p: (-p.orders_count, -p.revenue))[:8]
+    newest = picked("new_arrivals") or (sorted(products, key=lambda p: p.created_at, reverse=True)[:8] if len(products) > 2 else [])
     return {"store": await _store_info(db, s, products), "products": [public_product(p, variants[p.id]) for p in products],
             "best_sellers": [str(p.id) for p in best], "new_arrivals": [str(p.id) for p in newest]}
 

@@ -711,9 +711,10 @@ export type ShopOverview = {
 export type OptionGroup = { name: string; values: string[] };
 export type VariantInput = { options: Record<string, string>; price: number | null; stock: number | null; enabled: boolean };
 export type Variant = VariantInput & { id: string; title: string };
+export type ProductSection = "best_sellers" | "new_arrivals";
 export type ProductInput = {
   name: string; description: string; price: number; compare_at_price: number | null; image_url: string | null; status: "active" | "hidden"; stock: number | null; sort: number;
-  options: OptionGroup[]; variants: VariantInput[]; images: string[];
+  sections: ProductSection[]; options: OptionGroup[]; variants: VariantInput[]; images: string[];
 };
 export type Product = Omit<ProductInput, "variants"> & {
   id: string; media_id: string | null; permalink: string | null; orders_count: number; revenue: number; created_at: string | null; variants: Variant[];

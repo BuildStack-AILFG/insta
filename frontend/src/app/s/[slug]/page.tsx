@@ -29,7 +29,7 @@ export default async function StorePage({ params }: Props) {
   const byId = new Map(products.map((p) => [p.id, p]));
   const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((p): p is PublicProduct => !!p);
   const best = site.sections.best_sellers ? pick(data.best_sellers) : [];
-  const fresh = site.sections.new_arrivals && products.length > 2 ? pick(data.new_arrivals) : [];
+  const fresh = site.sections.new_arrivals ? pick(data.new_arrivals) : [];
   const insta = site.sections.instagram && store.instagram ? products.filter((p) => p.image_url && p.permalink).slice(0, 6) : [];
   const badges = [
     store.free_shipping_above !== null && store.shipping_fee ? { icon: Truck, title: "Free delivery", text: `On orders above ${fmtMoney(store.free_shipping_above)}` }

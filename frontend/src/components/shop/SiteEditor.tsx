@@ -8,8 +8,8 @@ import { ACCENTS, SitePreview } from "./CreateShopWizard";
 import PhotoUpload from "./PhotoUpload";
 
 const SECTIONS: { id: SiteSection; label: string; hint: string }[] = [
-  { id: "best_sellers", label: "Best sellers", hint: "Carousel of your top-selling products" },
-  { id: "new_arrivals", label: "New arrivals", hint: "Carousel of your newest products" },
+  { id: "best_sellers", label: "Best sellers", hint: "Products you tick as Best sellers, or else your top sellers" },
+  { id: "new_arrivals", label: "New arrivals", hint: "Products you tick as New arrivals, or else your newest" },
   { id: "all_products", label: "Shop all", hint: "Grid of every product" },
   { id: "instagram", label: "Shop our Instagram", hint: "Product photos linked to your posts" },
   { id: "about", label: "About", hint: "Your story (fill it in below)" },
