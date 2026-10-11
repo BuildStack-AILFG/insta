@@ -1162,3 +1162,23 @@ def invoice(shop: Shop, order: ShopOrder) -> dict:
         "buyer": {"name": order.customer_name, "phone": f"+{order.customer_phone}", "email": order.customer_email, "address": order.address or {}},
         "lines": lines, "totals": totals, "payment": {"method": order.payment_method, "status": order.payment_status},
     }
+
+
+# ---- photo uploads (Cloudinary) ------------------------------------------------------------------------------------
+
+class UploadsNotConfigured(Exception):
+    """CLOUDINARY_* settings are missing."""
+
+
+def cloudinary_signature(tenant_id: str, now: int | None = None) -> dict:
+    """Signed-upload parameters for https://api.cloudinary.com/v1_1/<cloud>/image/upload. The signature covers the folder,
+    so a browser can only write into this workspace's folder, and it expires with the timestamp (Cloudinary allows ~1 hour)."""
+    s = get_settings()
+    if not (s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret):
+        raise UploadsNotConfigured()
+    timestamp = int(now if now is not None else datetime.now(timezone.utc).timestamp())
+    folder = f"dmforgrow/{tenant_id}/shop"
+    to_sign = f"folder={folder}&timestamp={timestamp}"  # parameters sorted by name, then the secret appended (Cloudinary's SHA-1 scheme)
+    signature = hashlib.sha1((to_sign + s.cloudinary_api_secret).encode()).hexdigest()
+    return {"cloud_name": s.cloudinary_cloud_name, "api_key": s.cloudinary_api_key, "timestamp": timestamp, "folder": folder, "signature": signature,
+            "max_bytes": 10 * 1024 * 1024}

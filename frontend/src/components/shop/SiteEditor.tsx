@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, ExternalLink, Globe, Image as ImageIcon, Plus, Refr
 import { Alert, Badge, Button, Card, CopyField, cx, Field, Input, Select, Textarea, Toggle, useUi } from "@/components/ui/kit";
 import { errorMessage, shop as api, type HeroSlide, type Product, type Shop, type ShopSite, type SiteColors, type SiteSection, type SiteTextKey } from "@/lib/api";
 import { ACCENTS, SitePreview } from "./CreateShopWizard";
+import PhotoUpload from "./PhotoUpload";
 
 const SECTIONS: { id: SiteSection; label: string; hint: string }[] = [
   { id: "best_sellers", label: "Best sellers", hint: "Carousel of your top-selling products" },
@@ -132,7 +133,7 @@ export default function SiteEditor({ shop, products, onSaved }: { shop: Shop; pr
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const set = (p: Partial<ShopSite>) => setS((x) => ({ ...x, ...p }));
-  const setSlide = (i: number, p: Partial<HeroSlide>) => set({ hero: s.hero.map((h, j) => (j === i ? { ...h, ...p } : h)) });
+  const setSlide = (i: number, p: Partial<HeroSlide>) => setS((x) => ({ ...x, hero: x.hero.map((h, j) => (j === i ? { ...h, ...p } : h)) }));
   const move = (i: number, d: -1 | 1) => { const h = [...s.hero]; [h[i], h[i + d]] = [h[i + d], h[i]]; set({ hero: h }); };
   const photos = Array.from(new Set(products.flatMap((p) => [p.image_url, ...(p.images ?? [])]).filter((u): u is string => !!u)));
 
@@ -188,6 +189,7 @@ export default function SiteEditor({ shop, products, onSaved }: { shop: Shop; pr
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex gap-2">
                   <Input value={h.image_url} placeholder="Photo link (https://…)" onChange={(e) => setSlide(i, { image_url: e.target.value })} />
+                  <PhotoUpload label="Upload" onUploaded={([u]) => setSlide(i, { image_url: u })} />
                   {photos.length > 0 && (
                     <Select value="" onChange={(e) => e.target.value && setSlide(i, { image_url: e.target.value })} className="!w-36" aria-label="Use a product photo">
                       <option value="">Product photo…</option>{photos.map((u, k) => <option key={u} value={u}>Photo {k + 1}</option>)}
@@ -226,7 +228,12 @@ export default function SiteEditor({ shop, products, onSaved }: { shop: Shop; pr
           <div className="mb-3 text-[14px] font-semibold text-white">About your brand</div>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Heading"><Input value={s.about.title} maxLength={80} placeholder={`About ${shop.name}`} onChange={(e) => set({ about: { ...s.about, title: e.target.value } })} /></Field>
-            <Field label="Photo link (optional)"><Input value={s.about.image_url ?? ""} placeholder="https://…" onChange={(e) => set({ about: { ...s.about, image_url: e.target.value } })} /></Field>
+            <Field label="Photo (optional)">
+              <div className="flex gap-2">
+                <Input value={s.about.image_url ?? ""} placeholder="https://…" onChange={(e) => set({ about: { ...s.about, image_url: e.target.value } })} />
+                <PhotoUpload label="Upload" onUploaded={([u]) => setS((x) => ({ ...x, about: { ...x.about, image_url: u } }))} />
+              </div>
+            </Field>
           </div>
           <Field label="Your story" className="mt-3"><Textarea rows={4} maxLength={1500} value={s.about.text} placeholder="How it started, what makes your products special…" onChange={(e) => set({ about: { ...s.about, text: e.target.value } })} /></Field>
         </Card>

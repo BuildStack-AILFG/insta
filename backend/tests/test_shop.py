@@ -907,3 +907,19 @@ async def test_custom_domain_goes_live_once_dns_points_here(wsa, other, meta, ap
     assert taken.status_code == 409 and other_store["slug"]
     cleared = (await wsa.put("/shop/domain", json={"domain": ""})).json()
     assert cleared["custom_domain"] is None and cleared["domain_status"] == "none" and cleared["url"] == cleared["default_url"]
+
+
+async def test_photo_upload_signature_is_scoped_to_the_workspace(wsa, monkeypatch):
+    import hashlib
+
+    from app.core.config import get_settings
+    s = get_settings()
+    assert (await wsa.post("/shop/uploads/sign")).status_code == 503  # not configured: the UI falls back to photo links
+    for k, v in (("cloudinary_cloud_name", "demo-cloud"), ("cloudinary_api_key", "1234"), ("cloudinary_api_secret", "shh")):
+        monkeypatch.setattr(s, k, v)
+    r = await wsa.post("/shop/uploads/sign")
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["folder"] == f"dmforgrow/{wsa.tenant_id}/shop" and d["cloud_name"] == "demo-cloud" and d["api_key"] == "1234"
+    assert d["signature"] == hashlib.sha1(f"folder={d['folder']}&timestamp={d['timestamp']}shh".encode()).hexdigest()
+    assert "shh" not in r.text  # the secret never leaves the server

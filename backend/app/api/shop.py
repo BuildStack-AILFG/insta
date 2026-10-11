@@ -336,6 +336,15 @@ async def _save_product(db: AsyncSession, p: ShopProduct, body: ProductIn) -> di
     return product_out(p, (await svc.variants_of(db, [p.id]))[p.id])
 
 
+@router.post("/uploads/sign")
+async def sign_upload(ctx: Ctx = Depends(require_writer)) -> dict:
+    """A short-lived Cloudinary signature so the browser uploads a photo straight to Cloudinary, only into this workspace's folder."""
+    try:
+        return svc.cloudinary_signature(str(ctx.tenant_id))
+    except svc.UploadsNotConfigured:
+        raise HTTPException(status_code=503, detail={"error": "Photo uploads aren't set up yet. Paste a photo link instead."})
+
+
 @router.post("/products", status_code=status.HTTP_201_CREATED)
 async def create_product(body: ProductIn, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> dict:
     p = ShopProduct(tenant_id=ctx.tenant_id, name=body.name, price=body.price)

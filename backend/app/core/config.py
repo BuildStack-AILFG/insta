@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     media_dir: str = "media_uploads"
     media_quota_mb: int = 2048  # per workspace
 
+    # Cloudinary: shop photos (products, banners) upload straight from the browser with a signature from /api/shop/uploads/sign.
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+
     # "Continue with Google" sign-in. The OAuth *Web* client id from Google Cloud Console; the button is hidden when unset.
     google_client_id: str = ""
 

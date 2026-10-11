@@ -773,7 +773,27 @@ export const shop = {
   saveSite: (b: ShopSite) => request<Shop>("/shop/site", { method: "PUT", body: b }),
   setDomain: (domain: string) => request<Shop>("/shop/domain", { method: "PUT", body: { domain } }),
   checkDomain: () => request<{ shop: Shop; message: string | null }>("/shop/domain/check", { method: "POST" }),
+  uploadSignature: () => request<UploadSignature>("/shop/uploads/sign", { method: "POST" }),
 };
+
+export type UploadSignature = { cloud_name: string; api_key: string; timestamp: number; folder: string; signature: string; max_bytes: number };
+
+/** Uploads one photo straight to Cloudinary (signed by our API, scoped to the workspace's folder) and returns its https URL. */
+export async function uploadShopPhoto(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error(`${file.name} isn't an image.`);
+  const sig = await shop.uploadSignature();
+  if (file.size > sig.max_bytes) throw new Error(`${file.name} is larger than ${Math.round(sig.max_bytes / 1048576)} MB.`);
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", sig.api_key);
+  form.append("timestamp", String(sig.timestamp));
+  form.append("folder", sig.folder);
+  form.append("signature", sig.signature);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloud_name}/image/upload`, { method: "POST", body: form });
+  const data = (await res.json().catch(() => ({}))) as { secure_url?: string; error?: { message?: string } };
+  if (!res.ok || !data.secure_url) throw new Error(data.error?.message || "The photo couldn't be uploaded. Please try again.");
+  return data.secure_url;
+}
 
 /** What the public store pages read (no login). */
 export type PublicStore = {

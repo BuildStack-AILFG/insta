@@ -13,6 +13,7 @@ import ShopReports from "@/components/shop/ShopReports";
 import VariantsEditor, { draftFrom, toInput, type VariantDraft } from "@/components/shop/VariantsEditor";
 import CreateShopWizard from "@/components/shop/CreateShopWizard";
 import SiteEditor from "@/components/shop/SiteEditor";
+import PhotoUpload from "@/components/shop/PhotoUpload";
 import {
   errorMessage, instagram, itemLabel, shop as api, type IgAccount, type OrderStatus, type Product, type ProductInput, type ShiprocketStatus, type ShopInput, type ShopOrder,
   type ShopOverview, type Shop,
@@ -268,12 +269,21 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
           {f.image_url.trim() ? <img src={f.image_url} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" /> : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/25"><ImageIcon size={22} /></div>}
           <div className="flex-1 space-y-3">
             <Field label="Name"><Input value={f.name} maxLength={120} onChange={(e) => setF({ ...f, name: e.target.value })} autoFocus /></Field>
-            <Field label="Main photo link"><Input value={f.image_url} placeholder="https://…" onChange={(e) => setF({ ...f, image_url: e.target.value })} /></Field>
+            <Field label="Main photo" hint="Upload from your device, or paste a link">
+              <div className="flex gap-2">
+                <Input value={f.image_url} placeholder="https://…" onChange={(e) => setF({ ...f, image_url: e.target.value })} />
+                <PhotoUpload onUploaded={([u]) => setF((p) => ({ ...p, image_url: u }))} />
+              </div>
+            </Field>
           </div>
         </div>
-        <Field label="More photos (optional)" hint="One link per line — shown as a carousel on the product page.">
+        <Field label="More photos (optional)" hint="Upload up to 8, or paste one link per line — shown as a carousel on the product page.">
           <Textarea rows={2} value={f.images} placeholder={"https://…/back.jpg\nhttps://…/detail.jpg"} onChange={(e) => setF({ ...f, images: e.target.value })} />
         </Field>
+        {extra.length < 8 && (
+          <PhotoUpload multiple max={8 - extra.length}
+            onUploaded={(urls) => setF((p) => ({ ...p, images: [...p.images.split(/\s+/).filter(Boolean), ...urls].join("\n") }))} />
+        )}
         {extra.length > 0 && (
           <div className="flex gap-2 overflow-x-auto">{extra.filter((u) => /^https?:\/\/\S+$/.test(u)).map((u) => <img key={u} src={u} alt="" className="h-14 w-12 shrink-0 rounded-md object-cover" />)}</div>
         )}
