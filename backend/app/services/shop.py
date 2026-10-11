@@ -41,7 +41,7 @@ from app.models.conversation import Conversation, Message
 from app.models.instagram_account import InstagramAccount
 from app.models.shop import Shop, ShopCart, ShopOrder, ShopProduct, ShopVariant
 from app.models.tenant import Tenant
-from app.services import media_library, outbound_webhooks, payment_links
+from app.services import media_library, outbound_webhooks, payment_links, push
 from app.services.instagram import messaging
 from app.services.instagram.accounts import client_for
 from app.services.instagram.graph import GraphError
@@ -458,6 +458,8 @@ async def place_order(db: AsyncSession, shop: Shop, lines: list[Line], *, name: 
         # Orders placed in chat were just confirmed by the buyer; web COD orders from Instagram buyers get asked first.
         await confirm(db, order, ask_cod=source != "chat")
     await outbound_webhooks.emit(shop.tenant_id, "order_placed", order_event(order))
+    push.notify(shop.tenant_id, f"New order #{order.number}", f"{order.customer_name} · {inr(order.total)} · {'COD' if payment_method == 'cod' else 'Online'}",
+                {"type": "order", "order_id": str(order.id)})
     return order
 
 

@@ -16,6 +16,7 @@ from app.api.comment_automations import router as comment_automations_router
 from app.api.contacts import router as contacts_router
 from app.api.custom_replies import router as custom_replies_router
 from app.api.developer import router as developer_router
+from app.api.devices import router as devices_router
 from app.api.flows import router as flows_router
 from app.api.giveaways import router as giveaways_router
 from app.api.growth import public as bio_public_router
@@ -44,7 +45,7 @@ from app.api.workspace import router as workspace_router
 from app.core import logging as app_logging
 from app.core.config import get_settings
 from app.db import session as db_session
-from app.services import outbound_webhooks, scheduler
+from app.services import outbound_webhooks, push, scheduler
 from app.services.instagram import graph
 
 settings = get_settings()
@@ -65,6 +66,7 @@ async def lifespan(_: FastAPI):
     yield
     await scheduler.stop()
     await outbound_webhooks.drain()
+    await push.drain()
     await graph.close_http()
     await db_session.engine.dispose()
 
@@ -98,7 +100,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 for r in (auth_router, contacts_router, instagram_router, comment_automations_router, giveaways_router, posts_router, media_router, insights_router, growth_router, flows_router, custom_replies_router, settings_router, workspace_router,
-          inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, shop_router, admin_router):
+          inbox_router, segments_router, ai_router, developer_router, integrations_router, team_router, analytics_router, pipeline_router, billing_router, payments_router, shop_router, admin_router, devices_router):
     app.include_router(r, prefix="/api")
 # Public surfaces (no login): Instagram webhooks, provider hooks, public plans/QR, tracked-link redirects, and the API-key REST API.
 for r in (webhooks_router, hooks_router, public_router, public_api_router, site_router, links_router, bio_public_router, store_public_router, courier_router, media_files_router):
