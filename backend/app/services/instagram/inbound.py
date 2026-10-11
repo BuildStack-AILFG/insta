@@ -27,7 +27,7 @@ from app.models.growth import RefLink
 from app.models.instagram_account import InstagramAccount
 from app.models.tenant import Tenant
 from app.models.webhook import WebhookIngress
-from app.services import assignment, outbound_webhooks, pipeline
+from app.services import assignment, outbound_webhooks, pipeline, push
 from app.services.instagram import comments, messaging
 from app.services.instagram.accounts import client_for
 from app.services.instagram.graph import GraphError
@@ -241,6 +241,11 @@ async def _store_inbound(db: AsyncSession, account: InstagramAccount, igsid: str
         await outbound_webhooks.emit(account.tenant_id, "contact_created", {"contact_id": str(contact.id), "username": contact.ig_username, "source": contact.source})
     if conv_created:
         await outbound_webhooks.emit(account.tenant_id, "conversation_created", {"conversation_id": str(conv.id), "username": contact.ig_username})
+    # Phone push for the mobile app: new conversations, and messages in chats a human has taken over (the bot handles the rest).
+    if mtype != "reaction" and (conv_created or conv.inbox_status == "intervened"):
+        who = f"@{contact.ig_username}" if contact.ig_username else contact.name
+        push.notify(account.tenant_id, f"New message from {who}" if conv_created else who, conv.last_message_preview or "New message",
+                    {"type": "message", "conversation_id": str(conv.id)})
     return msg
 
 
