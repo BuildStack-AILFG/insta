@@ -242,7 +242,7 @@ async def test_flows_are_tenant_scoped(wsa, other):
 # ---- AI agent ------------------------------------------------------------------------------------------------------------------------------
 
 def fake_llm(monkeypatch, reply="Delivery takes 2-3 days.", handoff=False, confidence=0.9, collected=None, capture=None):
-    async def complete(api_key, *, system, messages, model=None, max_tokens=700):
+    async def complete(api_key, *, system, messages, model=None, max_tokens=700, provider="anthropic"):
         if capture is not None:
             capture.update(system=system, messages=messages, key=api_key)
         return json.dumps({"reply": reply, "handoff": handoff, "confidence": confidence, "collected": collected or {}})
@@ -356,3 +356,63 @@ async def test_ai_playground_and_knowledge_url_ingest(wsa, meta, monkeypatch):
 async def test_ai_url_ingest_blocks_internal_addresses(wsa):
     r = await wsa.post("/ai/knowledge/url", json={"url": "http://169.254.169.254/latest/meta-data/"})
     assert r.status_code == 201 and r.json()["status"] == "failed" and "private" in r.json()["error"].lower() or "https" in r.json()["error"].lower()
+
+
+# ---- AI providers --------------------------------------------------------------------------------------------------------------------------
+
+def _mock_provider(monkeypatch, response: dict, seen: list):
+    import httpx
+    real = httpx.AsyncClient
+
+    def handler(req):
+        seen.append({"url": str(req.url), "headers": dict(req.headers), "body": json.loads(req.content)})
+        return httpx.Response(200, json=response)
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: real(transport=httpx.MockTransport(handler), **{k: v for k, v in kw.items() if k != "transport"}))
+
+
+@pytest.mark.parametrize("provider,url,auth,body_key", [
+    ("anthropic", "https://api.anthropic.com/v1/messages", ("x-api-key", "k1"), "system"),
+    ("gateway", "https://ai-gateway.vercel.sh/v1/messages", ("x-api-key", "k1"), "system"),
+    ("openai", "https://api.openai.com/v1/responses", ("authorization", "Bearer k1"), "instructions"),
+    ("xai", "https://api.x.ai/v1/responses", ("authorization", "Bearer k1"), "instructions"),
+    ("groq", "https://api.groq.com/openai/v1/chat/completions", ("authorization", "Bearer k1"), None),
+])
+async def test_each_ai_provider_gets_its_own_request_shape(monkeypatch, provider, url, auth, body_key):
+    seen: list = []
+    if provider == "groq":
+        resp = {"choices": [{"message": {"role": "assistant", "content": "Hello from groq"}}]}
+    elif provider in ("openai", "xai"):
+        resp = {"output": [{"type": "reasoning", "content": []}, {"type": "message", "content": [{"type": "output_text", "text": "Hello from " + provider}]}]}
+    else:
+        resp = {"content": [{"type": "text", "text": "Hello from " + provider}]}
+    _mock_provider(monkeypatch, resp, seen)
+    out = await ai_agent.complete("k1", system="Be brief.", messages=[{"role": "user", "content": "hi"}], model="m-1", provider=provider)
+    assert out == "Hello from " + provider
+    req = seen[0]
+    assert req["url"] == url and req["headers"][auth[0]] == auth[1]
+    assert req["body"]["model"] == "m-1"
+    if body_key:
+        assert req["body"][body_key] == "Be brief." and req["body"].get("messages", req["body"].get("input")) == [{"role": "user", "content": "hi"}]
+    else:  # Chat Completions: the system prompt is the first message
+        assert req["body"]["messages"] == [{"role": "system", "content": "Be brief."}, {"role": "user", "content": "hi"}]
+
+
+async def test_ai_provider_choice_key_and_model_are_saved_and_used(wsa, monkeypatch):
+    from app.core.config import get_settings
+    from app.models.tenant import Tenant
+    bad = await wsa.put("/ai/config", json={"enabled": True, "provider": "gateway", "model": "gpt-6-luna", "api_key": "vck_test_123456"})
+    assert bad.status_code == 422 and "provider/model" in bad.json()["detail"]["error"]
+    cfg = (await wsa.put("/ai/config", json={"enabled": True, "provider": "gateway", "model": "openai/gpt-6-luna", "api_key": "vck_test_123456"})).json()
+    assert cfg["provider"] == "gateway" and cfg["model"] == "openai/gpt-6-luna" and cfg["default_models"]["xai"] == "grok-4.7"
+    async with await db_session() as db:
+        conn = ai_agent.connection(await db.get(Tenant, wsa.tenant_id))
+    assert (conn.provider, conn.key, conn.own, conn.model) == ("gateway", "vck_test_123456", True, "openai/gpt-6-luna")
+
+    switched = (await wsa.put("/ai/config", json={"enabled": False, "provider": "xai"})).json()
+    assert not switched["has_own_key"]  # the gateway key is not reused for xAI
+    assert (await wsa.put("/ai/config", json={"enabled": True, "provider": "xai"})).status_code == 422
+
+    monkeypatch.setattr(get_settings(), "ai_gateway_api_key", "platform-gateway")
+    async with await db_session() as db:
+        conn = ai_agent.connection(await db.get(Tenant, wsa.tenant_id))
+    assert (conn.provider, conn.key, conn.own, conn.model) == ("gateway", "platform-gateway", False, "anthropic/claude-sonnet-5.5")

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BookOpen, Bot, Globe, Headphones, MessageSquare, Plus, ShoppingBag, Sparkles, Target, Trash2, X } from "lucide-react";
 import { Alert, Badge, Button, Card, cx, EmptyState, Field, Input, Modal, Page, PageHeader, Spinner, statusTone, Tabs, Textarea, Toggle, useUi } from "@/components/ui/kit";
-import { ai as api, errorMessage, type AiConfig, type KnowledgeSource } from "@/lib/api";
+import { ai as api, errorMessage, type AiConfig, type AiProvider, type KnowledgeSource } from "@/lib/api";
 
 const AGENTS = [
   { id: "support", name: "Support agent", icon: Headphones, color: "#0F9D58", desc: "Answers customer questions from your knowledge base, day and night." },
@@ -29,6 +29,15 @@ export default function AiAgentPage() {
   );
 }
 
+/** Model ids from each provider's catalogue (AI Gateway /v1/models, 2026-10-05). The field also accepts any other id. */
+const PROVIDERS: { id: AiProvider; name: string; keyLabel: string; placeholder: string; where: string; models: string[] }[] = [
+  { id: "anthropic", name: "Claude", keyLabel: "Anthropic API key", placeholder: "sk-ant-…", where: "console.anthropic.com", models: ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-4-5-20251001"] },
+  { id: "openai", name: "OpenAI", keyLabel: "OpenAI API key", placeholder: "sk-…", where: "platform.openai.com", models: ["gpt-6-luna", "gpt-6-sol", "gpt-5.4-mini"] },
+  { id: "xai", name: "Grok (xAI)", keyLabel: "xAI API key", placeholder: "xai-…", where: "console.x.ai", models: ["grok-4.7", "grok-4.6", "grok-4.5"] },
+  { id: "groq", name: "Groq", keyLabel: "Groq API key", placeholder: "gsk_…", where: "console.groq.com", models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"] },
+  { id: "gateway", name: "Vercel AI Gateway", keyLabel: "AI Gateway API key", placeholder: "vck_…", where: "vercel.com → AI Gateway → API keys", models: ["anthropic/claude-sonnet-5.5", "openai/gpt-6-luna", "spacexai/grok-4.7", "moonshotai/kimi-k3", "google/gemini-3.8-flash"] },
+];
+
 function Config({ cfg, onSaved }: { cfg: AiConfig; onSaved: (c: AiConfig) => void }) {
   const { toast } = useUi();
   const [f, setF] = useState({ ...cfg, keywords: cfg.handoff_keywords.join(", "), fields: cfg.qualification_fields.join(", "), api_key: "" });
@@ -40,7 +49,7 @@ function Config({ cfg, onSaved }: { cfg: AiConfig; onSaved: (c: AiConfig) => voi
     try {
       const saved = await api.saveConfig({ enabled, agent_type: f.agent_type, business_name: f.business_name, persona_name: f.persona_name, tone: f.tone, language: f.language, instructions: f.instructions,
         handoff_keywords: f.keywords.split(",").map((k) => k.trim()).filter(Boolean), handoff_message: f.handoff_message, fallback_message: f.fallback_message, qualification_fields: f.fields.split(",").map((k) => k.trim()).filter(Boolean),
-        min_confidence: f.min_confidence, model: f.model, ...(f.api_key ? { api_key: f.api_key } : {}) });
+        min_confidence: f.min_confidence, provider: f.provider, model: f.model.trim(), ...(f.api_key ? { api_key: f.api_key } : {}) });
       onSaved(saved); setF((p) => ({ ...p, enabled: saved.enabled, api_key: "" })); toast(saved.enabled ? "AI agent is live" : "Settings saved");
     } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
@@ -81,13 +90,27 @@ function Config({ cfg, onSaved }: { cfg: AiConfig; onSaved: (c: AiConfig) => voi
         <Field label={`Minimum confidence: ${Math.round(f.min_confidence * 100)}%`} hint="Below this the agent hands over instead of guessing. Higher = safer, more hand-overs."><input type="range" min={0} max={90} step={5} value={Math.round(f.min_confidence * 100)} onChange={(e) => set("min_confidence", Number(e.target.value) / 100)} className="w-full accent-brand" /></Field>
       </Card>
 
-      <Card className="space-y-3 p-5">
-        <h3 className="text-[14px] font-semibold text-white">AI provider</h3>
-        <p className="text-[12.5px] text-white/50">{cfg.platform_key_available ? "Your plan includes AI replies on our shared key. To go beyond the included amount, add your own Anthropic API key — usage then bills to your Anthropic account, not ours." : "Add your Anthropic API key to power the agent. Get one at console.anthropic.com."}</p>
-        <Field label="Anthropic API key" hint={cfg.has_own_key ? `A key ending ${cfg.api_key_hint.slice(-4)} is saved (encrypted). Paste a new one to replace it.` : "Stored encrypted; never shown again."}>
-          <Input type="password" value={f.api_key} onChange={(e) => set("api_key", e.target.value)} placeholder={cfg.has_own_key ? "••••••••••••" : "sk-ant-…"} autoComplete="off" /></Field>
-        {cfg.has_own_key && <Button size="sm" variant="danger" onClick={async () => { try { onSaved(await api.saveConfig({ enabled: false, api_key: "" })); setF((p) => ({ ...p, enabled: false })); toast("Key removed and the agent was turned off"); } catch (e) { setErr(errorMessage(e)); } }}>Remove saved key</Button>}
-      </Card>
+      {(() => {
+        const p = PROVIDERS.find((x) => x.id === f.provider) ?? PROVIDERS[0];
+        const keySaved = cfg.has_own_key && cfg.provider === f.provider;
+        return <Card className="space-y-3 p-5">
+          <h3 className="text-[14px] font-semibold text-white">AI provider</h3>
+          <p className="text-[12.5px] text-white/50">{cfg.platform_key_available ? "Your plan includes AI replies on our shared key. To go beyond them, connect your own provider below — usage then bills to your account with that provider, not ours." : "Connect an AI provider with your own API key to power the agent."}</p>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5">{PROVIDERS.map((x) => (
+            <button key={x.id} type="button" onClick={() => setF((s) => ({ ...s, provider: x.id, model: "", api_key: "" }))}
+              className={cx("rounded-xl border px-3 py-2.5 text-left text-[13px] transition", f.provider === x.id ? "border-brand bg-brand/10 text-white" : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]")}>
+              <div className="font-semibold">{x.name}</div>{cfg.has_own_key && cfg.provider === x.id && <div className="text-[11px] text-emerald-300/80">connected</div>}</button>))}</div>
+          {f.provider === "gateway" && <p className="text-[12px] text-white/45">One key for Claude, GPT, Grok, Kimi, Gemini and more — billed by Vercel. Pick any model as <code>provider/model</code>.</p>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={p.keyLabel} hint={keySaved ? `A key ending ${cfg.api_key_hint.slice(-4)} is saved (encrypted). Paste a new one to replace it.` : `Get one at ${p.where}. Stored encrypted; never shown again.`}>
+              <Input type="password" value={f.api_key} onChange={(e) => set("api_key", e.target.value)} placeholder={keySaved ? "••••••••••••" : p.placeholder} autoComplete="off" /></Field>
+            <Field label="Model" hint={`Leave empty for the default (${cfg.default_models?.[f.provider] || p.models[0]}).`}>
+              <Input list={`models-${p.id}`} value={f.model} onChange={(e) => set("model", e.target.value)} placeholder={cfg.default_models?.[f.provider] || p.models[0]} />
+              <datalist id={`models-${p.id}`}>{p.models.map((m) => <option key={m} value={m} />)}</datalist></Field>
+          </div>
+          {keySaved && <Button size="sm" variant="danger" onClick={async () => { try { onSaved(await api.saveConfig({ enabled: false, provider: f.provider, api_key: "" })); setF((s) => ({ ...s, enabled: false })); toast("Key removed and the agent was turned off"); } catch (e) { setErr(errorMessage(e)); } }}>Remove saved key</Button>}
+        </Card>;
+      })()}
       <div className="flex justify-end"><Button loading={busy} onClick={() => save()}>Save changes</Button></div>
     </div>
   );

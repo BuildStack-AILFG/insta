@@ -36,8 +36,9 @@ class AIConfigIn(BaseModel):
     fallback_message: str = Field(default="", max_length=500)
     qualification_fields: list[str] = Field(default_factory=list, max_length=15)
     min_confidence: float = Field(default=0.35, ge=0, le=1)
-    model: str = Field(default="", max_length=80, pattern=r"^(claude-[a-z0-9\-\.]+)?$")
-    api_key: str | None = Field(default=None, max_length=300, description="Bring-your-own Anthropic key. Send '' to remove the stored key.")
+    provider: Literal["anthropic", "openai", "xai", "groq", "gateway"] = "anthropic"
+    model: str = Field(default="", max_length=120, pattern=r"^([A-Za-z0-9][A-Za-z0-9\-\._:/]*)?$")
+    api_key: str | None = Field(default=None, max_length=300, description="Bring-your-own key for the chosen provider. Send '' to remove the stored key.")
 
 
 def _config_out(tenant: Tenant) -> dict:
@@ -47,7 +48,8 @@ def _config_out(tenant: Tenant) -> dict:
     if stored.get("api_key_hint"):
         key_hint = stored["api_key_hint"]
     return {**{k: v for k, v in cfg.items() if k != "has_own_key"}, "has_own_key": cfg["has_own_key"], "api_key_hint": key_hint,
-            "platform_key_available": bool(agent.get_settings().anthropic_api_key), "usage_this_month": agent.usage_this_month(tenant)}
+            "platform_key_available": bool(agent.get_settings().anthropic_api_key or agent.get_settings().ai_gateway_api_key),
+            "default_models": agent.PROVIDERS | {"anthropic": agent.get_settings().ai_model}, "usage_this_month": agent.usage_this_month(tenant)}
 
 
 @router.get("/config")
@@ -64,17 +66,20 @@ async def put_config(body: AIConfigIn, ctx: Ctx = Depends(require_manager), db: 
     current = dict((tenant.settings or {}).get("ai") or {})
     new = {**body.model_dump(exclude={"api_key"}), "handoff_keywords": [k.strip() for k in body.handoff_keywords if k.strip()],
            "qualification_fields": [f.strip() for f in body.qualification_fields if f.strip()]}
-    if body.api_key is None:  # untouched
+    if body.model and ((body.provider == "gateway" and "/" not in body.model) or (body.provider in ("anthropic", "openai", "xai") and "/" in body.model)):
+        raise HTTPException(status_code=422, detail={"error": "AI Gateway models look like provider/model (e.g. openai/gpt-6-luna); Claude, OpenAI and Grok use the plain model name."})
+    switched = (current.get("provider") or "anthropic") != body.provider
+    if body.api_key is None and not switched:  # untouched — a key for one provider never carries over to another
         for k in ("api_key_enc", "api_key_hint"):
             if current.get(k):
                 new[k] = current[k]
-    elif body.api_key.strip():
+    elif body.api_key and body.api_key.strip():
         new["api_key_enc"], new["api_key_hint"] = encrypt(body.api_key.strip()), mask(body.api_key.strip())
     if body.enabled:
         try:
             agent._api_key(Tenant(settings={"ai": new}))  # fail early: enabling with no key would silently do nothing
         except agent.AIUnavailable as exc:
-            raise HTTPException(status_code=422, detail={"error": f"{exc} Add your Anthropic API key to turn the AI agent on."})
+            raise HTTPException(status_code=422, detail={"error": f"{exc} Add your API key for the chosen AI provider to turn the AI agent on."})
     tenant.settings = {**(tenant.settings or {}), "ai": new, "ai_agents": {t: (t == body.agent_type and body.enabled) for t in agent.AGENT_TYPES}}
     flag_modified(tenant, "settings")
     await db.commit()

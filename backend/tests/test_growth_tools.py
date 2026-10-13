@@ -150,7 +150,7 @@ async def test_ai_copywriter(wsa, monkeypatch):
     await wsa.put("/ai/config", json={"enabled": False, "api_key": "sk-ant-test-key-123456"})
     seen = {}
 
-    async def complete(api_key, *, system, messages, model=None, max_tokens=700):
+    async def complete(api_key, *, system, messages, model=None, max_tokens=700, provider="anthropic"):
         seen["system"] = system
         return 'Here you go: ["Hey {{username}}! Price list 👇", "Your list is here ✨", "Sent! Check it out"]'
     monkeypatch.setattr(ai_agent, "complete", complete)
