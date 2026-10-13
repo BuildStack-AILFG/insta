@@ -1,4 +1,4 @@
-"""AI agent: knowledge-grounded Instagram DM replies via the Anthropic Messages API, with human handoff and lead qualification."""
+"""AI agent: knowledge-grounded Instagram DM replies via Claude, OpenAI, Grok, Groq or Vercel AI Gateway, with human handoff and lead qualification."""
 
 from __future__ import annotations
 
@@ -27,6 +27,9 @@ log = logging.getLogger(__name__)
 AGENT_TYPES = {"support", "leads", "sales"}
 DEFAULT_HANDOFF_WORDS = ["human", "agent", "representative", "real person", "talk to someone", "speak to someone", "customer care"]
 HISTORY_LIMIT = 12
+# provider -> model used when the workspace doesn't pick one ("" = the ANTHROPIC default from settings). Ids checked against
+# the AI Gateway catalogue (https://ai-gateway.vercel.sh/v1/models), xAI's model list and a live Groq /models call on 2026-10-05.
+PROVIDERS = {"anthropic": "", "openai": "gpt-6-luna", "xai": "grok-4.7", "groq": "openai/gpt-oss-120b", "gateway": "anthropic/claude-sonnet-5.5"}
 
 
 class AIUnavailable(Exception):
@@ -56,23 +59,40 @@ def get_config(tenant: Tenant) -> dict:
         "fallback_message": cfg.get("fallback_message") or "",
         "qualification_fields": cfg.get("qualification_fields") or [],
         "min_confidence": float(cfg.get("min_confidence", 0.35)),
+        "provider": cfg.get("provider") if cfg.get("provider") in PROVIDERS else "anthropic",
         "model": cfg.get("model") or "",
         "has_own_key": bool(cfg.get("api_key_enc")),
     }
 
 
-def _api_key(tenant: Tenant) -> tuple[str, bool]:
-    """(key, is_tenant_key). Tenant-provided key wins; platform key is the metered fallback."""
+@dataclass
+class AIConn:
+    provider: str
+    key: str
+    own: bool  # the workspace's own key (unmetered) vs the platform's (counts against the plan's included replies)
+    model: str
+
+
+def connection(tenant: Tenant) -> AIConn:
+    """Which provider, key and model to call. The workspace's own key wins; the platform key is the metered fallback."""
+    cfg, s = get_config(tenant), get_settings()
     enc = ((tenant.settings or {}).get("ai") or {}).get("api_key_enc")
     if enc:
         try:
-            return decrypt(enc), True
+            key = decrypt(enc)
         except CryptoError as exc:
             raise AIUnavailable("Stored AI key could not be decrypted.") from exc
-    key = get_settings().anthropic_api_key
-    if not key:
-        raise AIUnavailable("No AI key configured for this workspace.")
-    return key, False
+        return AIConn(cfg["provider"], key, True, cfg["model"] or PROVIDERS[cfg["provider"]] or s.ai_model)
+    if s.ai_gateway_api_key:
+        return AIConn("gateway", s.ai_gateway_api_key, False, (cfg["provider"] == "gateway" and cfg["model"]) or s.ai_gateway_model)
+    if s.anthropic_api_key:
+        return AIConn("anthropic", s.anthropic_api_key, False, (cfg["provider"] == "anthropic" and cfg["model"]) or s.ai_model)
+    raise AIUnavailable("No AI key configured for this workspace.")
+
+
+def _api_key(tenant: Tenant) -> tuple[str, bool]:
+    conn = connection(tenant)
+    return conn.key, conn.own
 
 
 def _month_key() -> str:
@@ -95,25 +115,46 @@ async def _meter(db: AsyncSession, tenant: Tenant, own_key: bool) -> None:
     flag_modified(tenant, "settings")
 
 
-async def complete(api_key: str, *, system: str, messages: list[dict], model: str | None = None, max_tokens: int = 700) -> str:
+async def complete(api_key: str, *, system: str, messages: list[dict], model: str | None = None, max_tokens: int = 700, provider: str = "anthropic") -> str:
+    """One model call. Claude and AI Gateway speak the Anthropic Messages API (the gateway translates it for every provider's
+    models); OpenAI and xAI are called through their Responses API, Groq through its OpenAI-compatible Chat Completions."""
     settings = get_settings()
-    payload = {"model": model or settings.ai_model, "max_tokens": max_tokens, "system": system, "messages": messages}
+    if provider == "groq":
+        url = f"{settings.groq_api_base.rstrip('/')}/v1/chat/completions"
+        payload = {"model": model or PROVIDERS["groq"], "messages": [{"role": "system", "content": system}, *messages], "max_tokens": max(max_tokens * 4, 2000)}
+        headers = {"Authorization": f"Bearer {api_key}", "content-type": "application/json"}
+    elif provider in ("openai", "xai"):
+        base = settings.openai_api_base if provider == "openai" else settings.xai_api_base
+        # reasoning models spend output tokens thinking before they answer, so leave headroom for the visible reply
+        url = f"{base.rstrip('/')}/v1/responses"
+        payload = {"model": model or PROVIDERS[provider], "instructions": system, "input": messages, "max_output_tokens": max(max_tokens * 4, 2000)}
+        headers = {"Authorization": f"Bearer {api_key}", "content-type": "application/json"}
+    else:
+        base = settings.ai_gateway_api_base if provider == "gateway" else settings.anthropic_api_base
+        url = f"{base.rstrip('/')}/v1/messages"
+        payload = {"model": model or (settings.ai_gateway_model if provider == "gateway" else settings.ai_model), "max_tokens": max_tokens, "system": system, "messages": messages}
+        headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(45.0, connect=10.0)) as http:
-            resp = await http.post(
-                f"{settings.anthropic_api_base.rstrip('/')}/v1/messages", json=payload,
-                headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-            )
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as http:
+            resp = await http.post(url, json=payload, headers=headers)
     except httpx.HTTPError as exc:
         raise AIUnavailable(f"AI provider unreachable: {exc.__class__.__name__}") from exc
     if resp.status_code >= 400:
         try:
-            msg = resp.json().get("error", {}).get("message", "")
+            err = resp.json().get("error")
+            msg = err.get("message", "") if isinstance(err, dict) else str(err or "")
         except Exception:  # noqa: BLE001
             msg = ""
         raise AIUnavailable(f"AI provider error {resp.status_code}: {msg[:200]}")
-    blocks = resp.json().get("content", [])
-    return "".join(b.get("text", "") for b in blocks if b.get("type") == "text").strip()
+    data = resp.json()
+    if provider == "groq":
+        return str(((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
+    if provider in ("openai", "xai"):
+        if isinstance(data.get("output_text"), str):
+            return data["output_text"].strip()
+        return "".join(c.get("text", "") for item in data.get("output", []) if item.get("type") == "message"
+                       for c in item.get("content", []) if c.get("type") in ("output_text", "text")).strip()
+    return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
 
 
 def _parse_json(raw: str) -> dict | None:
@@ -183,14 +224,14 @@ async def answer(db: AsyncSession, tenant: Tenant, conv: Conversation, contact: 
     if wants_human(question, cfg["handoff_keywords"]):
         return AIResult(reply=cfg["handoff_message"], handoff=True, confidence=1.0)
 
-    key, own = _api_key(tenant)
-    await _meter(db, tenant, own)
+    conn = connection(tenant)
+    await _meter(db, tenant, conn.own)
     chunks = await knowledge.retrieve(db, tenant.id, question)
     history = await _history(db, conv)
     if not history or history[-1]["role"] != "user":
         history.append({"role": "user", "content": question})
 
-    raw = await complete(key, system=build_system_prompt(cfg, contact, chunks, extra_instructions), messages=history, model=cfg["model"] or None)
+    raw = await complete(conn.key, system=build_system_prompt(cfg, contact, chunks, extra_instructions), messages=history, model=conn.model, provider=conn.provider)
     data = _parse_json(raw)
     if data is None:  # model ignored the format — treat the raw text as the reply, low confidence
         return AIResult(reply=raw[:1500], confidence=0.5)
@@ -213,11 +254,11 @@ async def match_intent(db: AsyncSession, tenant: Tenant, text: str, candidates: 
     """AI Intent Match: which saved reply (if any) does this message mean? Returns candidate id or None."""
     if not candidates:
         return None
-    key, own = _api_key(tenant)
-    await _meter(db, tenant, own)
+    conn = connection(tenant)
+    await _meter(db, tenant, conn.own)
     listing = "\n".join(f"{i}: {trigger}" for i, (_, trigger) in enumerate(candidates))
     raw = await complete(
-        key, max_tokens=50,
+        conn.key, max_tokens=50, model=conn.model, provider=conn.provider,
         system=("You route Instagram direct messages. Given a customer message and a numbered list of intents, reply with ONLY the number of the intent the message clearly "
                 "means, or -1 if none match. No other text.\n\nIntents:\n" + listing),
         messages=[{"role": "user", "content": text[:1000]}],
@@ -231,10 +272,10 @@ async def match_intent(db: AsyncSession, tenant: Tenant, text: str, candidates: 
 
 async def classify_comment(db: AsyncSession, tenant: Tenant, text: str) -> str:
     """Moderation: 'spam', 'abusive' or 'ok' for one Instagram comment. Raises AIUnavailable when AI isn't set up."""
-    key, own = _api_key(tenant)
-    await _meter(db, tenant, own)
+    conn = connection(tenant)
+    await _meter(db, tenant, conn.own)
     raw = await complete(
-        key, max_tokens=5,
+        conn.key, max_tokens=5, model=conn.model, provider=conn.provider,
         system=("You moderate comments on a business's Instagram posts. Reply with exactly one word: spam (scams, bots, unrelated promotion, "
                 "fake giveaways, 'DM me to earn'), abusive (hate, harassment, threats, sexual content) or ok (anything else, including complaints and criticism)."),
         messages=[{"role": "user", "content": text[:1000]}],
@@ -252,11 +293,11 @@ WRITE_BRIEFS = {
 
 async def write_copy(db: AsyncSession, tenant: Tenant, purpose: str, brief: str, count: int = 3) -> list[str]:
     """Copywriter: `count` distinct options for a DM, public reply or caption. Raises AIUnavailable when AI isn't set up."""
-    key, own = _api_key(tenant)
-    await _meter(db, tenant, own)
+    conn = connection(tenant)
+    await _meter(db, tenant, conn.own)
     business = (get_config(tenant).get("business_name") or tenant.name or "").strip()
     raw = await complete(
-        key, max_tokens=900,
+        conn.key, max_tokens=900, model=conn.model, provider=conn.provider,
         system=(f"You write copy for {business or 'a business'} on Instagram. Write {WRITE_BRIEFS[purpose]}. Match the language of the brief (e.g. Hinglish stays Hinglish). "
                 f"Return ONLY a JSON array of {count} different strings, no other text."),
         messages=[{"role": "user", "content": brief[:1500]}],

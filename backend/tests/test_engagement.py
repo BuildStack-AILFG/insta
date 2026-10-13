@@ -43,7 +43,7 @@ async def test_moderation_can_delete_and_use_ai(wsa, meta, monkeypatch):
     await wsa.put("/ai/config", json={"enabled": False, "api_key": "sk-ant-test-key-123456"})
     await wsa.patch("/settings", json={"settings": {"moderation": {"enabled": True, "use_ai": True, "action": "delete"}}})
 
-    async def complete(api_key, *, system, messages, model=None, max_tokens=700):
+    async def complete(api_key, *, system, messages, model=None, max_tokens=700, provider="anthropic"):
         return "spam" if "earn" in messages[-1]["content"] else "ok"
     monkeypatch.setattr(ai_agent, "complete", complete)
     await wsa.comment("DM me to earn 50k a week!!", from_="920000000011", comment_id="1790000000000011")

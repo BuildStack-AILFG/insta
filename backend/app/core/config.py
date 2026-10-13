@@ -57,6 +57,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_api_base: str = "https://api.anthropic.com"
     ai_model: str = "claude-sonnet-5"
+    # Other AI providers a workspace can bring its own key for, and Vercel AI Gateway (one key, every provider's models).
+    # A platform AI_GATEWAY_API_KEY, when set, is the metered fallback instead of ANTHROPIC_API_KEY.
+    openai_api_base: str = "https://api.openai.com"
+    xai_api_base: str = "https://api.x.ai"
+    groq_api_base: str = "https://api.groq.com/openai"
+    ai_gateway_api_base: str = "https://ai-gateway.vercel.sh"
+    ai_gateway_api_key: str = ""
+    ai_gateway_model: str = "anthropic/claude-sonnet-5.5"
 
     # Media library: uploads are stored here and served at {public_base_url}/api/files/... so Instagram can download them.
     # Must be a persistent volume in production. A relative path is resolved from the backend folder.

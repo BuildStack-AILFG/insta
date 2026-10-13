@@ -384,10 +384,11 @@ export const patchSettings = (settings: Record<string, unknown>) => request<{ se
 
 // ---- AI ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+export type AiProvider = "anthropic" | "openai" | "xai" | "groq" | "gateway";
 export type AiConfig = {
   enabled: boolean; agent_type: "support" | "leads" | "sales"; business_name: string; persona_name: string; tone: string; language: string; instructions: string;
-  handoff_keywords: string[]; handoff_message: string; fallback_message: string; qualification_fields: string[]; min_confidence: number; model: string;
-  has_own_key: boolean; api_key_hint: string; platform_key_available: boolean; usage_this_month: number; included_replies?: number | null;
+  handoff_keywords: string[]; handoff_message: string; fallback_message: string; qualification_fields: string[]; min_confidence: number; model: string; provider: AiProvider;
+  has_own_key: boolean; api_key_hint: string; platform_key_available: boolean; usage_this_month: number; included_replies?: number | null; default_models?: Record<AiProvider, string>;
 };
 export type KnowledgeSource = { id: string; kind: "text" | "faq" | "url"; title: string; source_url: string | null; status: string; error: string | null; chunk_count: number; created_at: string };
 export const ai = {
