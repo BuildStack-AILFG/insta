@@ -793,7 +793,7 @@ async def test_a_new_store_gets_a_complete_website_from_its_settings(ws, app_cli
     assert site["announcement"] == "Free delivery on orders above ₹1,000 · Cash on delivery available"
     assert [h["title"] for h in site["hero"]] == ["Brownie box", "Chocolate truffle cake"] and site["hero"][0]["subtitle"] == "Fresh cakes, Pune"
     assert [f["q"] for f in site["faq"]] == ["Do you offer cash on delivery?", "How much is delivery?", "How do I track my order?"]
-    assert home["new_arrivals"][0] != cake["id"] and home["best_sellers"] == []
+    assert home["new_arrivals"] == [] and home["best_sellers"] == []  # with only 2 products, New arrivals would just repeat Shop all
     page = (await app_client.get(f"/api/public/store/{s['slug']}/products/{cake['id']}")).json()
     assert page["product"]["images"] == ["https://cdn.test/cake.jpg", "https://cdn.test/cake-2.jpg"] and [r["name"] for r in page["related"]] == ["Brownie box"]
 
