@@ -215,6 +215,7 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
               </div>
               <div className="p-3">
                 <div className="truncate text-[13.5px] font-medium text-white">{p.name}</div>
+                {p.category && <div className="truncate text-[11.5px] text-white/40">{p.category}</div>}
                 <div className="mt-0.5 flex items-center justify-between text-[12.5px]">
                   <span className="font-semibold text-white">{p.price >= 100 ? fmtMoney(p.price) : "—"}</span>
                   <span className="text-white/45">{p.orders_count} sold{p.stock !== null ? ` · ${p.stock} left` : ""}</span>
@@ -232,19 +233,19 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
         ))}</div>
       )}
       {picking && account && <MediaPicker account={account} selected={[]} onClose={() => setPicking(false)} onDone={(sel) => importPosts(sel.map((m) => m.id))} />}
-      {editing && <ProductEditor product={editing === "new" ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast("Product saved"); void load(); }} />}
+      {editing && <ProductEditor product={editing === "new" ? null : editing} categories={[...new Set((list ?? []).map((p) => p.category).filter(Boolean))].sort()} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast("Product saved"); void load(); }} />}
     </div>
   );
 }
 
 const SECTION_PICKS: { id: ProductSection; label: string }[] = [{ id: "new_arrivals", label: "New arrivals" }, { id: "best_sellers", label: "Best sellers" }];
 
-function ProductEditor({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => void }) {
+function ProductEditor({ product, categories, onClose, onSaved }: { product: Product | null; categories: string[]; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState({
     name: product?.name ?? "", description: product?.description ?? "", price: product && product.price >= 100 ? fromMinor(product.price) : "",
     mrp: product?.compare_at_price ? fromMinor(product.compare_at_price) : "", image_url: product?.image_url ?? "", visible: product ? product.status === "active" : true,
     track: product ? product.stock !== null : false, stock: String(product?.stock ?? 10), images: (product?.images ?? []).join("\n"),
-    sections: (product?.sections ?? []) as ProductSection[],
+    sections: (product?.sections ?? []) as ProductSection[], category: product?.category ?? "",
   });
   const extra = f.images.split(/\s+/).map((u) => u.trim()).filter(Boolean);
   const [draft, setDraft] = useState<VariantDraft>(() => draftFrom(product));
@@ -262,7 +263,7 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
     setBusy(true); setErr(null);
     const body: ProductInput = { name: f.name.trim(), description: f.description.trim(), price: price!, compare_at_price: mrp, image_url: f.image_url.trim() || null,
       status: f.visible ? "active" : "hidden", stock: f.track && !hasVariants ? Math.max(0, parseInt(f.stock, 10) || 0) : null, sort: product?.sort ?? 0,
-      sections: f.sections, options: variants.options, variants: variants.variants, images: extra };
+      sections: f.sections, category: f.category.trim(), options: variants.options, variants: variants.variants, images: extra };
     try { if (product) await api.updateProduct(product.id, body); else await api.createProduct(body); onSaved(); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
 
@@ -297,6 +298,10 @@ function ProductEditor({ product, onClose, onSaved }: { product: Product | null;
           <Field label="Price (₹)"><Input value={f.price} inputMode="decimal" placeholder="499" onChange={(e) => setF({ ...f, price: e.target.value })} /></Field>
           <Field label="MRP (₹, optional)" hint="Shown struck through, with the discount"><Input value={f.mrp} inputMode="decimal" placeholder="799" onChange={(e) => setF({ ...f, mrp: e.target.value })} /></Field>
         </div>
+        <Field label="Category (optional)" hint="e.g. Sarees, Kurtis — shoppers can filter your store by category. Pick one you've used or type a new one.">
+          <Input value={f.category} maxLength={60} list="product-categories" placeholder="Sarees" onChange={(e) => setF({ ...f, category: e.target.value })} />
+          <datalist id="product-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+        </Field>
         <Field label="Description"><Textarea rows={4} maxLength={2000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
         <VariantsEditor value={draft} onChange={setDraft} basePrice={f.price} />
         <Field label="Feature on the home page" hint="A section you haven't picked any products for fills itself with your newest / most-ordered products.">

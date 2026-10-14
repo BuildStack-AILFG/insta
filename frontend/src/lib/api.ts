@@ -715,7 +715,7 @@ export type Variant = VariantInput & { id: string; title: string };
 export type ProductSection = "best_sellers" | "new_arrivals";
 export type ProductInput = {
   name: string; description: string; price: number; compare_at_price: number | null; image_url: string | null; status: "active" | "hidden"; stock: number | null; sort: number;
-  sections: ProductSection[]; options: OptionGroup[]; variants: VariantInput[]; images: string[];
+  sections: ProductSection[]; category: string; options: OptionGroup[]; variants: VariantInput[]; images: string[];
 };
 export type Product = Omit<ProductInput, "variants"> & {
   id: string; media_id: string | null; permalink: string | null; orders_count: number; revenue: number; created_at: string | null; variants: Variant[];
@@ -804,7 +804,7 @@ export type PublicStore = {
 };
 export type PublicVariant = { id: string; title: string; options: Record<string, string>; price: number; sold_out: boolean };
 export type PublicProduct = {
-  id: string; name: string; description: string; price: number; price_varies: boolean; compare_at_price: number | null; image_url: string | null; permalink: string | null;
+  id: string; name: string; description: string; category: string; price: number; price_varies: boolean; compare_at_price: number | null; image_url: string | null; permalink: string | null;
   sold_out: boolean; options: OptionGroup[]; variants: PublicVariant[]; images: string[];
 };
 export type PublicOrder = {

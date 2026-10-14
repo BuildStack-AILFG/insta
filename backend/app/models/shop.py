@@ -84,6 +84,8 @@ class ShopProduct(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     sort: Mapped[int] = mapped_column(Integer, default=0)
     # Home-page rails the seller put this product in ("best_sellers", "new_arrivals"). A rail with no picks fills itself.
     sections: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    # The seller's own label ("Sarees", "Kurtis"); the store page offers one filter chip per category in use. Empty = uncategorised.
+    category: Mapped[str] = mapped_column(String(60), nullable=False, default="", server_default="")
 
     orders_count: Mapped[int] = mapped_column(Integer, default=0)  # paid / COD orders
     revenue: Mapped[int] = mapped_column(Integer, default=0)

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Banknote, Instagram, MessageCircle, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { HeroCarousel, Rail, RailItem } from "@/components/store/Carousel";
 import ProductCard from "@/components/store/ProductCard";
+import ProductGrid from "@/components/store/ProductGrid";
 import StoreShell, { loadStore, type StoreData } from "@/components/store/StoreShell";
 import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
@@ -69,9 +70,7 @@ export default async function StorePage({ params }: Props) {
                 <h2 className="text-[22px] font-bold tracking-tight sm:text-[26px]">{t.all_products_title}</h2>
                 <span className="text-[13px] text-[var(--muted)]">{products.length} product{products.length === 1 ? "" : "s"}</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-                {products.map((p) => <ProductCard key={p.id} slug={store.slug} product={p} />)}
-              </div>
+              <ProductGrid slug={store.slug} products={products} />
             </section>
           )}
         </>
