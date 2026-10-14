@@ -777,6 +777,17 @@ async def test_ordering_a_variant_in_chat(wsa, meta):
     assert order["source"] == "chat" and order["items"][0]["variant"] == "L / Red" and order["items"][0]["qty"] == 2 and order["total"] == 299800
     assert _variant(next(x for x in (await wsa.get("/shop/products")).json() if x["id"] == k["id"]), "L / Red")["stock"] == 2
 
+async def test_product_categories_are_tidied_saved_and_public(ws, app_client):
+    s = await _store(ws)
+    plain = await _product(ws)
+    assert plain["category"] == ""
+    tart = await _product(ws, name="Lemon tart", category="  Tarts   &  Pies ")
+    assert tart["category"] == "Tarts & Pies"
+    assert (await ws.post("/shop/products", json={"name": "X", "price": 10000, "category": "x" * 61})).status_code == 422
+    assert (await ws.put(f"/shop/products/{tart['id']}", json={"name": "Lemon tart", "price": 39900, "category": "Tarts"})).json()["category"] == "Tarts"
+    public = (await app_client.get(f"/api/public/store/{s['slug']}")).json()
+    assert {p["name"]: p["category"] for p in public["products"]} == {plain["name"]: "", "Lemon tart": "Tarts"}
+
 
 # ---- the storefront website ---------------------------------------------------------------------------------------------------
 
@@ -787,7 +798,6 @@ async def test_a_new_store_gets_a_complete_website_from_its_settings(ws, app_cli
     await _product(ws, name="Brownie box", price=39900, image_url="https://cdn.test/brownie.jpg")
     assert cake["images"] == ["https://cdn.test/cake-2.jpg"]  # blanks and repeats dropped
     assert (await ws.post("/shop/products", json={"name": "X", "price": 10000, "images": ["ftp://nope"]})).status_code == 422
-
     home = (await app_client.get(f"/api/public/store/{s['slug']}")).json()
     site = home["store"]["site"]
     assert site["announcement"] == "Free delivery on orders above ₹1,000 · Cash on delivery available"

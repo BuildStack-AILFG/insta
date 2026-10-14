@@ -125,9 +125,15 @@ class ProductIn(BaseModel):
     sort: int = 0
     # Home-page rails to feature it in; a rail nobody picked products for shows the newest / most-ordered ones.
     sections: list[Literal["best_sellers", "new_arrivals"]] = Field(default_factory=list, max_length=2)
+    category: str = Field(default="", max_length=60)
     # Size / colour etc. With options, every combination is a variant with its own stock (and optionally price).
     options: list[OptionGroup] = Field(default_factory=list, max_length=2)
     variants: list[VariantIn] = Field(default_factory=list, max_length=100)
+
+    @field_validator("category")
+    @classmethod
+    def _category(cls, v: str) -> str:
+        return " ".join(v.split())
 
     @field_validator("images")
     @classmethod
@@ -229,7 +235,7 @@ def variant_out(v: ShopVariant) -> dict:
 def product_out(p: ShopProduct, variants: list[ShopVariant] | None = None) -> dict:
     return {"id": str(p.id), "name": p.name, "description": p.description, "price": p.price, "compare_at_price": p.compare_at_price, "image_url": p.image_url,
             "images": p.images or [], "media_id": p.media_id, "permalink": p.permalink, "status": p.status, "stock": p.stock, "sort": p.sort, "sections": p.sections or [],
-            "options": p.options or [], "variants": [variant_out(v) for v in variants or []], "orders_count": p.orders_count, "revenue": p.revenue, "created_at": _iso(p.created_at)}
+            "category": p.category or "", "options": p.options or [], "variants": [variant_out(v) for v in variants or []], "orders_count": p.orders_count, "revenue": p.revenue, "created_at": _iso(p.created_at)}
 
 
 def _order_path(o: ShopOrder, slug: str | None) -> dict:
@@ -254,7 +260,7 @@ def public_product(p: ShopProduct, variants: list[ShopVariant]) -> dict:
     live = [v for v in variants if v.enabled] if p.options else []
     prices = [svc.unit_price(p, v) for v in live]
     return {"id": str(p.id), "name": p.name, "description": p.description, "price": min(prices) if prices else p.price, "price_varies": len(set(prices)) > 1,
-            "compare_at_price": p.compare_at_price, "image_url": p.image_url, "images": [u for u in [p.image_url, *(p.images or [])] if u],
+            "compare_at_price": p.compare_at_price, "category": p.category or "", "image_url": p.image_url, "images": [u for u in [p.image_url, *(p.images or [])] if u],
             "permalink": p.permalink, "sold_out": not svc.in_stock(p, variants),
             "options": (p.options or []) if live else [],
             "variants": [{"id": str(v.id), "title": v.title, "options": v.options, "price": svc.unit_price(p, v), "sold_out": v.stock is not None and v.stock <= 0}
