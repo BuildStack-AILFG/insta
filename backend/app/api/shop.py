@@ -470,6 +470,23 @@ async def view_store(slug: str, request: Request, db: AsyncSession = Depends(get
             "best_sellers": [str(p.id) for p in best], "new_arrivals": [str(p.id) for p in newest]}
 
 
+@public.get("/{slug}/search")
+async def search_store(slug: str, request: Request, q: str = Query(default="", max_length=60), db: AsyncSession = Depends(get_db)) -> dict:
+    """Navbar search: live suggestions by name, category or description."""
+    ratelimit.limit(request, "store-search", 60, 60)
+    s = await _public_shop(db, slug, selling=True)
+    term = " ".join(q.split())
+    if len(term) < 2:
+        return {"products": []}
+    like = "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    rows = (await db.execute(select(ShopProduct).where(
+        ShopProduct.tenant_id == s.tenant_id, ShopProduct.status == "active", ShopProduct.price >= 100,
+        ShopProduct.name.ilike(like, escape="\\") | ShopProduct.category.ilike(like, escape="\\") | ShopProduct.description.ilike(like, escape="\\"),
+    ).order_by(ShopProduct.orders_count.desc(), ShopProduct.created_at.desc()).limit(8))).scalars().all()
+    variants = await svc.variants_of(db, [p.id for p in rows])
+    return {"products": [public_product(p, variants[p.id]) for p in rows]}
+
+
 @public.get("/{slug}/products/{product_id}")
 async def view_product(slug: str, product_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
     s = await _public_shop(db, slug, selling=True)

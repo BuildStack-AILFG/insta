@@ -788,12 +788,26 @@ async def test_product_categories_are_tidied_saved_and_public(ws, app_client):
     public = (await app_client.get(f"/api/public/store/{s['slug']}")).json()
     assert {p["name"]: p["category"] for p in public["products"]} == {plain["name"]: "", "Lemon tart": "Tarts"}
 
+async def test_store_search_finds_active_products_by_name_or_category(ws, other, app_client):
+    s = await _store(ws)
+    await _product(ws, name="Silk saree", category="Sarees")
+    await _product(ws, name="Cotton kurti", category="Kurtis", description="Soft 100% cotton")
+    await _product(ws, name="Secret saree", category="Sarees", status="hidden")
+    url = f"/api/public/store/{s['slug']}/search"
+    names = lambda r: sorted(p["name"] for p in r.json()["products"])
+    assert names(await app_client.get(url, params={"q": "saree"})) == ["Silk saree"]  # hidden products never show
+    assert names(await app_client.get(url, params={"q": "kurtis"})) == ["Cotton kurti"]  # matches the category
+    assert names(await app_client.get(url, params={"q": "100%"})) == ["Cotton kurti"]  # % is literal, not a wildcard
+    assert names(await app_client.get(url, params={"q": "%%"})) == []
+    assert (await app_client.get(url, params={"q": "s"})).json() == {"products": []}  # too short
+    assert (await app_client.get("/api/public/store/nope-nope/search", params={"q": "saree"})).status_code == 404
+
 
 # ---- the storefront website ---------------------------------------------------------------------------------------------------
 
 async def test_a_new_store_gets_a_complete_website_from_its_settings(ws, app_client):
     s = await _store(ws, tagline="Fresh cakes, Pune")
-    assert s["site"]["accent"] == "#e11d48" and s["site"]["hero"] == [] and all(s["site"]["sections"].values())
+    assert s["site"]["accent"] == "#e11d48" and s["site"]["hero"] == [] and all(s["site"]["sections"].values()) and s["site"]["sections"]["categories"]
     cake = await _product(ws, images=["https://cdn.test/cake-2.jpg", "https://cdn.test/cake-2.jpg", " "])
     await _product(ws, name="Brownie box", price=39900, image_url="https://cdn.test/brownie.jpg")
     assert cake["images"] == ["https://cdn.test/cake-2.jpg"]  # blanks and repeats dropped

@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { Banknote, Instagram, MessageCircle, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { HeroCarousel, Rail, RailItem } from "@/components/store/Carousel";
 import ProductCard from "@/components/store/ProductCard";
+import CategoryTiles from "@/components/store/CategoryTiles";
 import ProductGrid from "@/components/store/ProductGrid";
 import StoreShell, { loadStore, type StoreData } from "@/components/store/StoreShell";
 import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ category?: string | string[] }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await loadStore<StoreData>(encodeURIComponent((await params).slug));
@@ -20,8 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** The store's home page: hero carousel, trust badges, best sellers, new arrivals, all products, Instagram, about and FAQ. */
-export default async function StorePage({ params }: Props) {
+export default async function StorePage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const picked = (await searchParams)?.category;
+  const category = typeof picked === "string" ? picked : null;
   const data = await loadStore<StoreData>(encodeURIComponent(slug));
   if (!data) notFound();
   const { store, products } = data;
@@ -57,6 +60,8 @@ export default async function StorePage({ params }: Props) {
         </section>
       )}
 
+      {site.sections.categories && <CategoryTiles slug={store.slug} title={t.categories_title} products={products} />}
+
       {products.length === 0 ? (
         <div className="py-24 text-center text-[var(--muted)]"><ShoppingBag className="mx-auto mb-3" size={30} />{t.empty_store}</div>
       ) : (
@@ -64,13 +69,13 @@ export default async function StorePage({ params }: Props) {
           {best.length > 0 && <Rail title={t.best_sellers_title} subtitle={t.best_sellers_subtitle}>{best.map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}</Rail>}
           {fresh.length > 0 && <Rail title={t.new_arrivals_title} subtitle={t.new_arrivals_subtitle}>{fresh.map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}</Rail>}
 
-          {(site.sections.all_products || (!best.length && !fresh.length)) && (
+          {(site.sections.all_products || category || (!best.length && !fresh.length)) && (
             <section id="products" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-14">
               <div className="mb-5 flex items-end justify-between">
                 <h2 className="text-[22px] font-bold tracking-tight sm:text-[26px]">{t.all_products_title}</h2>
                 <span className="text-[13px] text-[var(--muted)]">{products.length} product{products.length === 1 ? "" : "s"}</span>
               </div>
-              <ProductGrid slug={store.slug} products={products} />
+              <ProductGrid key={category ?? ""} slug={store.slug} products={products} initialCategory={category} />
             </section>
           )}
         </>

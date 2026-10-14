@@ -685,12 +685,12 @@ export type ShopInput = {
   chat_orders: boolean; cod_confirmation: boolean; reminders_enabled: boolean; reminder_after_minutes: number; reminder_message: string;
   gstin: string; legal_name: string; business_address: string; gst_rate: 0 | 5 | 12 | 18 | 28;
 };
-export type SiteSection = "best_sellers" | "new_arrivals" | "all_products" | "instagram" | "about" | "faq";
+export type SiteSection = "categories" | "best_sellers" | "new_arrivals" | "all_products" | "instagram" | "about" | "faq";
 export type HeroSlide = { image_url: string; title: string; subtitle: string; cta_label: string; product_id: string | null };
 /** The storefront website's look and content (white template). Empty fields are filled from the store's settings when shown. */
 export type SiteColors = { background: string; text: string; surface: string; button_text: string };
 export type SiteTextKey =
-  | "hero_button" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
+  | "hero_button" | "categories_title" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
   | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store";
 export type ShopSite = {
   accent: string; colors: SiteColors; texts: Record<SiteTextKey, string>; announcement: string; hero: HeroSlide[];

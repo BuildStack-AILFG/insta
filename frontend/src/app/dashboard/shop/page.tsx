@@ -240,6 +240,33 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
 
 const SECTION_PICKS: { id: ProductSection; label: string }[] = [{ id: "new_arrivals", label: "New arrivals" }, { id: "best_sellers", label: "Best sellers" }];
 
+/** Pick one of the categories already in use (tap again to clear), or add a new one. */
+function CategoryPicker({ value, options, onChange }: { value: string; options: string[]; onChange: (v: string) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const all = value && !options.some((o) => o.toLowerCase() === value.toLowerCase()) ? [...options, value] : options;
+  const commit = () => {
+    const v = draft.split(/\s+/).filter(Boolean).join(" ");
+    if (v) onChange(all.find((o) => o.toLowerCase() === v.toLowerCase()) ?? v);
+    setDraft(""); setAdding(false);
+  };
+  const pill = "rounded-full border px-3 py-1.5 text-[12.5px] transition";
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {all.map((c) => (
+        <button key={c} type="button" onClick={() => onChange(c === value ? "" : c)} aria-pressed={c === value}
+          className={`${pill} ${c === value ? "border-[var(--brand)] bg-[var(--brand)]/15 text-white" : "border-white/15 text-white/65 hover:text-white"}`}>{c}</button>
+      ))}
+      {adding ? (
+        <Input autoFocus value={draft} maxLength={60} placeholder="New category" aria-label="New category" className="!h-8 !w-40 !rounded-full !text-[12.5px]"
+          onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } else if (e.key === "Escape") { setDraft(""); setAdding(false); } }} />
+      ) : (
+        <button type="button" onClick={() => setAdding(true)} className={`${pill} flex items-center gap-1 border-dashed border-white/20 text-white/55 hover:text-white`}><Plus size={12} /> New category</button>
+      )}
+    </div>
+  );
+}
+
 function ProductEditor({ product, categories, onClose, onSaved }: { product: Product | null; categories: string[]; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState({
     name: product?.name ?? "", description: product?.description ?? "", price: product && product.price >= 100 ? fromMinor(product.price) : "",
@@ -298,9 +325,8 @@ function ProductEditor({ product, categories, onClose, onSaved }: { product: Pro
           <Field label="Price (₹)"><Input value={f.price} inputMode="decimal" placeholder="499" onChange={(e) => setF({ ...f, price: e.target.value })} /></Field>
           <Field label="MRP (₹, optional)" hint="Shown struck through, with the discount"><Input value={f.mrp} inputMode="decimal" placeholder="799" onChange={(e) => setF({ ...f, mrp: e.target.value })} /></Field>
         </div>
-        <Field label="Category (optional)" hint="e.g. Sarees, Kurtis — shoppers can filter your store by category. Pick one you've used or type a new one.">
-          <Input value={f.category} maxLength={60} list="product-categories" placeholder="Sarees" onChange={(e) => setF({ ...f, category: e.target.value })} />
-          <datalist id="product-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+        <Field label="Category (optional)" hint="Shoppers can browse and filter your store by category — e.g. Sarees, Kurtis.">
+          <CategoryPicker value={f.category} options={categories} onChange={(category) => setF({ ...f, category })} />
         </Field>
         <Field label="Description"><Textarea rows={4} maxLength={2000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
         <VariantsEditor value={draft} onChange={setDraft} basePrice={f.price} />

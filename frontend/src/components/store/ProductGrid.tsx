@@ -5,9 +5,9 @@ import ProductCard from "@/components/store/ProductCard";
 import type { PublicProduct } from "@/lib/api";
 
 /** The "all products" grid, with one filter chip per category the seller has used (none shown when nothing is categorised). */
-export default function ProductGrid({ slug, products }: { slug: string; products: PublicProduct[] }) {
+export default function ProductGrid({ slug, products, initialCategory = null }: { slug: string; products: PublicProduct[]; initialCategory?: string | null }) {
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(initialCategory && categories.includes(initialCategory) ? initialCategory : null);
   const shown = active ? products.filter((p) => p.category === active) : products;
   const chip = (on: boolean) => `shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition ${on ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)] hover:border-[var(--muted)]"}`;
 
