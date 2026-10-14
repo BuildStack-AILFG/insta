@@ -8,6 +8,7 @@ import { ACCENTS, SitePreview } from "./CreateShopWizard";
 import PhotoUpload from "./PhotoUpload";
 
 const SECTIONS: { id: SiteSection; label: string; hint: string }[] = [
+  { id: "categories", label: "Shop by category", hint: "Photo tiles under the banner, one per category" },
   { id: "best_sellers", label: "Best sellers", hint: "Products you tick as Best sellers, or else your top sellers" },
   { id: "new_arrivals", label: "New arrivals", hint: "Products you tick as New arrivals, or else your newest" },
   { id: "all_products", label: "Shop all", hint: "Grid of every product" },
@@ -28,7 +29,7 @@ const THEMES: { name: string; colors: SiteColors; accent?: string }[] = [
 const sameColors = (a: SiteColors, b: SiteColors) => (Object.keys(b) as (keyof SiteColors)[]).every((k) => a[k].toLowerCase() === b[k].toLowerCase());
 
 const TEXTS: [SiteTextKey, string][] = [
-  ["hero_button", "Banner button"], ["best_sellers_title", "Best sellers — heading"], ["best_sellers_subtitle", "Best sellers — line below"],
+  ["hero_button", "Banner button"], ["categories_title", "Categories — heading"], ["best_sellers_title", "Best sellers — heading"], ["best_sellers_subtitle", "Best sellers — line below"],
   ["new_arrivals_title", "New arrivals — heading"], ["new_arrivals_subtitle", "New arrivals — line below"], ["all_products_title", "All products — heading"],
   ["instagram_title", "Instagram — heading"], ["instagram_subtitle", "Instagram — line below"], ["faq_title", "FAQ — heading"],
   ["related_title", "Product page — more products"], ["add_to_cart", "Add to cart button"], ["buy_now", "Buy now button"], ["empty_store", "When there are no products"],

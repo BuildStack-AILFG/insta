@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Instagram, MessageCircle, Phone } from "lucide-react";
 import type { PublicProduct, PublicStore } from "@/lib/api";
 import { CartLink } from "./CartView";
+import StoreSearch from "./StoreSearch";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 
@@ -76,6 +77,7 @@ export default function StoreShell({ store, children, home = false }: { store: P
             {nav.map((n) => <Link key={n.label} href={n.href} className="hover:text-[var(--fg)]">{n.label}</Link>)}
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <StoreSearch slug={store.slug} />
             {store.instagram && (
               <a href={`https://instagram.com/${store.instagram}`} target="_blank" rel="noreferrer" aria-label={`@${store.instagram} on Instagram`}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--fg)] hover:bg-[var(--soft)]"><Instagram size={19} /></a>

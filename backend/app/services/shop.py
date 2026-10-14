@@ -117,12 +117,12 @@ def order_url(shop: Shop, order: ShopOrder) -> str:
 # filled from the store's own settings, so a brand-new store already looks complete.
 
 DEFAULT_ACCENT = "#e11d48"
-SITE_SECTIONS = ("best_sellers", "new_arrivals", "all_products", "instagram", "about", "faq")
+SITE_SECTIONS = ("categories", "best_sellers", "new_arrivals", "all_products", "instagram", "about", "faq")
 # Page colours (the accent above colours buttons and badges); the template derives muted text and lines from these.
 DEFAULT_COLORS = {"background": "#ffffff", "text": "#171717", "surface": "#f6f6f4", "button_text": "#ffffff"}
 # Every heading and button label on the website, so a store can speak in its own words (or language).
 DEFAULT_TEXTS = {
-    "hero_button": "Shop now", "best_sellers_title": "Best sellers", "best_sellers_subtitle": "What everyone's ordering",
+    "hero_button": "Shop now", "categories_title": "Shop by category", "best_sellers_title": "Best sellers", "best_sellers_subtitle": "What everyone's ordering",
     "new_arrivals_title": "New arrivals", "new_arrivals_subtitle": "Just landed in the store", "all_products_title": "Shop all",
     "instagram_title": "Shop our Instagram", "instagram_subtitle": "Seen it on our feed? Tap to buy.", "faq_title": "Questions? Answers.",
     "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "empty_store": "New products are coming soon.",
