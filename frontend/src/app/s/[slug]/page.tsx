@@ -5,12 +5,12 @@ import { Banknote, Instagram, MessageCircle, ShieldCheck, ShoppingBag, Truck } f
 import { HeroCarousel, Rail, RailItem } from "@/components/store/Carousel";
 import ProductCard from "@/components/store/ProductCard";
 import CategoryTiles from "@/components/store/CategoryTiles";
-import ProductGrid from "@/components/store/ProductGrid";
 import StoreShell, { loadStore, type StoreData } from "@/components/store/StoreShell";
 import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
+import { categoriesOf, categoryHref } from "@/lib/store/categories";
 
-type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ category?: string | string[] }> };
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await loadStore<StoreData>(encodeURIComponent((await params).slug));
@@ -21,15 +21,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** The store's home page: hero carousel, trust badges, best sellers, new arrivals, all products, Instagram, about and FAQ. */
-export default async function StorePage({ params, searchParams }: Props) {
+export default async function StorePage({ params }: Props) {
   const { slug } = await params;
-  const picked = (await searchParams)?.category;
-  const category = typeof picked === "string" ? picked : null;
   const data = await loadStore<StoreData>(encodeURIComponent(slug));
   if (!data) notFound();
   const { store, products } = data;
   const { site } = store;
   const t = site.texts;
+  const categories = categoriesOf(products, data.category_images);
   const byId = new Map(products.map((p) => [p.id, p]));
   const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((p): p is PublicProduct => !!p);
   const best = site.sections.best_sellers ? pick(data.best_sellers) : [];
@@ -44,7 +43,7 @@ export default async function StorePage({ params, searchParams }: Props) {
   ].filter((b) => b !== null);
 
   return (
-    <StoreShell store={store} home>
+    <StoreShell store={store} home categories={categories.map((c) => c.name)}>
       <HeroCarousel slides={site.hero} slug={store.slug} storeName={store.name} buttonLabel={t.hero_button} />
 
       {badges.length > 0 && (
@@ -60,7 +59,7 @@ export default async function StorePage({ params, searchParams }: Props) {
         </section>
       )}
 
-      {site.sections.categories && <CategoryTiles slug={store.slug} title={t.categories_title} products={products} />}
+      {site.sections.categories && <CategoryTiles slug={store.slug} title={t.categories_title} products={products} covers={data.category_images} />}
 
       {products.length === 0 ? (
         <div className="py-24 text-center text-[var(--muted)]"><ShoppingBag className="mx-auto mb-3" size={30} />{t.empty_store}</div>
@@ -69,14 +68,26 @@ export default async function StorePage({ params, searchParams }: Props) {
           {best.length > 0 && <Rail title={t.best_sellers_title} subtitle={t.best_sellers_subtitle}>{best.map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}</Rail>}
           {fresh.length > 0 && <Rail title={t.new_arrivals_title} subtitle={t.new_arrivals_subtitle}>{fresh.map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}</Rail>}
 
-          {(site.sections.all_products || category || (!best.length && !fresh.length)) && (
-            <section id="products" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-14">
-              <div className="mb-5 flex items-end justify-between">
-                <h2 className="text-[22px] font-bold tracking-tight sm:text-[26px]">{t.all_products_title}</h2>
-                <span className="text-[13px] text-[var(--muted)]">{products.length} product{products.length === 1 ? "" : "s"}</span>
-              </div>
-              <ProductGrid key={category ?? ""} slug={store.slug} products={products} initialCategory={category} />
+          {categories.slice(0, 4).map((c) => (
+            <Rail key={c.name} title={c.name} subtitle={`${c.count} item${c.count === 1 ? "" : "s"}`}
+              action={<Link href={categoryHref(store.slug, c.name)} className="mr-1 text-[13.5px] font-medium text-[var(--accent)] hover:underline">View all →</Link>}>
+              {products.filter((p) => p.category === c.name).slice(0, 8).map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}
+            </Rail>
+          ))}
+
+          {!best.length && !fresh.length && !categories.length && (
+            <section className="mx-auto max-w-6xl px-4 pt-14">
+              <h2 className="mb-5 text-[22px] font-bold tracking-tight sm:text-[26px]">{t.all_products_title}</h2>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{products.slice(0, 12).map((p) => <ProductCard key={p.id} slug={store.slug} product={p} />)}</div>
             </section>
+          )}
+
+          {site.sections.all_products && (
+            <div className="mt-12 text-center">
+              <Link href={`/s/${store.slug}/shop`} className="inline-flex items-center rounded-full bg-[var(--accent)] px-7 py-3 text-[14px] font-semibold text-[var(--accent-fg)] hover:opacity-90">
+                Shop all {products.length} products
+              </Link>
+            </div>
           )}
         </>
       )}

@@ -947,3 +947,45 @@ async def test_photo_upload_signature_is_scoped_to_the_workspace(wsa, monkeypatc
     assert d["folder"] == f"dmforgrow/{wsa.tenant_id}/shop" and d["cloud_name"] == "demo-cloud" and d["api_key"] == "1234"
     assert d["signature"] == hashlib.sha1(f"folder={d['folder']}&timestamp={d['timestamp']}shh".encode()).hexdigest()
     assert "shh" not in r.text  # the secret never leaves the server
+
+
+# ---- categories ------------------------------------------------------------------------------------------------------
+
+async def test_categories_add_pick_products_rename_and_delete(ws, other, app_client):
+    s = await _store(ws)
+    a, b, c = await _product(ws, name="A"), await _product(ws, name="B"), await _product(ws, name="C")
+    made = await ws.post("/shop/categories", json={"name": "  Bags ", "product_ids": [a["id"], b["id"]], "image_url": "https://cdn.test/bags.jpg"})
+    assert made.status_code == 201 and made.json()["name"] == "Bags" and made.json()["count"] == 2
+    cat = made.json()
+    assert (await ws.post("/shop/categories", json={"name": "bags"})).status_code == 409  # same name, any capitalisation
+
+    cats = {x["name"]: x for x in (await ws.get("/shop/categories")).json()}
+    assert cats["Bags"]["count"] == 2
+    cat_of = lambda r: {p["name"]: p["category"] for p in r.json()}
+    assert cat_of(await ws.get("/shop/products")) == {"A": "Bags", "B": "Bags", "C": ""}
+
+    # Pick a different set: C joins, B leaves; renaming carries the products along.
+    r = await ws.put(f"/shop/categories/{cat['id']}", json={"name": "Handbags", "product_ids": [a["id"], c["id"]]})
+    assert r.status_code == 200 and r.json()["count"] == 2
+    assert cat_of(await ws.get("/shop/products")) == {"A": "Handbags", "B": "", "C": "Handbags"}
+    store = (await app_client.get(f"/api/public/store/{s['slug']}")).json()
+    assert {p["category"] for p in store["products"]} == {"Handbags", ""} and store["category_images"] == {}  # cover removed by the save
+
+    # Someone else's products can't be pulled in, and their categories are invisible to us.
+    foreign = await _product(other, name="Theirs")
+    assert (await ws.put(f"/shop/categories/{cat['id']}", json={"name": "Handbags", "product_ids": [foreign["id"]]})).status_code == 422
+    assert (await other.put(f"/shop/categories/{cat['id']}", json={"name": "X"})).status_code == 404
+    assert (await other.get("/shop/categories")).json() == []
+
+    assert (await ws.delete(f"/shop/categories/{cat['id']}")).status_code == 204
+    assert cat_of(await ws.get("/shop/products")) == {"A": "", "B": "", "C": ""}
+    assert (await ws.get("/shop/categories")).json() == []
+
+
+async def test_category_typed_in_the_product_form_joins_the_list(ws):
+    await _store(ws)
+    p = await _product(ws, name="Kurta", category="Kurtas")
+    assert [x["name"] for x in (await ws.get("/shop/categories")).json()] == ["Kurtas"]
+    q = await _product(ws, name="Kurta 2", category="kurtas")  # reuses the existing spelling, no duplicate
+    assert q["category"] == "Kurtas" and len((await ws.get("/shop/categories")).json()) == 1
+    assert p["category"] == "Kurtas"

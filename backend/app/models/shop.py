@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -89,6 +89,17 @@ class ShopProduct(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     orders_count: Mapped[int] = mapped_column(Integer, default=0)  # paid / COD orders
     revenue: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ShopCategory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A category the seller created. Products join it by carrying its name in `ShopProduct.category`; an empty category is fine."""
+
+    __tablename__ = "shop_categories"
+    __table_args__ = (Index("uq_shop_categories_tenant_name", "tenant_id", text("lower(name)"), unique=True),)
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(60), nullable=False)
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)  # cover photo; the storefront falls back to the first product's
 
 
 class ShopVariant(UUIDPrimaryKeyMixin, TimestampMixin, Base):

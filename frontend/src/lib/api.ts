@@ -760,6 +760,10 @@ export const shop = {
   createProduct: (b: ProductInput) => request<Product>("/shop/products", { method: "POST", body: b }),
   updateProduct: (id: string, b: ProductInput) => request<Product>(`/shop/products/${id}`, { method: "PUT", body: b }),
   removeProduct: (id: string) => request<void>(`/shop/products/${id}`, { method: "DELETE" }),
+  categories: () => request<ShopCategory[]>("/shop/categories"),
+  createCategory: (b: CategoryInput) => request<ShopCategory>("/shop/categories", { method: "POST", body: b }),
+  updateCategory: (id: string, b: CategoryInput) => request<ShopCategory>(`/shop/categories/${id}`, { method: "PUT", body: b }),
+  removeCategory: (id: string) => request<void>(`/shop/categories/${id}`, { method: "DELETE" }),
   importPosts: (account_id: string, media_ids: string[]) =>
     request<{ created: Product[]; skipped: number; errors: string[] }>("/shop/products/import", { method: "POST", body: { account_id, media_ids } }),
   orders: (p?: { status?: string; payment?: string; limit?: number; offset?: number }) => request<Page<ShopOrder>>(`/shop/orders${qs(p)}`),
@@ -803,6 +807,8 @@ export type PublicStore = {
   free_shipping_above: number | null; payment_methods: ("online" | "cod")[]; site: ShopSite;
 };
 export type PublicVariant = { id: string; title: string; options: Record<string, string>; price: number; sold_out: boolean };
+export type ShopCategory = { id: string; name: string; image_url: string | null; count: number };
+export type CategoryInput = { name: string; image_url: string | null; product_ids: string[] };
 export type PublicProduct = {
   id: string; name: string; description: string; category: string; price: number; price_varies: boolean; compare_at_price: number | null; image_url: string | null; permalink: string | null;
   sold_out: boolean; options: OptionGroup[]; variants: PublicVariant[]; images: string[];

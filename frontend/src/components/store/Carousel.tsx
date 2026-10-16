@@ -83,7 +83,7 @@ export function HeroCarousel({ slides, slug, storeName, buttonLabel }: { slides:
     return (
       <section className="bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg))] px-4 py-20 text-center">
         <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[48px]">{storeName}</h1>
-        <Link href={`/s/${slug}#products`} className="mt-6 inline-block rounded-full bg-[var(--accent)] px-7 py-3 text-[15px] font-semibold text-[var(--accent-fg)]">{buttonLabel}</Link>
+        <Link href={`/s/${slug}/shop`} className="mt-6 inline-block rounded-full bg-[var(--accent)] px-7 py-3 text-[15px] font-semibold text-[var(--accent-fg)]">{buttonLabel}</Link>
       </section>
     );
   }
@@ -97,7 +97,7 @@ export function HeroCarousel({ slides, slug, storeName, buttonLabel }: { slides:
             <div className="absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-6 pb-14 text-white sm:pb-16">
               {s.title && <h2 className="max-w-xl text-[30px] font-extrabold leading-tight tracking-tight sm:text-[46px]">{s.title}</h2>}
               {s.subtitle && <p className="mt-2 max-w-lg text-[15px] text-white/85 sm:text-[17px]">{s.subtitle}</p>}
-              <Link href={s.product_id ? `/s/${slug}/p/${s.product_id}` : `/s/${slug}#products`}
+              <Link href={s.product_id ? `/s/${slug}/p/${s.product_id}` : `/s/${slug}/shop`}
                 className="mt-6 inline-block rounded-full bg-[var(--accent)] px-7 py-3 text-[15px] font-semibold text-[var(--accent-fg)] transition hover:brightness-95">
                 {s.cta_label || buttonLabel}
               </Link>

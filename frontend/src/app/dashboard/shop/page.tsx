@@ -11,6 +11,7 @@ import ShipModal from "@/components/shop/ShipModal";
 import ShippingSettings from "@/components/shop/ShippingSettings";
 import ShopReports from "@/components/shop/ShopReports";
 import VariantsEditor, { draftFrom, toInput, type VariantDraft } from "@/components/shop/VariantsEditor";
+import CategoriesTab from "@/components/shop/CategoriesTab";
 import CreateShopWizard from "@/components/shop/CreateShopWizard";
 import SiteEditor from "@/components/shop/SiteEditor";
 import PhotoUpload from "@/components/shop/PhotoUpload";
@@ -20,7 +21,7 @@ import {
 } from "@/lib/api";
 import { fmtMoney, fromMinor, toMinor } from "@/lib/money";
 
-type Tab = "orders" | "products" | "website" | "reports" | "settings";
+type Tab = "orders" | "products" | "categories" | "website" | "reports" | "settings";
 
 function WebsiteTab({ shop, onSaved }: { shop: Shop; onSaved: () => void }) {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -62,10 +63,11 @@ export default function ShopPage() {
             <Stat label="To ship" value={stats.to_ship} sub={`${stats.awaiting_payment ? `${stats.awaiting_payment} awaiting payment · ` : ""}${stats.views.toLocaleString()} store visits`} />
           </div>
           <div className="mb-5"><CopyField label="Your store link — put it in your Instagram bio" value={shop.url} /></div>
-          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, { id: "products", label: "Products" }, { id: "website", label: "Website" },
+          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, { id: "products", label: "Products" }, { id: "categories", label: "Categories" }, { id: "website", label: "Website" },
             { id: "reports", label: "Reports" }, { id: "settings", label: "Store settings" }]} value={tab} onChange={setTab} />
           {tab === "orders" && <Orders onChange={load} />}
           {tab === "products" && <Products accounts={accounts} />}
+          {tab === "categories" && <CategoriesTab />}
           {tab === "website" && <WebsiteTab shop={shop} onSaved={load} />}
           {tab === "reports" && <ShopReports />}
           {tab === "settings" && (
@@ -178,6 +180,8 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [picking, setPicking] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [catNames, setCatNames] = useState<string[]>([]);
+  useEffect(() => { api.categories().then((c) => setCatNames(c.map((x) => x.name)), () => {}); }, [editing]);
   const load = useCallback(async () => { try { setList(await api.products()); } catch (e) { toast(errorMessage(e), "error"); } }, [toast]);
   useEffect(() => { void load(); }, [load]);
 
@@ -233,7 +237,7 @@ function Products({ accounts }: { accounts: IgAccount[] }) {
         ))}</div>
       )}
       {picking && account && <MediaPicker account={account} selected={[]} onClose={() => setPicking(false)} onDone={(sel) => importPosts(sel.map((m) => m.id))} />}
-      {editing && <ProductEditor product={editing === "new" ? null : editing} categories={[...new Set((list ?? []).map((p) => p.category).filter(Boolean))].sort()} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast("Product saved"); void load(); }} />}
+      {editing && <ProductEditor product={editing === "new" ? null : editing} categories={[...new Set([...catNames, ...(list ?? []).map((p) => p.category).filter(Boolean)])].sort((a, b) => a.localeCompare(b))} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast("Product saved"); void load(); }} />}
     </div>
   );
 }
