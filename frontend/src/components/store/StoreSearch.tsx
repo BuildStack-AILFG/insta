@@ -16,9 +16,10 @@ export default function StoreSearch({ slug }: { slug: string }) {
   const box = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const term = q.trim();
+  const shown = term.length >= 2 ? results : null;  // too-short input hides suggestions without resetting state in the effect
 
   useEffect(() => {
-    if (term.length < 2) { setResults(null); return; }
+    if (term.length < 2) return;
     const ctl = new AbortController();
     const timer = setTimeout(async () => {
       try {
@@ -47,9 +48,9 @@ export default function StoreSearch({ slug }: { slug: string }) {
           placeholder="Search products" aria-label="Search products" maxLength={60}
           className="h-10 w-full rounded-full border border-[var(--line)] bg-[var(--soft)] pl-9 pr-9 text-[14px] outline-none placeholder:text-[var(--faint)] focus:border-[var(--muted)]" />
         {(q || open) && <button onClick={close} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--muted)] hover:text-[var(--fg)] md:hidden"><X size={16} /></button>}
-        {open && term.length >= 2 && results && (
+        {open && shown && (
           <div className="absolute left-0 right-0 top-12 max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-1.5 shadow-xl shadow-black/10 md:min-w-80">
-            {results.length === 0 ? <div className="px-3 py-4 text-center text-[13.5px] text-[var(--muted)]">No products match “{term}”.</div> : results.map((p) => (
+            {shown.length === 0 ? <div className="px-3 py-4 text-center text-[13.5px] text-[var(--muted)]">No products match “{term}”.</div> : shown.map((p) => (
               <Link key={p.id} href={`/s/${slug}/p/${p.id}`} onClick={close} className="flex items-center gap-3 rounded-xl p-2 hover:bg-[var(--soft)]">
                 {p.image_url ? <img src={p.image_url} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" /> : <span className="h-12 w-12 shrink-0 rounded-lg bg-[var(--soft)]" />}
                 <span className="min-w-0 flex-1">
