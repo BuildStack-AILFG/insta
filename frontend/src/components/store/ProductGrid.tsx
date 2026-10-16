@@ -4,24 +4,33 @@ import { useState } from "react";
 import ProductCard from "@/components/store/ProductCard";
 import type { PublicProduct } from "@/lib/api";
 
-/** The "all products" grid, with one filter chip per category the seller has used (none shown when nothing is categorised). */
-export default function ProductGrid({ slug, products, initialCategory = null }: { slug: string; products: PublicProduct[]; initialCategory?: string | null }) {
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const [active, setActive] = useState<string | null>(initialCategory && categories.includes(initialCategory) ? initialCategory : null);
-  const shown = active ? products.filter((p) => p.category === active) : products;
-  const chip = (on: boolean) => `shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition ${on ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)] hover:border-[var(--muted)]"}`;
+type Sort = "featured" | "low" | "high";
+
+/** A product grid with a result count, sort and an in-stock filter. The page decides which products go in (all, or one category). */
+export default function ProductGrid({ slug, products }: { slug: string; products: PublicProduct[] }) {
+  const [sort, setSort] = useState<Sort>("featured");
+  const [inStock, setInStock] = useState(false);
+  const shown = products.filter((p) => !inStock || !p.sold_out);
+  if (sort !== "featured") shown.sort((a, b) => (sort === "low" ? a.price - b.price : b.price - a.price));
 
   return (
     <>
-      {categories.length > 0 && (
-        <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-          <button className={chip(active === null)} onClick={() => setActive(null)}>All</button>
-          {categories.map((c) => <button key={c} className={chip(active === c)} onClick={() => setActive(c)}>{c}</button>)}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-y border-[var(--line)] py-3 text-[13.5px]">
+        <span className="text-[var(--muted)]">{shown.length} product{shown.length === 1 ? "" : "s"}</span>
+        <div className="flex items-center gap-4">
+          <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} className="accent-[var(--accent)]" /> In stock only</label>
+          <label className="flex items-center gap-2 text-[var(--muted)]">Sort
+            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-1.5 text-[13.5px] text-[var(--fg)] outline-none">
+              <option value="featured">Featured</option>
+              <option value="low">Price: low to high</option>
+              <option value="high">Price: high to low</option>
+            </select>
+          </label>
         </div>
-      )}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-        {shown.map((p) => <ProductCard key={p.id} slug={slug} product={p} />)}
       </div>
+      {shown.length === 0
+        ? <div className="py-16 text-center text-[var(--muted)]">Nothing matches these filters.</div>
+        : <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{shown.map((p) => <ProductCard key={p.id} slug={slug} product={p} />)}</div>}
     </>
   );
 }

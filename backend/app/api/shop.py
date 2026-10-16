@@ -18,7 +18,7 @@ from app.core import ratelimit
 from app.models.billing import PaymentLink
 from app.models.comment_automation import CommentAutomation
 from app.models.instagram_account import InstagramAccount
-from app.models.shop import Shop, ShopCart, ShopOrder, ShopProduct, ShopVariant
+from app.models.shop import Shop, ShopCart, ShopCategory, ShopOrder, ShopProduct, ShopVariant
 from app.services import payment_links, shiprocket, shop_domains
 from app.services.billing import GSTIN_RE
 from app.services.entitlements import has_feature, require_feature
@@ -337,6 +337,8 @@ async def _save_product(db: AsyncSession, p: ShopProduct, body: ProductIn) -> di
     data["sections"] = list(dict.fromkeys(data["sections"]))
     for k, v in data.items():
         setattr(p, k, v)
+    if p.category:  # a category typed into the product form joins the seller's category list (and takes its spelling)
+        p.category = (await _category_named(db, p.tenant_id, p.category)).name
     await db.flush()
     await svc.set_variants(db, p, [{"name": g.name.strip(), "values": g.values} for g in body.options],
                            [{**v.model_dump(), "options": {k.strip(): val for k, val in v.options.items()}} for v in body.variants])
@@ -352,6 +354,111 @@ async def sign_upload(ctx: Ctx = Depends(require_writer)) -> dict:
         return svc.cloudinary_signature(str(ctx.tenant_id))
     except svc.UploadsNotConfigured:
         raise HTTPException(status_code=503, detail={"error": "Photo uploads aren't set up yet. Paste a photo link instead."})
+
+
+# ---- dashboard: categories -------------------------------------------------------------------------------------------
+
+class CategoryIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    image_url: str | None = Field(default=None, pattern=URL, max_length=2000)
+    product_ids: list[uuid.UUID] = Field(default_factory=list, max_length=2000)
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        v = " ".join(v.split())
+        if not v:
+            raise ValueError("Give the category a name.")
+        return v
+
+
+def category_out(c: ShopCategory, count: int) -> dict:
+    return {"id": str(c.id), "name": c.name, "image_url": c.image_url, "count": count}
+
+
+async def _category_named(db: AsyncSession, tenant_id: uuid.UUID, name: str) -> ShopCategory:
+    """The tenant's category with this name (any capitalisation), created if it doesn't exist yet."""
+    c = (await db.execute(select(ShopCategory).where(ShopCategory.tenant_id == tenant_id, func.lower(ShopCategory.name) == name.lower()))).scalar_one_or_none()
+    if c is None:
+        c = ShopCategory(tenant_id=tenant_id, name=name)
+        db.add(c)
+        await db.flush()
+    return c
+
+
+async def _category(db: AsyncSession, ctx: Ctx, category_id: uuid.UUID) -> ShopCategory:
+    c = await db.get(ShopCategory, category_id)
+    if c is None or c.tenant_id != ctx.tenant_id:
+        raise HTTPException(status_code=404, detail={"error": "Category not found."})
+    return c
+
+
+async def _clash(db: AsyncSession, ctx: Ctx, name: str, own_id: uuid.UUID | None = None) -> None:
+    q = select(ShopCategory.id).where(ShopCategory.tenant_id == ctx.tenant_id, func.lower(ShopCategory.name) == name.lower())
+    if own_id:
+        q = q.where(ShopCategory.id != own_id)
+    if (await db.execute(q)).first():
+        raise HTTPException(status_code=409, detail={"error": f"You already have a category called “{name}”."})
+
+
+async def _members(db: AsyncSession, ctx: Ctx, name: str) -> list[ShopProduct]:
+    return list((await db.execute(select(ShopProduct).where(ShopProduct.tenant_id == ctx.tenant_id, func.lower(ShopProduct.category) == name.lower()))).scalars().all())
+
+
+async def _assign(db: AsyncSession, ctx: Ctx, c: ShopCategory, product_ids: list[uuid.UUID]) -> int:
+    """Make exactly `product_ids` the members of `c`: listed products move in, products that were in it and aren't listed move out."""
+    ids = set(product_ids)
+    found = {}
+    if ids:
+        found = {p.id: p for p in (await db.execute(select(ShopProduct).where(ShopProduct.tenant_id == ctx.tenant_id, ShopProduct.id.in_(ids)))).scalars().all()}
+    if len(found) != len(ids):
+        raise HTTPException(status_code=422, detail={"error": "Some of those products no longer exist."})
+    for p in await _members(db, ctx, c.name):
+        if p.id not in ids:
+            p.category = ""
+    for p in found.values():
+        p.category = c.name
+    return len(ids)
+
+
+@router.get("/categories")
+async def list_categories(ctx: Ctx = Depends(get_ctx), db: AsyncSession = Depends(get_db)) -> list[dict]:
+    rows = (await db.execute(select(ShopCategory).where(ShopCategory.tenant_id == ctx.tenant_id).order_by(func.lower(ShopCategory.name)))).scalars().all()
+    counts = dict((await db.execute(select(func.lower(ShopProduct.category), func.count()).where(ShopProduct.tenant_id == ctx.tenant_id, ShopProduct.category != "")
+                                    .group_by(func.lower(ShopProduct.category)))).all())
+    return [category_out(c, counts.get(c.name.lower(), 0)) for c in rows]
+
+
+@router.post("/categories", status_code=status.HTTP_201_CREATED)
+async def create_category(body: CategoryIn, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> dict:
+    await _clash(db, ctx, body.name)
+    c = ShopCategory(tenant_id=ctx.tenant_id, name=body.name, image_url=body.image_url)
+    db.add(c)
+    await db.flush()
+    n = await _assign(db, ctx, c, body.product_ids)
+    await db.commit()
+    return category_out(c, n)
+
+
+@router.put("/categories/{category_id}")
+async def save_category(category_id: uuid.UUID, body: CategoryIn, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> dict:
+    c = await _category(db, ctx, category_id)
+    await _clash(db, ctx, body.name, c.id)
+    for p in await _members(db, ctx, c.name):  # a rename carries the products along
+        p.category = body.name
+    c.name, c.image_url = body.name, body.image_url
+    n = await _assign(db, ctx, c, body.product_ids)
+    await db.commit()
+    return category_out(c, n)
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+async def delete_category(category_id: uuid.UUID, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> None:
+    c = await _category(db, ctx, category_id)
+    for p in await _members(db, ctx, c.name):
+        p.category = ""
+    await db.delete(c)
+    await db.commit()
 
 
 @router.post("/products", status_code=status.HTTP_201_CREATED)
@@ -466,7 +573,9 @@ async def view_store(slug: str, request: Request, db: AsyncSession = Depends(get
         return [p for p in products if section in (p.sections or [])][:12]
     best = picked("best_sellers") or sorted((p for p in products if p.orders_count > 0), key=lambda p: (-p.orders_count, -p.revenue))[:8]
     newest = picked("new_arrivals") or (sorted(products, key=lambda p: p.created_at, reverse=True)[:8] if len(products) > 2 else [])
+    covers = (await db.execute(select(ShopCategory.name, ShopCategory.image_url).where(ShopCategory.tenant_id == s.tenant_id, ShopCategory.image_url.is_not(None)))).all()
     return {"store": await _store_info(db, s, products), "products": [public_product(p, variants[p.id]) for p in products],
+            "category_images": {name: url for name, url in covers},
             "best_sellers": [str(p.id) for p in best], "new_arrivals": [str(p.id) for p in newest]}
 
 

@@ -6,6 +6,7 @@ import { Check, Minus, Plus, ShoppingBag } from "lucide-react";
 import type { PublicProduct, PublicStore } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import { addToCart } from "./cart";
+import PriceBlock from "./PriceBlock";
 
 const MAX_QTY = 10;
 
@@ -42,7 +43,7 @@ export default function ProductBuy({ store, product, refToken }: { store: Public
   }
   return (
     <div className="space-y-5">
-      {groups.length > 0 && variant && <div className="text-[20px] font-bold">{fmtMoney(price)}</div>}
+      <PriceBlock price={price} from={product.price_varies && !variant} compareAt={product.price_varies ? null : product.compare_at_price} />
       {groups.map((g) => (
         <div key={g.name}>
           <div className="mb-2 text-[13px] text-[var(--muted)]">{g.name}{picked[g.name] && <>: <b className="text-[var(--fg)]">{picked[g.name]}</b></>}</div>

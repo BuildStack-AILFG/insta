@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Instagram, MessageCircle, Phone } from "lucide-react";
 import type { PublicProduct, PublicStore } from "@/lib/api";
 import { CartLink } from "./CartView";
+import { categoryHref } from "@/lib/store/categories";
 import StoreSearch from "./StoreSearch";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
@@ -17,7 +18,7 @@ export async function loadStore<T>(path: string): Promise<T | null> {
   }
 }
 
-export type StoreData = { store: PublicStore; products: PublicProduct[]; best_sellers: string[]; new_arrivals: string[] };
+export type StoreData = { store: PublicStore; products: PublicProduct[]; best_sellers: string[]; new_arrivals: string[]; category_images?: Record<string, string> };
 export type ProductData = { store: PublicStore; product: PublicProduct; related: PublicProduct[] };
 
 /**
@@ -51,12 +52,12 @@ export function whatsappUrl(phone: string): string | null {
  * The storefront template (white theme): announcement bar, sticky header with the cart, footer with policies and contact,
  * and a WhatsApp button. The seller's brand colour is exposed as --accent for every page inside it.
  */
-export default function StoreShell({ store, children, home = false }: { store: PublicStore; children: ReactNode; home?: boolean }) {
+export default function StoreShell({ store, children, home = false, categories = [] }: { store: PublicStore; children: ReactNode; home?: boolean; categories?: string[] }) {
   const { site } = store;
   const wa = store.support_phone ? whatsappUrl(store.support_phone) : null;
   const base = `/s/${store.slug}`;
   const nav = [
-    { label: "Shop", href: `${base}#products`, on: true },
+    { label: "Shop", href: `${base}/shop`, on: true },
     { label: "About", href: `${base}#about`, on: site.sections.about && !!site.about.text },
     { label: "FAQ", href: `${base}#faq`, on: site.sections.faq },
   ].filter((n) => n.on);
@@ -85,16 +86,31 @@ export default function StoreShell({ store, children, home = false }: { store: P
             <CartLink slug={store.slug} />
           </div>
         </div>
+        {categories.length > 0 && (
+          <nav aria-label="Categories" className="border-t border-[var(--line)]">
+            <div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 text-[13px] text-[var(--muted)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Link href={`${base}/shop`} className="shrink-0 py-2.5 font-medium text-[var(--fg)]">All</Link>
+              {categories.map((c) => <Link key={c} href={categoryHref(store.slug, c)} className="shrink-0 py-2.5 hover:text-[var(--fg)]">{c}</Link>)}
+            </div>
+          </nav>
+        )}
       </header>
 
       <div className={home ? "" : "mx-auto max-w-6xl px-4 pb-16"}>{children}</div>
 
       <footer className="mt-16 border-t border-[var(--line)] bg-[var(--surface)]">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-[13.5px] text-[var(--muted)] sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-[13.5px] text-[var(--muted)] sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="mb-2 text-[15px] font-bold text-[var(--fg)]">{store.name}</div>
             {store.tagline && <p>{store.tagline}</p>}
             {store.instagram && <a href={`https://instagram.com/${store.instagram}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 hover:text-[var(--fg)]"><Instagram size={14} /> @{store.instagram}</a>}
+          </div>
+          <div>
+            <div className="mb-2 font-semibold text-[var(--fg)]">Shop</div>
+            <ul className="space-y-1.5">
+              <li><Link href={`${base}/shop`} className="hover:text-[var(--fg)]">All products</Link></li>
+              {categories.slice(0, 6).map((c) => <li key={c}><Link href={categoryHref(store.slug, c)} className="hover:text-[var(--fg)]">{c}</Link></li>)}
+            </ul>
           </div>
           <div>
             <div className="mb-2 font-semibold text-[var(--fg)]">Help</div>
