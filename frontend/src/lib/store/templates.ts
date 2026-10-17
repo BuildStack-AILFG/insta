@@ -35,7 +35,7 @@ export const TEMPLATES: StoreTemplate[] = [
     starter: { texts: {}, announcement: "", about: { title: "", text: "" }, faq: [] },
   },
   {
-    id: "boutique", name: "Atelier", niche: "Fashion & boutique", blurb: "Editorial serif type, a split banner and tall, quiet product photos.", header: "center", hero: "split",
+    id: "boutique", name: "Fashion", niche: "Boutique, sarees & clothing", blurb: "Editorial serif type, a split banner and tall, quiet product photos.", header: "center", hero: "split",
     colors: { background: "#fbf7f0", text: "#2b2118", surface: "#f1e8da", button_text: "#ffffff" }, accent: "#7c2d12",
     starter: {
       texts: { hero_button: "Explore the edit", categories_title: "Shop by style", best_sellers_title: "Most loved", best_sellers_subtitle: "The pieces our customers keep coming back for",
@@ -50,7 +50,7 @@ export const TEMPLATES: StoreTemplate[] = [
     },
   },
   {
-    id: "jewellery", name: "Lumière", niche: "Jewellery & accessories", blurb: "Dark and gold, a centred banner and hairline-framed products.", header: "center", hero: "center",
+    id: "jewellery", name: "Jewellery", niche: "Jewellery & accessories", blurb: "Dark and gold, a centred banner and hairline-framed products.", header: "center", hero: "center",
     colors: { background: "#0c0a09", text: "#f5efe6", surface: "#17130f", button_text: "#0c0a09" }, accent: "#c9a24b",
     starter: {
       texts: { hero_button: "Discover the collection", categories_title: "Collections", best_sellers_title: "Signature pieces", best_sellers_subtitle: "Our most coveted designs",
@@ -65,7 +65,7 @@ export const TEMPLATES: StoreTemplate[] = [
     },
   },
   {
-    id: "bakery", name: "Crumb", niche: "Bakery, cakes & food", blurb: "Warm, rounded and friendly, with a framed banner and cosy product cards.", header: "left", hero: "inset",
+    id: "bakery", name: "Bakery & Food", niche: "Cakes, snacks & home food", blurb: "Warm, rounded and friendly, with a framed banner and cosy product cards.", header: "left", hero: "inset",
     colors: { background: "#fff8f0", text: "#3b2417", surface: "#ffeedd", button_text: "#ffffff" }, accent: "#e2622d",
     starter: {
       texts: { hero_button: "Order now", categories_title: "What are you craving?", best_sellers_title: "Customer favourites", best_sellers_subtitle: "Baked fresh, loved by everyone",
@@ -80,7 +80,7 @@ export const TEMPLATES: StoreTemplate[] = [
     },
   },
   {
-    id: "beauty", name: "Pure", niche: "Beauty, skincare & wellness", blurb: "Calm sage tones, a soft banner panel and clean, bordered product cards.", header: "left", hero: "panel",
+    id: "beauty", name: "Beauty & Wellness", niche: "Skincare, cosmetics & supplements", blurb: "Calm sage tones, a soft banner panel and clean, bordered product cards.", header: "left", hero: "panel",
     colors: { background: "#fbfcfa", text: "#1d2a24", surface: "#eef3ee", button_text: "#ffffff" }, accent: "#3f7a5a",
     starter: {
       texts: { hero_button: "Shop the range", categories_title: "Shop by need", best_sellers_title: "Bestsellers", best_sellers_subtitle: "Trusted by thousands of customers",
