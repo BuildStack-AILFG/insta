@@ -26,6 +26,7 @@ FEATURES: dict[str, dict[str, str]] = {
     "intent_matching": {"label": "Intent matching", "blurb": "AI works out which of your replies a customer meant, even without the exact keyword."},
     "segments": {"label": "Segments", "blurb": "Saved audiences built from tags, traits and activity."},
     "pipeline": {"label": "Sales pipeline", "blurb": "Track deals from first DM to payment on a drag-and-drop board."},
+    "shop_templates": {"label": "Store templates", "blurb": "Ready-made storefront designs for fashion, jewellery, food and beauty brands."},
 }
 
 TRIAL_DAYS_DEFAULT = 14
@@ -37,9 +38,12 @@ _TRIAL_FEATURES = {**_ALL_ON, "conversation_analytics": False, "automation_repor
                    "api_access": False, "integrations": False}
 # Growth-tier features: off on the trial, the free plan and Starter; Growth and above get everything.
 _GROWTH_ONLY = {"shop": False, "giveaways": False, "intent_matching": False, "segments": False, "pipeline": False}
-_TRIAL_FEATURES = {**_TRIAL_FEATURES, **_GROWTH_ONLY}
+# Pro-tier features: everything above Growth. Growth keeps the classic storefront; Pro (and Scale / Enterprise) add the niche templates.
+_PRO_ONLY = {"shop_templates": False}
+_TRIAL_FEATURES = {**_TRIAL_FEATURES, **_GROWTH_ONLY, **_PRO_ONLY}
 _FREE_FEATURES = {**_TRIAL_FEATURES, "ai_agent": False}
-_STARTER_FEATURES = {**_ALL_ON, **_GROWTH_ONLY}
+_STARTER_FEATURES = {**_ALL_ON, **_GROWTH_ONLY, **_PRO_ONLY}
+_GROWTH_FEATURES = {**_ALL_ON, **_PRO_ONLY}
 
 PLANS: list[dict] = [
     {
@@ -62,9 +66,15 @@ PLANS: list[dict] = [
     },
     {
         "id": "growth", "name": "Growth", "price_monthly": 129900, "price_quarterly": 116900, "price_yearly": 103900, "is_default_trial": False, "is_public": True,
-        "features": _ALL_ON,
+        "features": _GROWTH_FEATURES,
         "quotas": {"max_instagram_accounts": 3, "max_team_members": 8, "max_automation_flows": 20, "max_contacts": 10000, "max_comment_automations": 100,
                    "ai_replies_included_per_month": 2000, "max_knowledge_sources": 10},
+    },
+    {
+        "id": "pro", "name": "Pro", "price_monthly": 159900, "price_quarterly": 143900, "price_yearly": 127900, "is_default_trial": False, "is_public": True,
+        "features": _ALL_ON,
+        "quotas": {"max_instagram_accounts": 5, "max_team_members": 12, "max_automation_flows": 30, "max_contacts": 20000, "max_comment_automations": 150,
+                   "ai_replies_included_per_month": 3000, "max_knowledge_sources": 15},
     },
     {   # Retired tier: hidden from sale, still honoured for workspaces that bought it.
         "id": "scale", "name": "Scale", "price_monthly": 599900, "price_quarterly": 539900, "price_yearly": 479900, "is_default_trial": False, "is_public": False,

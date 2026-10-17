@@ -219,7 +219,7 @@ def _plan_out(p: Plan, workspaces: int) -> dict:
 @router.get("/plans")
 async def list_plans(_: User = Depends(require_platform_admin), db: AsyncSession = Depends(get_db)) -> dict:
     counts = {pid: n for pid, n in (await db.execute(select(Tenant.plan_id, func.count()).where(Tenant.status != "deleted").group_by(Tenant.plan_id))).all()}
-    order = {"trial": 0, "free": 1, "starter": 2, "growth": 3, "scale": 4, "enterprise": 5}
+    order = {"trial": 0, "free": 1, "starter": 2, "growth": 3, "pro": 4, "scale": 5, "enterprise": 6}
     plans = sorted((await db.execute(select(Plan))).scalars().all(), key=lambda p: (order.get(p.id, 9), p.id))
     return {"plans": [_plan_out(p, counts.get(p.id, 0)) for p in plans], "feature_catalog": FEATURES, "quota_keys": list(QUOTA_KEYS),
             "trial_days": await entitlements.trial_days(db)}

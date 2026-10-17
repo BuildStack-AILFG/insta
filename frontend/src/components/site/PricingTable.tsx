@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, BadgeCheck, Check, FileText, Minus, ShieldCheck, Sparkles } from "lucide-react";
 import {
-  ENTERPRISE_EXTRAS, FEATURE_LABELS, fmtLimit, GROWTH_TIER_FEATURES, GST_PERCENT, inr, limitBullets, monthsOf, perDay, PERIODS, savingPercent,
+  ENTERPRISE_EXTRAS, FEATURE_LABELS, fmtLimit, GROWTH_TIER_FEATURES, GST_PERCENT, inr, limitBullets, monthsOf, perDay, PERIODS, PRO_TIER_FEATURES, savingPercent,
   type FeatureKey, type Limits, type Period, type PlanInfo, type TrialInfo,
 } from "@/lib/site/plans";
 
@@ -77,14 +77,15 @@ function PlanCard({ plan, period }: { plan: PlanInfo; period: Period }) {
       <ul className="mt-6 space-y-2.5 border-t border-white/10 pt-5 text-[13.5px] text-white/70">
         {enterprise ? (
           <>
-            <Li strong>Everything in Growth, without limits</Li>
+            <Li strong>Everything in Pro, without limits</Li>
             <Li>Unlimited accounts, seats &amp; contacts</Li>
             {ENTERPRISE_EXTRAS.map((f) => <Li key={f}>{f}</Li>)}
           </>
         ) : (
           <>
-            <Li strong>{plan.id === "starter" ? "All core automation features" : "Everything in Starter, with more room"}</Li>
-            {plan.id !== "starter" && <Li>Plus {GROWTH_TIER_FEATURES.map((k) => FEATURE_LABELS[k].label).join(", ")}</Li>}
+            <Li strong>{plan.id === "starter" ? "All core automation features" : plan.id === "pro" ? "Everything in Growth, with more room" : "Everything in Starter, with more room"}</Li>
+            {plan.id === "growth" && <Li>Plus {GROWTH_TIER_FEATURES.map((k) => FEATURE_LABELS[k].label).join(", ")}</Li>}
+            {plan.id === "pro" && <Li>Plus {PRO_TIER_FEATURES.map((k) => FEATURE_LABELS[k].label).join(", ")} for fashion, jewellery, food &amp; beauty</Li>}
             {limitBullets(plan.limits).map((f) => <Li key={f}>{f}</Li>)}
           </>
         )}
@@ -116,7 +117,7 @@ export function TrustStrip({ trialDays }: { trialDays: number }) {
   );
 }
 
-/** The three plan cards with a Monthly/Yearly toggle — used on the home page and the pricing page. */
+/** The plan cards with a Monthly/Yearly toggle — used on the home page and the pricing page. */
 export function PlanCards({ plans, initialPeriod = "yearly" }: Pick<Props, "plans"> & { initialPeriod?: Period }) {
   const [period, setPeriod] = useState<Period>(initialPeriod);
   return (
@@ -125,7 +126,7 @@ export function PlanCards({ plans, initialPeriod = "yearly" }: Pick<Props, "plan
         <PeriodToggle period={period} onChange={setPeriod} plans={plans} />
         <p className="text-[13px] text-white/45">Prices in ₹ per month, excluding {GST_PERCENT}% GST · switch or cancel any time</p>
       </div>
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
+      <div className={`mx-auto grid gap-6 ${plans.length > 3 ? "max-w-7xl sm:grid-cols-2 xl:grid-cols-4" : "max-w-6xl lg:grid-cols-3"}`}>
         {plans.map((p) => <PlanCard key={p.id} plan={p} period={period} />)}
       </div>
     </div>
@@ -159,12 +160,16 @@ export function CompareTable({ plans }: Pick<Props, "plans">) {
             <tr key={r.key} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{r.label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3 text-white/70">{fmtLimit(c.limits[r.key])}</td>)}</tr>
           ))}
           <SectionRow label="Included in every plan" span={cols.length + 1} />
-          {[...CORE_ROWS, ...(Object.keys(FEATURE_LABELS) as FeatureKey[]).filter((k) => !GROWTH_TIER_FEATURES.includes(k)).map((k) => FEATURE_LABELS[k].label)].map((label) => (
+          {[...CORE_ROWS, ...(Object.keys(FEATURE_LABELS) as FeatureKey[]).filter((k) => !GROWTH_TIER_FEATURES.includes(k) && !PRO_TIER_FEATURES.includes(k)).map((k) => FEATURE_LABELS[k].label)].map((label) => (
             <tr key={label} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3"><Check size={16} className="text-brand" strokeWidth={2.5} /></td>)}</tr>
           ))}
           <SectionRow label="Growth and above" span={cols.length + 1} />
           {GROWTH_TIER_FEATURES.map((k) => (
             <tr key={k} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{FEATURE_LABELS[k].label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3">{c.id === "starter" ? <Minus size={16} className="text-white/30" aria-label="Not included" /> : <Check size={16} className="text-brand" strokeWidth={2.5} />}</td>)}</tr>
+          ))}
+          <SectionRow label="Pro and above" span={cols.length + 1} />
+          {PRO_TIER_FEATURES.map((k) => (
+            <tr key={k} className="border-t border-white/10"><th scope="row" className="px-5 py-3 font-medium text-white">{FEATURE_LABELS[k].label}</th>{cols.map((c) => <td key={c.id} className="px-5 py-3">{c.id === "starter" || c.id === "growth" ? <Minus size={16} className="text-white/30" aria-label="Not included" /> : <Check size={16} className="text-brand" strokeWidth={2.5} />}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -184,7 +189,7 @@ export default function PricingTable({ plans, trial }: Props) {
       <div className="mt-16">
         <h2 className="text-center text-[24px] font-extrabold tracking-tight text-white sm:text-[28px]">Compare plans</h2>
         <p className="mx-auto mb-8 mt-2 max-w-2xl text-center text-[14.5px] leading-relaxed text-white/55">
-          Every plan has the core automation tools. Growth adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline, with more room on every limit.
+          Every plan has the core automation tools. Growth adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline. Pro adds ready-made store templates and more room on every limit.
         </p>
         <CompareTable plans={plans} />
       </div>

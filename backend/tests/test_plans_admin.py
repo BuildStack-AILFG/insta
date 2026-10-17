@@ -81,10 +81,10 @@ async def test_starter_unlocks_the_trial_locks_but_not_growth_tier_tools(ws):
     assert r.status_code == 402 and r.json()["detail"]["feature"] == "intent_matching"
 
 
-async def test_growth_unlocks_everything(ws):
+async def test_growth_unlocks_everything_except_store_templates(ws):
     await set_plan(ws, "growth")
     f = (await ws.get("/auth/me")).json()["workspace"]["features"]
-    assert all(f.values())
+    assert f["shop_templates"] is False and all(v for k, v in f.items() if k != "shop_templates")
     for method, path in LOCKED_ENDPOINTS + GROWTH_ENDPOINTS:
         assert (await getattr(ws, method)(path)).status_code == 200, path
 
@@ -98,7 +98,7 @@ async def test_trial_is_capped_at_five_comment_automations(ws):
 
 async def test_billing_overview_offers_only_plans_on_sale(ws):
     ids = [p["id"] for p in (await ws.get("/billing")).json()["plans"]]
-    assert ids == ["starter", "growth", "enterprise"]  # the retired Scale tier, Free and Trial are never offered
+    assert ids == ["starter", "growth", "pro", "enterprise"]  # the retired Scale tier, Free and Trial are never offered
 
 
 # ---- public price list ---------------------------------------------------------------------------------------------------------
@@ -108,9 +108,10 @@ async def test_public_plans_lists_only_what_is_for_sale(app_client):
     assert r.status_code == 200
     body = r.json()
     ids = [p["id"] for p in body["plans"]]
-    assert ids == ["starter", "growth", "enterprise"]  # no free / trial / retired scale
-    starter, growth, enterprise = body["plans"]
+    assert ids == ["starter", "growth", "pro", "enterprise"]  # no free / trial / retired scale
+    starter, growth, pro, enterprise = body["plans"]
     assert starter["per_month"]["monthly"] == 79900 and growth["per_month"]["monthly"] == 129900 and enterprise["per_month"]["monthly"] is None
+    assert pro["per_month"]["monthly"] == 159900 and pro["features"]["shop_templates"] is True and growth["features"]["shop_templates"] is False
     assert body["trial"]["days"] == 14 and body["trial"]["features"]["api_access"] is False and body["trial"]["features"]["ai_agent"] is True
     assert "conversation_analytics" in body["feature_catalog"]
 
@@ -146,7 +147,7 @@ async def test_admin_can_change_plan_extend_trial_and_override_limits(ws, other,
 
     r = await ws.patch(f"/admin/workspaces/{other.tenant_id}", json={"plan_id": "growth", "quotas_override": {"max_contacts": 12345}})
     body = r.json()
-    assert body["plan_id"] == "growth" and body["quotas"]["max_contacts"] == 12345 and all(body["features"].values())
+    assert body["plan_id"] == "growth" and body["quotas"]["max_contacts"] == 12345 and all(v for k, v in body["features"].items() if k != "shop_templates")
     assert (await other.get("/developer/keys")).status_code == 200  # the customer sees the unlock immediately
     assert (await other.get("/auth/me")).json()["workspace"]["plan_state"]["kind"] == "custom"  # granted by hand, no expiry
 

@@ -6,6 +6,7 @@ import { Alert, Badge, Button, Card, CopyField, cx, Field, Input, Select, Textar
 import { errorMessage, shop as api, type HeroSlide, type Product, type Shop, type ShopSite, type SiteColors, type SiteSection, type SiteTextKey } from "@/lib/api";
 import { ACCENTS, SitePreview } from "./CreateShopWizard";
 import PhotoUpload from "./PhotoUpload";
+import TemplatePicker from "./TemplatePicker";
 
 const SECTIONS: { id: SiteSection; label: string; hint: string }[] = [
   { id: "categories", label: "Shop by category", hint: "Photo tiles under the banner, one per category" },
@@ -149,10 +150,19 @@ export default function SiteEditor({ shop, products, onSaved }: { shop: Shop; pr
     catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
 
+  /** "Use this template" from the gallery: show it in the editor and save the website straight away. Errors (e.g. the Pro-plan 402) go back to the dialog. */
+  const useTemplate = async (next: ShopSite) => {
+    const body = { ...next, about: { ...next.about, image_url: next.about.image_url?.trim() || null } };
+    await api.saveSite(body);
+    setS(next); toast("Template applied — your website is updated"); onSaved();
+  };
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
       <div className="space-y-5">
         {err && <Alert onClose={() => setErr(null)}>{err}</Alert>}
+
+        <TemplatePicker shop={shop} site={s} onApply={useTemplate} />
 
         <Card className="p-5">
           <div className="mb-1 text-[14px] font-semibold text-white">Colours</div>

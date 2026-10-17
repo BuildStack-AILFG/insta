@@ -127,7 +127,10 @@ DEFAULT_TEXTS = {
     "instagram_title": "Shop our Instagram", "instagram_subtitle": "Seen it on our feed? Tap to buy.", "faq_title": "Questions? Answers.",
     "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "empty_store": "New products are coming soon.",
 }
+# Layout + style presets for the storefront (the look itself lives in frontend/src/lib/store/templates.ts). `classic` is the original look.
+TEMPLATES = ("classic", "boutique", "jewellery", "bakery", "beauty")
 DEFAULT_SITE: dict = {
+    "template": "classic",
     "accent": DEFAULT_ACCENT,
     "colors": DEFAULT_COLORS,
     "texts": DEFAULT_TEXTS,
@@ -147,6 +150,8 @@ def site_settings(shop: Shop) -> dict:
     for key in ("about", "sections", "policies", "colors"):
         merged[key] = {**DEFAULT_SITE[key], **(saved.get(key) or {})}
     merged["texts"] = {**DEFAULT_TEXTS, **{k: v for k, v in (saved.get("texts") or {}).items() if v}}  # an emptied field falls back to the default
+    if merged.get("template") not in TEMPLATES:
+        merged["template"] = "classic"
     return merged
 
 

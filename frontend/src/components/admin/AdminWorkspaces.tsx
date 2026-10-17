@@ -8,7 +8,7 @@ import { fmtMoney } from "@/lib/money";
 import { dateOnly, PlanBadge, QUOTA_LABELS, StateBadge, UNLIMITED } from "./adminUi";
 
 const PAGE = 25;
-const PLAN_FILTERS = ["trial", "free", "starter", "growth", "scale", "enterprise"];
+const PLAN_FILTERS = ["trial", "free", "starter", "growth", "pro", "scale", "enterprise"];
 
 export default function AdminWorkspaces({ initialOpenId }: { initialOpenId: string | null }) {
   const [q, setQ] = useState("");

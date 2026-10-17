@@ -7,7 +7,7 @@
  * also leaves out the growth-tier tools (GROWTH_TIER_FEATURES); Growth and Enterprise unlock every feature and differ only in volume.
  */
 
-export type PlanId = "starter" | "growth" | "enterprise";
+export type PlanId = "starter" | "growth" | "pro" | "enterprise";
 export type Period = "monthly" | "yearly";
 
 export const PERIODS: { id: Period; label: string; months: number }[] = [
@@ -32,7 +32,7 @@ export type PlanInfo = {
 };
 
 export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations"
-  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline";
+  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline" | "shop_templates";
 
 /** What the free trial can and can't do (mirrors the trial row in the database). */
 export type TrialInfo = { days: number; limits: Limits; features: Record<FeatureKey, boolean> };
@@ -50,10 +50,14 @@ export const FEATURE_LABELS: Record<FeatureKey, { label: string; blurb: string }
   intent_matching: { label: "Intent matching", blurb: "AI works out which of your replies a customer meant, even without the exact keyword." },
   segments: { label: "Segments", blurb: "Saved audiences built from tags, traits and activity." },
   pipeline: { label: "Sales pipeline", blurb: "Track deals from first DM to payment on a drag-and-drop board." },
+  shop_templates: { label: "Store templates", blurb: "Ready-made storefront designs for fashion, jewellery, food and beauty brands." },
 };
 
 /** Features that Starter leaves out — only Growth and above include them (mirrors backend plan_catalog._GROWTH_ONLY). */
 export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "giveaways", "intent_matching", "segments", "pipeline"];
+
+/** Features only Pro and above include (mirrors backend plan_catalog._PRO_ONLY). */
+export const PRO_TIER_FEATURES: FeatureKey[] = ["shop_templates"];
 
 export const PLANS: PlanInfo[] = [
   {
@@ -72,6 +76,13 @@ export const PLANS: PlanInfo[] = [
     limits: { numbers: 3, seats: 8, contacts: 10000, automations: 100, flows: 20, ai: 2000, knowledge: 10 },
   },
   {
+    id: "pro",
+    name: "Pro",
+    audience: "For brands that want a store that looks like theirs, with room to grow.",
+    perMonth: { monthly: 1599, yearly: 1279 },
+    limits: { numbers: 5, seats: 12, contacts: 20000, automations: 150, flows: 30, ai: 3000, knowledge: 15 },
+  },
+  {
     id: "enterprise",
     name: "Enterprise",
     audience: "For high-volume sales and support desks with custom needs.",
@@ -84,7 +95,7 @@ export const TRIAL: TrialInfo = {
   days: TRIAL_DAYS,
   limits: { numbers: 1, seats: 3, contacts: 1000, automations: 5, flows: 5, ai: 200, knowledge: 2 },
   features: { ai_agent: true, conversation_analytics: false, automation_reports: false, sales_reports: false, assignment_rules: false, api_access: false, integrations: false,
-    shop: false, giveaways: false, intent_matching: false, segments: false, pipeline: false },
+    shop: false, giveaways: false, intent_matching: false, segments: false, pipeline: false, shop_templates: false },
 };
 
 /** Everything both paid plans and Enterprise include, whatever the volume. */

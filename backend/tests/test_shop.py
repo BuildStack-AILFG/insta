@@ -989,3 +989,36 @@ async def test_category_typed_in_the_product_form_joins_the_list(ws):
     q = await _product(ws, name="Kurta 2", category="kurtas")  # reuses the existing spelling, no duplicate
     assert q["category"] == "Kurtas" and len((await ws.get("/shop/categories")).json()) == 1
     assert p["category"] == "Kurtas"
+
+
+async def test_niche_templates_are_a_pro_feature(ws, app_client):
+    import uuid as _uuid
+    from sqlalchemy import update
+    from app.models.tenant import Tenant
+    from tests.conftest import db_session
+
+    async def on_plan(plan: str) -> None:
+        async with await db_session() as db:
+            await db.execute(update(Tenant).where(Tenant.id == _uuid.UUID(ws.tenant_id)).values(plan_id=plan))
+            await db.commit()
+
+    async def public_template(slug: str) -> str:
+        return (await app_client.get(f"/api/public/store/{slug}")).json()["store"]["site"]["template"]
+
+    s = await _store(ws)
+    site = s["site"]
+    assert site["template"] == "classic"
+    r = await ws.put("/shop/site", json={**site, "template": "jewellery"})  # the workspace is on Growth
+    assert r.status_code == 402 and r.json()["detail"]["feature"] == "shop_templates"
+    assert (await ws.put("/shop/site", json={**site, "template": "nonsense"})).status_code == 422
+    assert (await ws.put("/shop/site", json={**site, "template": "classic"})).status_code == 200
+
+    await on_plan("pro")
+    assert (await ws.put("/shop/site", json={**site, "template": "jewellery"})).json()["site"]["template"] == "jewellery"
+    assert await public_template(s["slug"]) == "jewellery"
+
+    await on_plan("growth")  # a downgrade shows the classic look, keeps the saved choice, and other edits still save
+    assert await public_template(s["slug"]) == "classic"
+    assert (await ws.put("/shop/site", json={**site, "template": "jewellery", "announcement": "Sale"})).status_code == 200
+    await on_plan("pro")
+    assert await public_template(s["slug"]) == "jewellery"

@@ -36,7 +36,7 @@ export type PlanKind = "trial" | "free" | "active" | "grace" | "custom";
 export type PlanState = { kind: PlanKind; ends_at: string | null; days_left: number; expired: boolean };
 /** Keys of the plan feature switches (see backend/app/services/plan_catalog.py). */
 export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations"
-  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline";
+  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline" | "shop_templates";
 export type MeWorkspace = Workspace & { plan_name: string; plan_state: PlanState; features: Record<FeatureKey, boolean> };
 export type MeResponse = {
   user_id: string;
@@ -693,6 +693,8 @@ export type SiteTextKey =
   | "hero_button" | "categories_title" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
   | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store";
 export type ShopSite = {
+  /** Storefront layout + style: classic | boutique | jewellery | bakery | beauty (non-classic needs the Pro plan). */
+  template: "classic" | "boutique" | "jewellery" | "bakery" | "beauty";
   accent: string; colors: SiteColors; texts: Record<SiteTextKey, string>; announcement: string; hero: HeroSlide[];
   about: { title: string; text: string; image_url: string | null }; faq: { q: string; a: string }[]; sections: Record<SiteSection, boolean>;
   policies: { shipping: string; returns: string };

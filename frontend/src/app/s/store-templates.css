@@ -1,0 +1,46 @@
+/*
+ * Storefront templates (lib/store/templates.ts). StoreShell puts data-template="<id>" on the store's <main>; every rule below is scoped to a
+ * non-classic template, so `classic` (and any store without a template) renders exactly as it always did. Colours come from the seller's
+ * saved colours (--bg, --fg, --accent, ...); this file only adds fonts, shapes and card styles. Hooks: .pc / .pc-media / .pc-name / .pc-price
+ * (ProductCard), .ct-img (CategoryTiles), .st-brand (store name).
+ */
+
+[data-template="boutique"] { --font-display: var(--font-playfair), Georgia, serif; --radius: 2px; --btn-radius: 2px; }
+[data-template="jewellery"] { --font-display: var(--font-cormorant), Georgia, serif; --radius: 0px; --btn-radius: 0px; }
+[data-template="bakery"] { --font-display: var(--font-fredoka), system-ui, sans-serif; --radius: 1.5rem; --btn-radius: 9999px; }
+[data-template="beauty"] { --font-display: var(--font-outfit), system-ui, sans-serif; --radius: 0.9rem; --btn-radius: 0.75rem; }
+
+/* Shared by every niche template */
+[data-template]:not([data-template="classic"]) :is(h1, h2, h3, .st-brand) { font-family: var(--font-display); }
+[data-template]:not([data-template="classic"]) :is(.rounded-xl, .rounded-2xl) { border-radius: var(--radius); }
+[data-template]:not([data-template="classic"]) .rounded-3xl { border-radius: calc(var(--radius) * 1.5); }
+
+/* Primary buttons (accent pills) take the template's button shape */
+:is([data-template="boutique"], [data-template="jewellery"], [data-template="beauty"]) :is(a, button).rounded-full.bg-\[var\(--accent\)\] { border-radius: var(--btn-radius); }
+
+/* --- Atelier (boutique): quiet, tall photos, serif names --- */
+[data-template="boutique"] .pc-media { aspect-ratio: 3 / 4; }
+[data-template="boutique"] .pc-name { font-family: var(--font-display); font-size: 15px; font-weight: 500; }
+[data-template="boutique"] .pc-price { font-size: 14px; opacity: 0.85; }
+[data-template="boutique"] .ct-img { border-radius: 2px; }
+
+/* --- Lumière (jewellery): gold hairlines, upper-case spaced names --- */
+[data-template="jewellery"] h2 { text-transform: uppercase; letter-spacing: 0.14em; font-weight: 500; font-size: clamp(18px, 2.2vw, 22px); }
+[data-template="jewellery"] .pc { border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent); padding: 0.55rem; }
+[data-template="jewellery"] .pc-media { aspect-ratio: 1 / 1; }
+[data-template="jewellery"] .pc-name { text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; font-weight: 500; text-align: center; }
+[data-template="jewellery"] .pc-price { justify-content: center; color: var(--accent); }
+[data-template="jewellery"] .ct-img { border-radius: 0; box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* --- Crumb (bakery): warm, rounded, cosy cards --- */
+[data-template="bakery"] .pc { background: var(--surface); padding: 0.55rem; border-radius: var(--radius); box-shadow: 0 10px 28px -16px color-mix(in srgb, var(--fg) 40%, transparent); }
+[data-template="bakery"] .pc-media { border-radius: calc(var(--radius) - 0.5rem); }
+[data-template="bakery"] .pc-name { font-weight: 600; }
+[data-template="bakery"] .pc-price { color: var(--accent); }
+[data-template="bakery"] .ct-img { border-radius: 1.75rem; }
+
+/* --- Pure (beauty): clean bordered cards --- */
+[data-template="beauty"] .pc { border: 1px solid var(--line); padding: 0.55rem; border-radius: var(--radius); background: var(--bg); }
+[data-template="beauty"] .pc-media { border-radius: calc(var(--radius) - 0.3rem); }
+[data-template="beauty"] .pc-name { font-weight: 600; }
+[data-template="beauty"] .pc-price { color: var(--accent); }

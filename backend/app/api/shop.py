@@ -21,7 +21,7 @@ from app.models.instagram_account import InstagramAccount
 from app.models.shop import Shop, ShopCart, ShopCategory, ShopOrder, ShopProduct, ShopVariant
 from app.services import payment_links, shiprocket, shop_domains
 from app.services.billing import GSTIN_RE
-from app.services.entitlements import has_feature, require_feature
+from app.services.entitlements import ensure_feature, has_feature, require_feature
 from app.services.instagram.accounts import public_base
 from app.services import shop as svc
 
@@ -554,9 +554,12 @@ async def _store_info(db: AsyncSession, s: Shop, products: list[ShopProduct] | N
     """The store's header / footer data plus its website settings (with the hero carousel when `products` is given)."""
     account = await db.get(InstagramAccount, s.account_id) if s.account_id else None
     methods = await svc.payment_methods(db, s)
+    site = svc.public_site(s, methods, products)
+    if site["template"] != "classic" and not await has_feature(db, s.tenant_id, "shop_templates"):
+        site = {**site, "template": "classic"}  # a downgraded plan falls back to the classic look; the saved choice returns on upgrade
     return {"slug": s.slug, "name": s.name, "tagline": s.tagline, "logo_url": s.logo_url or (account.profile_picture_url if account else None),
             "instagram": account.username if account else None, "support_phone": s.support_phone, "shipping_fee": s.shipping_fee,
-            "free_shipping_above": s.free_shipping_above, "payment_methods": methods, "site": svc.public_site(s, methods, products)}
+            "free_shipping_above": s.free_shipping_above, "payment_methods": methods, "site": site}
 
 
 @public.get("/{slug}")
@@ -827,6 +830,7 @@ class ColorsIn(BaseModel):
 
 
 class SiteIn(BaseModel):
+    template: str = Field(default="classic", max_length=20)
     accent: str = Field(default=svc.DEFAULT_ACCENT, pattern=HEX)
     colors: ColorsIn = Field(default_factory=ColorsIn)
     texts: dict[str, str] = Field(default_factory=dict)
@@ -836,6 +840,13 @@ class SiteIn(BaseModel):
     faq: list[FaqItem] = Field(default_factory=list, max_length=12)
     sections: dict[str, bool] = Field(default_factory=dict)
     policies: PoliciesIn = Field(default_factory=PoliciesIn)
+
+    @field_validator("template")
+    @classmethod
+    def _template(cls, v: str) -> str:
+        if v not in svc.TEMPLATES:
+            raise ValueError("Unknown template.")
+        return v
 
     @field_validator("sections")
     @classmethod
@@ -855,6 +866,9 @@ class SiteIn(BaseModel):
 async def save_site(body: SiteIn, ctx: Ctx = Depends(require_manager), db: AsyncSession = Depends(get_db)) -> dict:
     """The storefront website's look and content."""
     s = await _require_shop(db, ctx)
+    # Niche templates are a Pro feature; saving the classic look (or keeping the template a store already has) never needs it.
+    if body.template != "classic" and body.template != svc.site_settings(s)["template"]:
+        await ensure_feature(db, ctx.tenant_id, "shop_templates")
     ids = {sl.product_id for sl in body.hero if sl.product_id}
     if ids:
         found = set((await db.execute(select(ShopProduct.id).where(ShopProduct.tenant_id == ctx.tenant_id, ShopProduct.id.in_(ids)))).scalars())
