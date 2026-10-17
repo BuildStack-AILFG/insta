@@ -1,7 +1,7 @@
 # DMForGrow
 
 Instagram comment → DM automation, shared DM inbox, flows and an AI agent, built on Meta's official Instagram API with
-Instagram Login. Live at [gramforgrow.in](https://gramforgrow.in).
+Instagram Login. Live at [dmforgrow.in](https://dmforgrow.in).
 
 | Part | Stack | Docs |
 |---|---|---|

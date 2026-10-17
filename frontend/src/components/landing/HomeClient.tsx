@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SmoothScroll from "@/components/landing/SmoothScroll";
+import RedirectIfSignedIn from "@/components/auth/RedirectIfSignedIn";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import PremiumHero from "@/components/landing/PremiumHero";
 import ProductHubsSection from "@/components/landing/ProductHubsSection";
@@ -30,6 +31,7 @@ export default function HomeClient({ pricing }: { pricing?: React.ReactNode }) {
 
   return (
     <SmoothScroll>
+      <RedirectIfSignedIn />
       <div id="top" className="min-h-screen overflow-x-hidden bg-black text-white">
         <LandingNavbar />
         <PremiumHero onGetStarted={handleGetStarted} onBookDemo={handleBookDemo} />

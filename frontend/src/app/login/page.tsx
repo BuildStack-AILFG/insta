@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AuthShell from "@/components/auth/AuthShell";
 import LoginForm from "@/components/auth/LoginForm";
+import RedirectIfSignedIn from "@/components/auth/RedirectIfSignedIn";
 
 export const metadata: Metadata = {
   title: "Log in",
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthShell mode="login">
+      <RedirectIfSignedIn />
       <LoginForm />
     </AuthShell>
   );
