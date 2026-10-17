@@ -873,7 +873,7 @@ def test_domains_are_cleaned_up_and_get_the_right_dns_record():
     assert d.instructions("shop.priyaboutique.com") == {"type": "CNAME", "name": "shop", "value": "cname.vercel-dns.com"}
     assert d.instructions("priyaboutique.com") == {"type": "A", "name": "@", "value": "76.76.21.21"}
     assert d.instructions("priyaboutique.co.in")["type"] == "A" and d.instructions("store.priyaboutique.co.in")["name"] == "store"
-    for bad in ("", "localhost", "priya", "my shop.com", "-bad.com", "gramforgrow.in", "x.gramforgrow.in", "me.vercel.app", "1.2.3.4"):
+    for bad in ("", "localhost", "priya", "my shop.com", "-bad.com", "dmforgrow.in", "x.dmforgrow.in", "www.dmforgrow.in", "me.vercel.app", "1.2.3.4"):
         try:
             d.normalize(bad)
             raise AssertionError(bad)

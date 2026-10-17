@@ -91,9 +91,9 @@ function XIcon({ className }: { className?: string }) {
 const FOOTER_SOCIAL = [
   { id: "whatsapp", label: "WhatsApp support", href: whatsappLink(), Icon: WhatsAppIcon, color: "#25D366" },
   { id: "youtube", label: "YouTube", href: "https://www.youtube.com/@ScaleDeskTechnologies", Icon: Youtube, color: "#FF0000" },
-  { id: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/showcase/gramforgrow", Icon: Linkedin, color: "#0A66C2" },
-  { id: "x", label: "X", href: "https://x.com/gramforgrow", Icon: XIcon, color: "#000000" },
-  { id: "facebook", label: "Facebook", href: "https://www.facebook.com/gramforgrow", Icon: Facebook, color: "#1877F2" },
+  { id: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/showcase/dmforgrow", Icon: Linkedin, color: "#0A66C2" },
+  { id: "x", label: "X", href: "https://x.com/dmforgrow", Icon: XIcon, color: "#000000" },
+  { id: "facebook", label: "Facebook", href: "https://www.facebook.com/dmforgrow", Icon: Facebook, color: "#1877F2" },
 ];
 
 export default function Footer() {

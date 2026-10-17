@@ -20,13 +20,13 @@ From `backend/app/services/instagram/graph.py` (`SCOPES`). Request **Advanced Ac
 
 App Dashboard → **App settings → Basic**
 - [ ] App icon 1024×1024, app name "DMForGrow", category "Business and pages"
-- [ ] Privacy Policy URL: `https://gramforgrow.com/privacy` (lists every permission and its use, section 5)
-- [ ] Terms of Service URL: `https://gramforgrow.com/terms`
+- [ ] Privacy Policy URL: `https://www.dmforgrow.in/privacy` (lists every permission and its use, section 5)
+- [ ] Terms of Service URL: `https://www.dmforgrow.in/terms`
 - [ ] User data deletion: **Data deletion callback URL** `https://<backend>/api/webhooks/instagram/data-deletion`
 - [ ] Contact email set and monitored
 
 Instagram → **API setup with Instagram login**
-- [ ] **Business login settings** → Redirect URL `https://gramforgrow.com/dashboard/instagram/callback` (must equal `INSTAGRAM_REDIRECT_URI` / `FRONTEND_URL`)
+- [ ] **Business login settings** → Redirect URL `https://www.dmforgrow.in/dashboard/instagram/callback` (must equal `INSTAGRAM_REDIRECT_URI` / `FRONTEND_URL`)
 - [ ] Deauthorize callback `https://<backend>/api/webhooks/instagram/deauthorize`
 - [ ] Data deletion request URL `https://<backend>/api/webhooks/instagram/data-deletion`
 - [ ] Webhooks: callback `https://<backend>/api/webhooks/instagram`, verify token = `INSTAGRAM_WEBHOOK_VERIFY_TOKEN`, fields subscribed: `comments`, `live_comments`, `messages`, `messaging_postbacks`, `messaging_seen`, `message_reactions`, `messaging_referral`
@@ -56,7 +56,7 @@ Reviewer access
 Record the **Connect** segment once and start every video with it (or reuse the clip).
 
 ### 0. Connect (start of every video)
-1. Open `gramforgrow.com`, click **Log in**, sign in as the reviewer user.
+1. Open `www.dmforgrow.in`, click **Log in**, sign in as the reviewer user.
 2. Sidebar → **Instagram** → **Connect with Instagram**.
 3. Instagram login page → log in as the test account.
 4. Consent screen: pause 2–3 s so all permissions are readable. Caption: *"The business grants DMForGrow these permissions."* Click **Allow**.
@@ -116,9 +116,9 @@ Record the **Connect** segment once and start every video with it (or reuse the 
 ## 6. Reviewer notes (paste into "Notes for reviewer")
 
 ```
-DMForGrow (https://gramforgrow.com) lets businesses automate and manage their own Instagram professional account.
+DMForGrow (https://www.dmforgrow.in) lets businesses automate and manage their own Instagram professional account.
 
-1. Go to https://gramforgrow.com/login
+1. Go to https://www.dmforgrow.in/login
    Email: <reviewer email>   Password: <password>
 2. Sidebar → Instagram → "Connect with Instagram"
 3. Log in with the test Instagram account:
@@ -133,7 +133,7 @@ Where each permission is used:
 - instagram_business_manage_insights: Content → Insights
 
 To test comments/DMs, comment or send a DM to the test account from any other Instagram account.
-Privacy policy: https://gramforgrow.com/privacy  Data deletion: https://gramforgrow.com/data-deletion
+Privacy policy: https://www.dmforgrow.in/privacy  Data deletion: https://www.dmforgrow.in/data-deletion
 ```
 
 ## 7. After approval

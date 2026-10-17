@@ -1,5 +1,5 @@
 """
-Custom domains for shop websites (e.g. shop.priyaboutique.com instead of gramforgrow.in/s/priyas-boutique).
+Custom domains for shop websites (e.g. shop.priyaboutique.com instead of dmforgrow.in/s/priyas-boutique).
 
 The seller adds a DNS record pointing at the web app's host — a CNAME for a subdomain, an A record for a root domain — and we check that
 the domain resolves to the same place before turning it on. The frontend's proxy (src/proxy.ts) then serves the store for that host.
@@ -25,7 +25,7 @@ from app.models.shop import Shop
 log = logging.getLogger(__name__)
 
 _LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
-OWN = ("gramforgrow.in", "vercel.app", "localhost")
+OWN = ("dmforgrow.in", "vercel.app", "localhost")
 
 # Tests route Vercel calls to httpx.MockTransport (and replace `resolve` below).
 _http_factory: Callable[[], httpx.AsyncClient] | None = None
