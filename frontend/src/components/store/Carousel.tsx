@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { HeroSlide } from "@/lib/api";
 import type { HeroLayout } from "@/lib/store/templates";
 
@@ -53,11 +53,11 @@ export function Rail({ title, subtitle, action, children }: { title: string; sub
 
 /** One slot in a Rail: two across on phones, four on desktop. */
 export function RailItem({ children }: { children: ReactNode }) {
-  return <div className="w-[46%] shrink-0 snap-start sm:w-[31%] lg:w-[23.5%]">{children}</div>;
+  return <div className="rail-item w-[46%] shrink-0 snap-start sm:w-[31%] lg:w-[23.5%]">{children}</div>;
 }
 
 /** Full-width banner carousel: auto-advances, swipes, arrows and dots. `layout` is the template's banner style (classic = text over the photo). */
-export function HeroCarousel({ slides, slug, storeName, buttonLabel, layout = "overlay" }: { slides: HeroSlide[]; slug: string; storeName: string; buttonLabel: string; layout?: HeroLayout }) {
+export function HeroCarousel({ slides, slug, storeName, buttonLabel, layout = "overlay", tagline, template = "classic" }: { slides: HeroSlide[]; slug: string; storeName: string; buttonLabel: string; layout?: HeroLayout; tagline?: string; template?: string }) {
   const { ref } = useScroller();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -82,9 +82,12 @@ export function HeroCarousel({ slides, slug, storeName, buttonLabel, layout = "o
 
   if (!slides.length) {
     return (
-      <section className="bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg))] px-4 py-20 text-center">
-        <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[48px]">{storeName}</h1>
-        <Link href={`/s/${slug}/shop`} className="mt-6 inline-block rounded-full bg-[var(--accent)] px-7 py-3 text-[15px] font-semibold text-[var(--accent-fg)]">{buttonLabel}</Link>
+      <section className="st-hero-empty bg-[color-mix(in_srgb,var(--accent)_8%,var(--bg))] px-4 py-20 text-center" data-empty-hero={template}>
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[48px]">{storeName}</h1>
+          {template !== "classic" && tagline && <p className="mx-auto mt-3 max-w-xl text-[16px] text-[var(--muted)]">{tagline}</p>}
+          <Link href={`/s/${slug}/shop`} className="mt-6 inline-block rounded-full bg-[var(--accent)] px-7 py-3 text-[15px] font-semibold text-[var(--accent-fg)]">{buttonLabel}</Link>
+        </div>
       </section>
     );
   }
@@ -141,7 +144,7 @@ export function HeroCarousel({ slides, slug, storeName, buttonLabel, layout = "o
       <div className="relative">
         <div ref={ref} className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-roledescription="carousel">
           {slides.map((s, i) => (
-            <div key={i} className={`relative ${height} w-full shrink-0 snap-start overflow-hidden bg-[var(--soft)] ${layout === "inset" ? "rounded-3xl" : ""}`} aria-roledescription="slide" aria-label={`${i + 1} of ${slides.length}`}>
+            <div key={i} className={`hero-slide relative ${height} w-full shrink-0 snap-start overflow-hidden bg-[var(--soft)] ${layout === "inset" ? "rounded-3xl" : ""}`} aria-roledescription="slide" aria-label={`${i + 1} of ${slides.length}`}>
               {slideBody(s, i)}
             </div>
           ))}
@@ -171,10 +174,34 @@ export function HeroCarousel({ slides, slug, storeName, buttonLabel, layout = "o
   );
 }
 
-/** Product photos: swipeable main image with thumbnails. */
-export function Gallery({ images, alt }: { images: string[]; alt: string }) {
+/** Full-screen photo viewer for product pages (niche templates): arrows, Esc and tap-outside to close. */
+function Lightbox({ images, start, onClose }: { images: string[]; start: number; onClose: () => void }) {
+  const [i, setI] = useState(start);
+  const step = useCallback((d: number) => setI((x) => (x + d + images.length) % images.length), [images.length]);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); else if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1); };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [onClose, step]);
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4" onClick={onClose} role="dialog" aria-label="Photo viewer">
+      <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"><X size={20} /></button>
+      <img src={images[i]} alt="" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] max-w-[94vw] object-contain" />
+      {images.length > 1 && (
+        <>
+          <button onClick={(e) => { e.stopPropagation(); step(-1); }} aria-label="Previous photo" className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"><ChevronLeft size={22} /></button>
+          <button onClick={(e) => { e.stopPropagation(); step(1); }} aria-label="Next photo" className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"><ChevronRight size={22} /></button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Product photos: swipeable main image with thumbnails. `zoom` lets buyers tap a photo to see it full screen. */
+export function Gallery({ images, alt, side = false, zoom = false }: { images: string[]; alt: string; side?: boolean; zoom?: boolean }) {
   const { ref } = useScroller();
   const [index, setIndex] = useState(0);
+  const [light, setLight] = useState<number | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -185,10 +212,11 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
   const go = (i: number) => ref.current?.scrollTo({ left: i * ref.current.clientWidth, behavior: "smooth" });
   if (!images.length) return <div className="aspect-[4/5] rounded-2xl bg-[var(--soft)]" />;
   return (
-    <div>
-      <div className="relative">
+    <div className={side ? "md:flex md:flex-row-reverse md:items-start md:gap-3" : ""}>
+      {light !== null && <Lightbox images={images} start={light} onClose={() => setLight(null)} />}
+      <div className="relative min-w-0 md:flex-1">
         <div ref={ref} className="flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-[var(--soft)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {images.map((src, i) => <img key={src} src={src} alt={i === 0 ? alt : ""} className="aspect-[4/5] w-full shrink-0 snap-start object-cover" />)}
+          {images.map((src, i) => <img key={src} src={src} alt={i === 0 ? alt : ""} onClick={zoom ? () => setLight(i) : undefined} className={`gal-img aspect-[4/5] w-full shrink-0 snap-start object-cover ${zoom ? "cursor-zoom-in" : ""}`} />)}
         </div>
         {images.length > 1 && (
           <>
@@ -198,7 +226,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
         )}
       </div>
       {images.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto">
+        <div className={`mt-3 flex gap-2 overflow-x-auto ${side ? "md:mt-0 md:max-h-[640px] md:w-16 md:shrink-0 md:flex-col" : ""}`}>
           {images.map((src, i) => (
             <button key={src} onClick={() => go(i)} className={`h-16 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === index ? "border-[var(--accent)]" : "border-transparent opacity-70 hover:opacity-100"}`} aria-label={`Photo ${i + 1}`}>
               <img src={src} alt="" className="h-full w-full object-cover" />

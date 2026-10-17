@@ -829,8 +829,19 @@ class ColorsIn(BaseModel):
     button_text: str = Field(default=svc.DEFAULT_COLORS["button_text"], pattern=HEX)
 
 
+class TestimonialIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    text: str = Field(min_length=1, max_length=400)
+
+
 class SiteIn(BaseModel):
     template: str = Field(default="classic", max_length=20)
+    testimonials: list[TestimonialIn] = Field(default_factory=list, max_length=6)
+    size_guide: str = Field(default="", max_length=1500)
+    photo_fit: Literal["cover", "contain"] = "cover"
+    section_order: list[str] = Field(default_factory=list, max_length=20)
+    grid_columns: Literal[3, 4] = 4
+    hero_height: Literal["compact", "normal", "tall"] = "normal"
     accent: str = Field(default=svc.DEFAULT_ACCENT, pattern=HEX)
     colors: ColorsIn = Field(default_factory=ColorsIn)
     texts: dict[str, str] = Field(default_factory=dict)
@@ -848,6 +859,15 @@ class SiteIn(BaseModel):
             raise ValueError("Unknown template.")
         return v
 
+    @field_validator("section_order")
+    @classmethod
+    def _order(cls, v: list[str]) -> list[str]:
+        seen: list[str] = []
+        for k in v:
+            if k in svc.HOME_BLOCKS and k not in seen:
+                seen.append(k)
+        return seen
+
     @field_validator("sections")
     @classmethod
     def _sections(cls, v: dict[str, bool]) -> dict[str, bool]:
@@ -857,8 +877,9 @@ class SiteIn(BaseModel):
     @classmethod
     def _texts(cls, v: dict[str, str]) -> dict[str, str]:
         out = {k: str(v[k]).strip() for k in svc.DEFAULT_TEXTS if k in v}
-        if any(len(x) > 80 for x in out.values()):
-            raise ValueError("Keep each text under 80 characters.")
+        # headings and button labels stay short; the descriptive lines (…_text) may run to a couple of sentences
+        if any(len(x) > (200 if k.endswith("_text") else 80) for k, x in out.items()):
+            raise ValueError("Keep headings and buttons under 80 characters and descriptions under 200.")
         return out
 
 

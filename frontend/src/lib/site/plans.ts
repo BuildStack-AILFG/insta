@@ -7,7 +7,7 @@
  * also leaves out the growth-tier tools (GROWTH_TIER_FEATURES); Growth and Enterprise unlock every feature and differ only in volume.
  */
 
-export type PlanId = "starter" | "growth" | "pro" | "enterprise";
+export type PlanId = "starter" | "growth" | "enterprise";
 export type Period = "monthly" | "yearly";
 
 export const PERIODS: { id: Period; label: string; months: number }[] = [
@@ -54,10 +54,7 @@ export const FEATURE_LABELS: Record<FeatureKey, { label: string; blurb: string }
 };
 
 /** Features that Starter leaves out — only Growth and above include them (mirrors backend plan_catalog._GROWTH_ONLY). */
-export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "giveaways", "intent_matching", "segments", "pipeline"];
-
-/** Features only Pro and above include (mirrors backend plan_catalog._PRO_ONLY). */
-export const PRO_TIER_FEATURES: FeatureKey[] = ["shop_templates"];
+export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "shop_templates", "giveaways", "intent_matching", "segments", "pipeline"];
 
 export const PLANS: PlanInfo[] = [
   {
@@ -74,13 +71,6 @@ export const PLANS: PlanInfo[] = [
     perMonth: { monthly: 1299, yearly: 1039 },
     highlight: true,
     limits: { numbers: 3, seats: 8, contacts: 10000, automations: 100, flows: 20, ai: 2000, knowledge: 10 },
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    audience: "For brands that want a store that looks like theirs, with room to grow.",
-    perMonth: { monthly: 1599, yearly: 1279 },
-    limits: { numbers: 5, seats: 12, contacts: 20000, automations: 150, flows: 30, ai: 3000, knowledge: 15 },
   },
   {
     id: "enterprise",

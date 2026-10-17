@@ -9,6 +9,7 @@
 [data-template="jewellery"] { --font-display: var(--font-cormorant), Georgia, serif; --radius: 0px; --btn-radius: 0px; }
 [data-template="bakery"] { --font-display: var(--font-fredoka), system-ui, sans-serif; --radius: 1.5rem; --btn-radius: 9999px; }
 [data-template="beauty"] { --font-display: var(--font-outfit), system-ui, sans-serif; --radius: 0.9rem; --btn-radius: 0.75rem; }
+[data-template="fitness"] { --font-display: var(--font-barlow), Impact, system-ui, sans-serif; --radius: 0.4rem; --btn-radius: 0.3rem; }
 
 /* Shared by every niche template */
 [data-template]:not([data-template="classic"]) :is(h1, h2, h3, .st-brand) { font-family: var(--font-display); }
@@ -16,7 +17,7 @@
 [data-template]:not([data-template="classic"]) .rounded-3xl { border-radius: calc(var(--radius) * 1.5); }
 
 /* Primary buttons (accent pills) take the template's button shape */
-:is([data-template="boutique"], [data-template="jewellery"], [data-template="beauty"]) :is(a, button).rounded-full.bg-\[var\(--accent\)\] { border-radius: var(--btn-radius); }
+:is([data-template="boutique"], [data-template="jewellery"], [data-template="beauty"], [data-template="fitness"]) :is(a, button).rounded-full.bg-\[var\(--accent\)\] { border-radius: var(--btn-radius); }
 
 /* --- Fashion (boutique): quiet, tall photos, serif names --- */
 [data-template="boutique"] .pc-media { aspect-ratio: 3 / 4; }
@@ -44,3 +45,66 @@
 [data-template="beauty"] .pc-media { border-radius: calc(var(--radius) - 0.3rem); }
 [data-template="beauty"] .pc-name { font-weight: 600; }
 [data-template="beauty"] .pc-price { color: var(--accent); }
+
+/* --- Fitness & Supplements: bold, dark, high contrast --- */
+[data-template="fitness"] :is(h1, h2, h3) { text-transform: uppercase; letter-spacing: 0.02em; font-weight: 700; }
+[data-template="fitness"] h2 { font-size: clamp(26px, 3.4vw, 38px); font-style: italic; }
+[data-template="fitness"] .pc { border: 1px solid var(--line); background: var(--surface); padding: 0.5rem; border-radius: var(--radius); transition: border-color 0.2s, transform 0.2s; }
+[data-template="fitness"] .pc:hover { border-color: var(--accent); transform: translateY(-2px); }
+[data-template="fitness"] .pc-media { border-radius: calc(var(--radius) - 0.1rem); }
+[data-template="fitness"] .pc-name { text-transform: uppercase; letter-spacing: 0.03em; font-size: 13.5px; font-weight: 600; font-family: var(--font-display); }
+[data-template="fitness"] .pc-price { color: var(--accent); font-weight: 700; }
+[data-template="fitness"] .ct-img { border-radius: 0.4rem; }
+[data-template="fitness"] .st-hero-empty { background: radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), var(--surface); padding-block: 7rem; text-align: left; }
+[data-template="fitness"] .st-hero-empty h1 { font-size: clamp(40px, 7vw, 76px); font-style: italic; text-transform: uppercase; line-height: 0.95; }
+
+/* --- Scroll reveal (armed only for sections below the fold; see components/store/home/Reveal.tsx) --- */
+.st-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.st-reveal.st-in { opacity: 1; transform: none; }
+
+/* --- Banner-less home pages: each template has its own default hero --- */
+[data-template] .st-hero-empty { position: relative; overflow: hidden; }
+[data-template="boutique"] .st-hero-empty { background: linear-gradient(120deg, var(--surface), color-mix(in srgb, var(--accent) 14%, var(--bg))); padding-block: 7rem; }
+[data-template="boutique"] .st-hero-empty h1 { font-weight: 500; font-size: clamp(36px, 6vw, 64px); }
+[data-template="jewellery"] .st-hero-empty { background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%), var(--bg); padding-block: 7rem; border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+[data-template="jewellery"] .st-hero-empty h1 { font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em; font-size: clamp(28px, 5vw, 52px); }
+[data-template="bakery"] .st-hero-empty { background: radial-gradient(color-mix(in srgb, var(--accent) 16%, transparent) 2px, transparent 2.5px) 0 0 / 24px 24px, var(--surface); padding-block: 6rem; }
+[data-template="bakery"] .st-hero-empty h1 { font-weight: 600; }
+[data-template="beauty"] .st-hero-empty { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, var(--bg)), var(--surface)); padding-block: 6.5rem; }
+[data-template="beauty"] .st-hero-empty::after { content: ""; position: absolute; right: -80px; top: -80px; width: 280px; height: 280px; border-radius: 9999px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+[data-template="beauty"] .st-hero-empty h1 { font-weight: 600; }
+
+/* --- Product page extras (accordions, sticky mobile buy bar) --- */
+.st-acc summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0; font-weight: 600; font-size: 14px; }
+.st-acc summary::-webkit-details-marker { display: none; }
+.st-acc[open] summary .st-plus { transform: rotate(45deg); }
+.st-acc .st-plus { transition: transform 0.2s; color: var(--faint); font-size: 20px; line-height: 1; }
+.st-stickybuy { position: fixed; inset-inline: 0; bottom: 0; z-index: 35; transform: translateY(110%); transition: transform 0.3s ease; }
+.st-stickybuy.st-on { transform: none; }
+@media (min-width: 768px) { .st-stickybuy { display: none; } }
+
+/* --- Quick add on product cards (niche templates only) --- */
+.qa { display: none; }
+[data-template]:not([data-template="classic"]) .qa { display: flex; opacity: 0; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s; }
+[data-template]:not([data-template="classic"]) .pc:hover .qa, [data-template]:not([data-template="classic"]) .pc:focus-within .qa { opacity: 1; transform: none; }
+@media (hover: none) { [data-template]:not([data-template="classic"]) .qa { opacity: 1; transform: none; } }
+
+/* --- Announcement ticker --- */
+.st-ticker { overflow: hidden; white-space: nowrap; }
+.st-ticker-track { display: inline-flex; animation: st-marquee 45s linear infinite; }
+.st-ticker:hover .st-ticker-track { animation-play-state: paused; }
+@keyframes st-marquee { to { transform: translateX(-50%); } }
+
+/* --- Seller layout options (Website tab → Layout) --- */
+@media (min-width: 1024px) {
+  [data-cols="3"] .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  [data-cols="3"] .rail-item { width: 31.5%; }
+}
+@media (min-width: 768px) {
+  [data-hero="compact"] .hero-slide { height: 40vh; min-height: 280px; max-height: 420px; }
+  [data-hero="tall"] .hero-slide { height: 80vh; min-height: 460px; max-height: 780px; }
+}
+[data-fit="contain"] .pc-media img { object-fit: contain; padding: 6%; background: var(--surface); }
+[data-fit="contain"] .gal-img { object-fit: contain; background: var(--surface); }
+
+@media (prefers-reduced-motion: reduce) { .st-reveal { opacity: 1; transform: none; transition: none; } .st-ticker-track { animation: none; } }

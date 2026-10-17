@@ -16,7 +16,7 @@ from app.db.base import Base, TimestampMixin
 class Plan(TimestampMixin, Base):
     __tablename__ = "plans"
 
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)  # 'free' | 'trial' | 'starter' | 'growth' | 'pro' | 'scale' | 'enterprise'
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)  # 'free' | 'trial' | 'starter' | 'growth' | 'scale' | 'enterprise'
     name: Mapped[str] = mapped_column(String(64), nullable=False)
 
     price_monthly: Mapped[int | None] = mapped_column(Integer, nullable=True)  # smallest currency unit (e.g. paise); null = custom/enterprise

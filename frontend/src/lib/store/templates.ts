@@ -5,7 +5,7 @@ import type { PublicStore, ShopSite, SiteColors, SiteTextKey } from "@/lib/api";
  * `data-template` in app/s/store-templates.css and StoreShell / HeroCarousel) plus optional *starter content* for its niche.
  * `classic` is the original white storefront and renders exactly as before. Keep ids in step with backend services/shop.py TEMPLATES.
  */
-export type TemplateId = "classic" | "boutique" | "jewellery" | "bakery" | "beauty";
+export type TemplateId = "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness";
 export type HeaderLayout = "left" | "center";
 export type HeroLayout = "overlay" | "center" | "split" | "inset" | "panel";
 
@@ -94,7 +94,43 @@ export const TEMPLATES: StoreTemplate[] = [
       ],
     },
   },
+  {
+    id: "fitness", name: "Fitness & Supplements", niche: "Protein, gym gear & wellness", blurb: "Bold dark look with a big banner, goal-based tiles and benefit highlights.", header: "left", hero: "overlay",
+    colors: { background: "#0a0a0b", text: "#f4f4f5", surface: "#151518", button_text: "#0a0a0b" }, accent: "#c6f432",
+    starter: {
+      texts: { hero_button: "Shop now", categories_title: "Shop by goal", best_sellers_title: "Top sellers", best_sellers_subtitle: "What our athletes are buying",
+        new_arrivals_title: "New drops", new_arrivals_subtitle: "Fresh stock, just landed", all_products_title: "Everything", instagram_title: "Train with us", related_title: "Stack it with", add_to_cart: "Add to cart" },
+      announcement: "100% authentic supplements · Fast delivery across India",
+      about: { title: "Built for your goals", text: "We stock only products we would use ourselves: genuine supplements with clear labels, and gym gear that lasts. Tell us your goal and we'll help you build the right stack." },
+      faq: [
+        { q: "Are your products original?", a: "Yes. We buy directly from brands and authorised distributors, and every batch has its original seal." },
+        { q: "How do I choose a protein?", a: "DM us your goal (muscle gain, fat loss, general fitness) and your diet, and we'll suggest the right one." },
+        { q: "How fast is delivery?", a: "Most orders ship within 24 hours and arrive in 2–6 working days." },
+      ],
+    },
+  },
 ];
+
+/** The home-page blocks each niche template shows, in order (the seller can reorder them: site.section_order). Mirrors backend HOME_BLOCKS. */
+export const HOME_ORDER: Record<Exclude<TemplateId, "classic">, string[]> = {
+  boutique: ["lookbook", "best", "tiles", "fresh", "story", "testimonials", "insta", "faq", "all"],
+  jewellery: ["collections", "signature", "fresh", "story", "testimonials", "faq"],
+  bakery: ["best", "steps", "fresh", "custom", "testimonials", "insta", "faq", "all"],
+  beauty: ["benefits", "collections", "best", "fresh", "story", "testimonials", "faq", "all"],
+  fitness: ["benefits", "collections", "best", "fresh", "testimonials", "story", "insta", "faq", "all"],
+};
+export const HOME_LABELS: Record<string, string> = {
+  lookbook: "Shop the look (photo collage)", collections: "Collection tiles", tiles: "Shop by category", signature: "Top products grid", best: "Best sellers", fresh: "New arrivals",
+  benefits: "Delivery & payment highlights", steps: "How ordering works", custom: "Custom order button", story: "Your story (About)", testimonials: "Customer reviews",
+  insta: "Instagram photos", faq: "FAQ", all: "Shop-all button",
+};
+/** The block order to render: the seller's order where they set one, the template's own order for anything they haven't placed. */
+export function homeOrder(id: TemplateId, saved: string[] | undefined): string[] {
+  const base = id === "classic" ? [] : HOME_ORDER[id];
+  if (!saved?.length) return base;
+  const known = saved.filter((k) => base.includes(k));
+  return [...known, ...base.filter((k) => !known.includes(k))];
+}
 
 export const isTemplateId = (v: unknown): v is TemplateId => typeof v === "string" && TEMPLATES.some((t) => t.id === v);
 export const getTemplate = (id: string | undefined | null): StoreTemplate => TEMPLATES.find((t) => t.id === id) ?? TEMPLATES[0];
@@ -106,15 +142,18 @@ export function previewSite(site: ShopSite, id: TemplateId): ShopSite {
 }
 export const previewStore = (store: PublicStore, id: TemplateId): PublicStore => ({ ...store, site: previewSite(store.site, id) });
 
+export type ApplyOptions = { colours: boolean; starter: boolean };
+
 /**
- * What "Use this template" does to the editor's site settings: always the look; with `withStarter`, also the niche texts, announcement, About
- * and FAQ — but only where the seller hasn't written their own (a text still equal to its default, an empty announcement / About / FAQ).
- * Banners, products, logo, policies and section toggles are never touched.
+ * What "Use this template" does to the editor's site settings: by default only the layout (`template`). Opt-in: `colours` also takes the
+ * template's colours; `starter` also fills the niche texts, announcement, About and FAQ — but only where the seller hasn't written their own
+ * (a text still equal to its default, an empty announcement / About / FAQ). Banners, products, logo, policies and section toggles are never touched.
+ * Nothing is saved here: the editor shows the result and the seller presses Save (or Undo).
  */
-export function applyTemplate(site: ShopSite, id: TemplateId, defaultTexts: Record<SiteTextKey, string>, withStarter: boolean): ShopSite {
+export function applyTemplate(site: ShopSite, id: TemplateId, defaultTexts: Record<SiteTextKey, string>, { colours, starter }: ApplyOptions): ShopSite {
   const t = getTemplate(id);
-  const next: ShopSite = { ...site, template: t.id, colors: t.colors, accent: t.accent };
-  if (!withStarter) return next;
+  const next: ShopSite = { ...site, template: t.id, ...(colours ? { colors: t.colors, accent: t.accent } : {}) };
+  if (!starter) return next;
   const texts = { ...site.texts };
   for (const [k, v] of Object.entries(t.starter.texts) as [SiteTextKey, string][]) {
     if (!texts[k] || texts[k] === defaultTexts[k]) texts[k] = v;

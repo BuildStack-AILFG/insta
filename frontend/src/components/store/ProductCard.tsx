@@ -1,16 +1,19 @@
 import Link from "next/link";
 import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
+import { isSample } from "@/lib/store/sample";
+import QuickAdd from "./QuickAdd";
 
 /** A product tile: photo (the second photo shows on hover), name, price with MRP and discount, sold-out badge. */
 export default function ProductCard({ slug, product: p, className = "" }: { slug: string; product: PublicProduct; className?: string }) {
   const off = !p.price_varies && p.compare_at_price && p.compare_at_price > p.price ? Math.round(100 - (100 * p.price) / p.compare_at_price) : 0;
   const second = p.images[1];
   return (
-    <Link href={`/s/${slug}/p/${p.id}`} className={`pc group block ${className}`}>
+    <Link href={isSample(p.id) ? "#" : `/s/${slug}/p/${p.id}`} className={`pc group block ${className}`}>
       <div className="pc-media relative aspect-[4/5] overflow-hidden rounded-2xl bg-[var(--soft)]">
         {p.image_url && <img src={p.image_url} alt={p.name} loading="lazy" className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] ${second ? "group-hover:opacity-0" : ""}`} />}
         {second && <img src={second} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />}
+        <QuickAdd slug={slug} product={p} />
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
           {p.sold_out && <span className="rounded-full bg-neutral-900/85 px-2.5 py-1 text-[11px] font-semibold text-white">Sold out</span>}
           {!p.sold_out && off >= 5 && <span className="rounded-full bg-[var(--accent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--accent-fg)]">{off}% off</span>}

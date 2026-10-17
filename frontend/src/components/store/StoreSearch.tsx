@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, X } from "lucide-react";
 import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
+import { isDemoSlug, searchDemo } from "@/lib/store/demos";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 
@@ -22,6 +23,7 @@ export default function StoreSearch({ slug }: { slug: string }) {
     if (term.length < 2) return;
     const ctl = new AbortController();
     const timer = setTimeout(async () => {
+      if (isDemoSlug(slug)) { setResults(searchDemo(slug, term)); return; }
       try {
         const res = await fetch(`${API_URL}/public/store/${encodeURIComponent(slug)}/search?q=${encodeURIComponent(term)}`, { signal: ctl.signal });
         if (res.ok) setResults(((await res.json()) as { products: PublicProduct[] }).products);

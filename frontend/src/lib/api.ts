@@ -685,16 +685,28 @@ export type ShopInput = {
   chat_orders: boolean; cod_confirmation: boolean; reminders_enabled: boolean; reminder_after_minutes: number; reminder_message: string;
   gstin: string; legal_name: string; business_address: string; gst_rate: 0 | 5 | 12 | 18 | 28;
 };
-export type SiteSection = "categories" | "best_sellers" | "new_arrivals" | "all_products" | "instagram" | "about" | "faq";
+export type SiteSection = "categories" | "best_sellers" | "new_arrivals" | "all_products" | "instagram" | "about" | "testimonials" | "faq";
 export type HeroSlide = { image_url: string; title: string; subtitle: string; cta_label: string; product_id: string | null };
 /** The storefront website's look and content (white template). Empty fields are filled from the store's settings when shown. */
 export type SiteColors = { background: string; text: string; surface: string; button_text: string };
 export type SiteTextKey =
   | "hero_button" | "categories_title" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
-  | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store";
+  | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store"
+  | "lookbook_title" | "lookbook_subtitle" | "testimonials_title" | "steps_title" | "step1_title" | "step1_text" | "step2_title" | "step2_text" | "step3_title" | "step3_text"
+  | "custom_title" | "custom_text" | "custom_button";
 export type ShopSite = {
-  /** Storefront layout + style: classic | boutique | jewellery | bakery | beauty (non-classic needs the Pro plan). */
-  template: "classic" | "boutique" | "jewellery" | "bakery" | "beauty";
+  /** Storefront layout + style: classic | boutique | jewellery | bakery | beauty | fitness (non-classic templates are part of the Growth plan). */
+  template: "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness";
+  /** Reviews the seller writes themselves (up to 6). */
+  testimonials: { name: string; text: string }[];
+  /** Shown as a "Size guide" link next to a Size option on product pages. */
+  size_guide: string;
+  /** "contain" shows product shots on a plain background without cropping them. */
+  photo_fit: "cover" | "contain";
+  /** Niche templates: home-page blocks in the seller's order (empty = the template's own order). */
+  section_order: string[];
+  grid_columns: 3 | 4;
+  hero_height: "compact" | "normal" | "tall";
   accent: string; colors: SiteColors; texts: Record<SiteTextKey, string>; announcement: string; hero: HeroSlide[];
   about: { title: string; text: string; image_url: string | null }; faq: { q: string; a: string }[]; sections: Record<SiteSection, boolean>;
   policies: { shipping: string; returns: string };

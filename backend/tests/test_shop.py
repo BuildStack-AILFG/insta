@@ -991,15 +991,14 @@ async def test_category_typed_in_the_product_form_joins_the_list(ws):
     assert p["category"] == "Kurtas"
 
 
-async def test_niche_templates_are_a_pro_feature(ws, app_client):
-    import uuid as _uuid
-    from sqlalchemy import update
-    from app.models.tenant import Tenant
+async def test_niche_templates_follow_the_plan_feature(ws, app_client):
+    from app.models.plan import Plan
     from tests.conftest import db_session
 
-    async def on_plan(plan: str) -> None:
+    async def templates_on(on: bool) -> None:  # the admin console can switch the feature per plan
         async with await db_session() as db:
-            await db.execute(update(Tenant).where(Tenant.id == _uuid.UUID(ws.tenant_id)).values(plan_id=plan))
+            plan = await db.get(Plan, "growth")
+            plan.features = {**(plan.features or {}), "shop_templates": on}
             await db.commit()
 
     async def public_template(slug: str) -> str:
@@ -1008,17 +1007,64 @@ async def test_niche_templates_are_a_pro_feature(ws, app_client):
     s = await _store(ws)
     site = s["site"]
     assert site["template"] == "classic"
-    r = await ws.put("/shop/site", json={**site, "template": "jewellery"})  # the workspace is on Growth
-    assert r.status_code == 402 and r.json()["detail"]["feature"] == "shop_templates"
-    assert (await ws.put("/shop/site", json={**site, "template": "nonsense"})).status_code == 422
-    assert (await ws.put("/shop/site", json={**site, "template": "classic"})).status_code == 200
+    try:
+        # Growth includes the templates
+        assert (await ws.put("/shop/site", json={**site, "template": "nonsense"})).status_code == 422
+        assert (await ws.put("/shop/site", json={**site, "template": "jewellery"})).json()["site"]["template"] == "jewellery"
+        assert await public_template(s["slug"]) == "jewellery"
 
-    await on_plan("pro")
-    assert (await ws.put("/shop/site", json={**site, "template": "jewellery"})).json()["site"]["template"] == "jewellery"
-    assert await public_template(s["slug"]) == "jewellery"
+        await templates_on(False)  # switched off: the storefront shows the classic look, keeps the saved choice, other edits still save
+        assert await public_template(s["slug"]) == "classic"
+        r = await ws.put("/shop/site", json={**site, "template": "boutique"})
+        assert r.status_code == 402 and r.json()["detail"]["feature"] == "shop_templates"
+        assert (await ws.put("/shop/site", json={**site, "template": "jewellery", "announcement": "Sale"})).status_code == 200
+        assert (await ws.put("/shop/site", json={**site, "template": "classic"})).status_code == 200
 
-    await on_plan("growth")  # a downgrade shows the classic look, keeps the saved choice, and other edits still save
-    assert await public_template(s["slug"]) == "classic"
-    assert (await ws.put("/shop/site", json={**site, "template": "jewellery", "announcement": "Sale"})).status_code == 200
-    await on_plan("pro")
-    assert await public_template(s["slug"]) == "jewellery"
+        await templates_on(True)
+        assert (await ws.put("/shop/site", json={**site, "template": "jewellery"})).status_code == 200
+        assert await public_template(s["slug"]) == "jewellery"
+    finally:
+        await templates_on(True)
+
+
+async def test_layout_options_testimonials_and_section_order(ws, app_client):
+    s = await _store(ws)
+    site = s["site"]
+    assert site["testimonials"] == [] and site["photo_fit"] == "cover" and site["grid_columns"] == 4 and site["hero_height"] == "normal" and site["section_order"] == []
+    assert site["sections"]["testimonials"] is True and site["size_guide"] == ""
+
+    body = {**site, "template": "boutique", "testimonials": [{"name": "Asha", "text": "Lovely fabric and fast delivery."}], "size_guide": "S = 36 in, M = 38 in",
+            "photo_fit": "contain", "grid_columns": 3, "hero_height": "tall", "section_order": ["faq", "best", "bogus", "faq"]}
+    saved = (await ws.put("/shop/site", json=body)).json()["site"]
+    assert saved["testimonials"] == [{"name": "Asha", "text": "Lovely fabric and fast delivery."}] and saved["size_guide"].startswith("S = 36")
+    assert saved["photo_fit"] == "contain" and saved["grid_columns"] == 3 and saved["hero_height"] == "tall"
+    assert saved["section_order"] == ["faq", "best"]  # unknown blocks and repeats are dropped
+
+    public = (await app_client.get(f"/api/public/store/{s['slug']}")).json()["store"]["site"]
+    assert public["testimonials"][0]["name"] == "Asha" and public["grid_columns"] == 3 and public["photo_fit"] == "contain" and public["section_order"] == ["faq", "best"]
+
+    assert (await ws.put("/shop/site", json={**body, "testimonials": [{"name": "A", "text": "x"}] * 7})).status_code == 422
+    assert (await ws.put("/shop/site", json={**body, "photo_fit": "stretch"})).status_code == 422
+    assert (await ws.put("/shop/site", json={**body, "grid_columns": 5})).status_code == 422
+    assert (await ws.put("/shop/site", json={**body, "testimonials": [{"name": "", "text": "x"}]})).status_code == 422
+
+
+async def test_template_section_texts_are_editable(ws, app_client):
+    s = await _store(ws)
+    site = s["site"]
+    texts = site["texts"]
+    assert texts["lookbook_title"] == "Shop the look" and texts["steps_title"] == "How ordering works" and texts["testimonials_title"] == "What customers say"
+    assert texts["step1_text"].startswith("Browse the menu") and texts["custom_button"] == "Request on Instagram"
+    assert s["default_texts"]["custom_title"] == "Planning something special?"
+
+    mine = {**texts, "lookbook_title": "Is season ka look", "steps_title": "Order kaise karein", "step1_text": "x" * 200, "custom_button": "WhatsApp karein", "unknown": "ignored"}
+    saved = (await ws.put("/shop/site", json={**site, "texts": mine})).json()["site"]["texts"]
+    assert saved["lookbook_title"] == "Is season ka look" and saved["steps_title"] == "Order kaise karein" and saved["custom_button"] == "WhatsApp karein"
+    assert saved["step1_text"] == "x" * 200 and "unknown" not in saved
+    public = (await app_client.get(f"/api/public/store/{s['slug']}")).json()["store"]["site"]["texts"]
+    assert public["lookbook_title"] == "Is season ka look" and public["step2_title"] == "Tell us the details"  # untouched ones keep the default
+
+    emptied = (await ws.put("/shop/site", json={**site, "texts": {**mine, "lookbook_title": ""}})).json()["site"]["texts"]
+    assert emptied["lookbook_title"] == "Shop the look"  # an emptied field falls back to the default
+    assert (await ws.put("/shop/site", json={**site, "texts": {**mine, "step1_text": "x" * 201}})).status_code == 422
+    assert (await ws.put("/shop/site", json={**site, "texts": {**mine, "steps_title": "x" * 81}})).status_code == 422

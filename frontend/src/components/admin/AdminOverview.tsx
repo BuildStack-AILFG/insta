@@ -6,7 +6,7 @@ import { admin, errorMessage, type AdminOverview as Overview } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import { dateOnly, PLAN_TONE, PlanBadge, StateBadge } from "./adminUi";
 
-const PLAN_ORDER = ["trial", "free", "starter", "growth", "pro", "scale", "enterprise"];
+const PLAN_ORDER = ["trial", "free", "starter", "growth", "scale", "enterprise"];
 
 export default function AdminOverview({ onOpen }: { onOpen: (id: string) => void }) {
   const [o, setO] = useState<Overview | null>(null);

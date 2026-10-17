@@ -8,9 +8,12 @@ import type { PublicProduct } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import { categoriesOf, categoryHref } from "@/lib/store/categories";
 import { getTemplate } from "@/lib/store/templates";
+import TemplateHome from "./home/TemplateHome";
+import { Testimonials } from "./home/blocks";
 
 /** The store's home page: hero carousel, trust badges, best sellers, new arrivals, all products, Instagram, about and FAQ. */
 export default function StoreHome({ data }: { data: StoreData }) {
+  if (data.store.site.template && data.store.site.template !== "classic") return <TemplateHome data={data} />;
   const { store, products } = data;
   const { site } = store;
   const t = site.texts;
@@ -64,7 +67,7 @@ export default function StoreHome({ data }: { data: StoreData }) {
           {!best.length && !fresh.length && !categories.length && (
             <section className="mx-auto max-w-6xl px-4 pt-14">
               <h2 className="mb-5 text-[22px] font-bold tracking-tight sm:text-[26px]">{t.all_products_title}</h2>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{products.slice(0, 12).map((p) => <ProductCard key={p.id} slug={store.slug} product={p} />)}</div>
+              <div className="pgrid grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{products.slice(0, 12).map((p) => <ProductCard key={p.id} slug={store.slug} product={p} />)}</div>
             </section>
           )}
 
@@ -111,6 +114,8 @@ export default function StoreHome({ data }: { data: StoreData }) {
           </div>
         </section>
       )}
+
+      {site.sections.testimonials && (site.testimonials?.length ?? 0) > 0 && <Testimonials items={site.testimonials} title={t.testimonials_title} />}
 
       {site.sections.faq && site.faq.length > 0 && (
         <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 pt-16">
