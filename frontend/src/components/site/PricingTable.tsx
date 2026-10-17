@@ -116,7 +116,7 @@ export function TrustStrip({ trialDays }: { trialDays: number }) {
   );
 }
 
-/** The three plan cards with a Monthly/Yearly toggle — used on the home page and the pricing page. */
+/** The plan cards with a Monthly/Yearly toggle — used on the home page and the pricing page. */
 export function PlanCards({ plans, initialPeriod = "yearly" }: Pick<Props, "plans"> & { initialPeriod?: Period }) {
   const [period, setPeriod] = useState<Period>(initialPeriod);
   return (
@@ -184,7 +184,7 @@ export default function PricingTable({ plans, trial }: Props) {
       <div className="mt-16">
         <h2 className="text-center text-[24px] font-extrabold tracking-tight text-white sm:text-[28px]">Compare plans</h2>
         <p className="mx-auto mb-8 mt-2 max-w-2xl text-center text-[14.5px] leading-relaxed text-white/55">
-          Every plan has the core automation tools. Growth adds the Instagram Shop, giveaways, intent matching, segments and the sales pipeline, with more room on every limit.
+          Every plan has the core automation tools. Growth adds the Instagram Shop with ready-made store templates, giveaways, intent matching, segments and the sales pipeline, with more room on every limit.
         </p>
         <CompareTable plans={plans} />
       </div>

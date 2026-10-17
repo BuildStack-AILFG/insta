@@ -26,6 +26,7 @@ FEATURES: dict[str, dict[str, str]] = {
     "intent_matching": {"label": "Intent matching", "blurb": "AI works out which of your replies a customer meant, even without the exact keyword."},
     "segments": {"label": "Segments", "blurb": "Saved audiences built from tags, traits and activity."},
     "pipeline": {"label": "Sales pipeline", "blurb": "Track deals from first DM to payment on a drag-and-drop board."},
+    "shop_templates": {"label": "Store templates", "blurb": "Ready-made storefront designs for fashion, jewellery, food and beauty brands."},
 }
 
 TRIAL_DAYS_DEFAULT = 14
@@ -36,7 +37,8 @@ _ALL_ON = {k: True for k in FEATURES}
 _TRIAL_FEATURES = {**_ALL_ON, "conversation_analytics": False, "automation_reports": False, "sales_reports": False, "assignment_rules": False,
                    "api_access": False, "integrations": False}
 # Growth-tier features: off on the trial, the free plan and Starter; Growth and above get everything.
-_GROWTH_ONLY = {"shop": False, "giveaways": False, "intent_matching": False, "segments": False, "pipeline": False}
+# The store's ready-made templates ride along with the shop, so they are Growth-tier too.
+_GROWTH_ONLY = {"shop": False, "shop_templates": False, "giveaways": False, "intent_matching": False, "segments": False, "pipeline": False}
 _TRIAL_FEATURES = {**_TRIAL_FEATURES, **_GROWTH_ONLY}
 _FREE_FEATURES = {**_TRIAL_FEATURES, "ai_agent": False}
 _STARTER_FEATURES = {**_ALL_ON, **_GROWTH_ONLY}

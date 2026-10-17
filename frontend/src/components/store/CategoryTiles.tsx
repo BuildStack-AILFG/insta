@@ -13,7 +13,7 @@ export default function CategoryTiles({ slug, title, products, covers }: { slug:
       <div className="-mx-4 flex gap-5 overflow-x-auto px-4 pb-2 sm:gap-8">
         {tiles.map((t) => (
           <Link key={t.name} href={categoryHref(slug, t.name)} className="group flex w-24 shrink-0 flex-col items-center gap-2 text-center sm:w-28">
-            <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[var(--soft)] ring-1 ring-[var(--line)] transition group-hover:ring-2 group-hover:ring-[var(--accent)] sm:h-28 sm:w-28">
+            <span className="ct-img flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[var(--soft)] ring-1 ring-[var(--line)] transition group-hover:ring-2 group-hover:ring-[var(--accent)] sm:h-28 sm:w-28">
               {t.image ? <img src={t.image} alt="" loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
                 : <span className="text-[26px] font-bold text-[var(--muted)]">{t.name.slice(0, 1).toUpperCase()}</span>}
             </span>
