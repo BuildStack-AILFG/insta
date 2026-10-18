@@ -32,7 +32,7 @@ export type PlanInfo = {
 };
 
 export type FeatureKey = "ai_agent" | "conversation_analytics" | "automation_reports" | "sales_reports" | "assignment_rules" | "api_access" | "integrations"
-  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline";
+  | "shop" | "giveaways" | "intent_matching" | "segments" | "pipeline" | "shop_templates";
 
 /** What the free trial can and can't do (mirrors the trial row in the database). */
 export type TrialInfo = { days: number; limits: Limits; features: Record<FeatureKey, boolean> };
@@ -50,10 +50,11 @@ export const FEATURE_LABELS: Record<FeatureKey, { label: string; blurb: string }
   intent_matching: { label: "Intent matching", blurb: "AI works out which of your replies a customer meant, even without the exact keyword." },
   segments: { label: "Segments", blurb: "Saved audiences built from tags, traits and activity." },
   pipeline: { label: "Sales pipeline", blurb: "Track deals from first DM to payment on a drag-and-drop board." },
+  shop_templates: { label: "Store templates", blurb: "Ready-made storefront designs for fashion, jewellery, food and beauty brands." },
 };
 
 /** Features that Starter leaves out — only Growth and above include them (mirrors backend plan_catalog._GROWTH_ONLY). */
-export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "giveaways", "intent_matching", "segments", "pipeline"];
+export const GROWTH_TIER_FEATURES: FeatureKey[] = ["shop", "shop_templates", "giveaways", "intent_matching", "segments", "pipeline"];
 
 export const PLANS: PlanInfo[] = [
   {
@@ -84,7 +85,7 @@ export const TRIAL: TrialInfo = {
   days: TRIAL_DAYS,
   limits: { numbers: 1, seats: 3, contacts: 1000, automations: 5, flows: 5, ai: 200, knowledge: 2 },
   features: { ai_agent: true, conversation_analytics: false, automation_reports: false, sales_reports: false, assignment_rules: false, api_access: false, integrations: false,
-    shop: false, giveaways: false, intent_matching: false, segments: false, pipeline: false },
+    shop: false, giveaways: false, intent_matching: false, segments: false, pipeline: false, shop_templates: false },
 };
 
 /** Everything both paid plans and Enterprise include, whatever the volume. */

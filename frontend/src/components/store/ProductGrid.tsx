@@ -30,7 +30,7 @@ export default function ProductGrid({ slug, products }: { slug: string; products
       </div>
       {shown.length === 0
         ? <div className="py-16 text-center text-[var(--muted)]">Nothing matches these filters.</div>
-        : <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{shown.map((p) => <ProductCard key={p.id} slug={slug} product={p} />)}</div>}
+        : <div className="pgrid grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{shown.map((p) => <ProductCard key={p.id} slug={slug} product={p} />)}</div>}
     </>
   );
 }

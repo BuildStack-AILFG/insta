@@ -11,6 +11,7 @@ export type CartLine = { product_id: string; variant_id: string | null; qty: num
 type Cart = { lines: CartLine[]; ref: string | null };
 
 const EVENT = "gfg-cart";
+export const CART_OPEN_EVENT = "gfg-cart-open";
 const MAX_QTY = 10;
 const key = (slug: string) => `gfg_cart_${slug}`;
 const EMPTY = JSON.stringify({ lines: [], ref: null });
@@ -54,6 +55,11 @@ export function addToCart(slug: string, line: CartLine, ref?: string | null) {
 export function setQty(slug: string, line: CartLine, qty: number) {
   const cart = parse(readRaw(slug));
   write(slug, { ...cart, lines: qty <= 0 ? cart.lines.filter((l) => !same(l, line)) : cart.lines.map((l) => (same(l, line) ? { ...l, qty: Math.min(MAX_QTY, qty) } : l)) });
+}
+
+/** Slide the cart drawer open (niche templates). */
+export function openCartDrawer() {
+  window.dispatchEvent(new Event(CART_OPEN_EVENT));
 }
 
 export function clearCart(slug: string) {

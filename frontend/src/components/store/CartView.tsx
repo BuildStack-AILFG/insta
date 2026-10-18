@@ -5,7 +5,7 @@ import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import type { PublicStore } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import CheckoutForm from "./CheckoutForm";
-import { setQty, useCart } from "./cart";
+import { openCartDrawer, setQty, useCart } from "./cart";
 
 /** The cart page: edit lines, then the checkout form for all of them. */
 export default function CartView({ store }: { store: PublicStore }) {
@@ -45,12 +45,17 @@ export default function CartView({ store }: { store: PublicStore }) {
 }
 
 /** Header cart icon with the number of items. */
-export function CartLink({ slug }: { slug: string }) {
+export function CartLink({ slug, drawer = false }: { slug: string; drawer?: boolean }) {
   const n = useCart(slug).lines.reduce((sum, l) => sum + l.qty, 0);
-  return (
-    <Link href={`/s/${slug}/cart`} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--fg)] hover:bg-[var(--soft)]" aria-label={`Cart, ${n} items`}>
+  const cls = "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--fg)] hover:bg-[var(--soft)]";
+  const inner = (
+    <>
       <ShoppingBag size={19} />
       {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[11px] font-bold text-[var(--accent-fg)]">{n}</span>}
-    </Link>
+    </>
   );
+  // Niche templates open the slide-out cart; the classic template keeps linking to the cart page.
+  return drawer
+    ? <button type="button" onClick={openCartDrawer} className={cls} aria-label={`Cart, ${n} items`}>{inner}</button>
+    : <Link href={`/s/${slug}/cart`} className={cls} aria-label={`Cart, ${n} items`}>{inner}</Link>;
 }

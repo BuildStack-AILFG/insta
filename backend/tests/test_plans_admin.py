@@ -111,6 +111,7 @@ async def test_public_plans_lists_only_what_is_for_sale(app_client):
     assert ids == ["starter", "growth", "enterprise"]  # no free / trial / retired scale
     starter, growth, enterprise = body["plans"]
     assert starter["per_month"]["monthly"] == 79900 and growth["per_month"]["monthly"] == 129900 and enterprise["per_month"]["monthly"] is None
+    assert growth["features"]["shop_templates"] is True and starter["features"]["shop_templates"] is False
     assert body["trial"]["days"] == 14 and body["trial"]["features"]["api_access"] is False and body["trial"]["features"]["ai_agent"] is True
     assert "conversation_analytics" in body["feature_catalog"]
 

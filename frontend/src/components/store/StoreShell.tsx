@@ -4,12 +4,18 @@ import { Instagram, MessageCircle, Phone } from "lucide-react";
 import type { PublicProduct, PublicStore } from "@/lib/api";
 import { CartLink } from "./CartView";
 import { categoryHref } from "@/lib/store/categories";
+import { getTemplate } from "@/lib/store/templates";
+import { getDemo, getDemoProduct, isDemoSlug } from "@/lib/store/demos";
 import StoreSearch from "./StoreSearch";
+import CartDrawer from "./CartDrawer";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 
 /** Server-side loader for the public store endpoints (no login, never cached: stock and prices change). */
 export async function loadStore<T>(path: string): Promise<T | null> {
+  const [rawSlug, kind, productId] = path.split("/");
+  const slug = decodeURIComponent(rawSlug);
+  if (isDemoSlug(slug)) return ((kind === "products" ? getDemoProduct(slug, productId) : getDemo(slug)) as T | null) ?? null; // demo stores are static (no API)
   try {
     const res = await fetch(`${API_URL}/public/store/${path}`, { cache: "no-store" });
     return res.ok ? ((await res.json()) as T) : null;
@@ -61,29 +67,40 @@ export default function StoreShell({ store, children, home = false, categories =
     { label: "About", href: `${base}#about`, on: site.sections.about && !!site.about.text },
     { label: "FAQ", href: `${base}#faq`, on: site.sections.faq },
   ].filter((n) => n.on);
+  const niche = !!site.template && site.template !== "classic";
+  const centered = getTemplate(site.template).header === "center";
+  const navLinks = nav.map((n) => <Link key={n.label} href={n.href} className="hover:text-[var(--fg)]">{n.label}</Link>);
   return (
-    <main className="min-h-screen bg-[var(--bg)] text-[var(--fg)]" style={themeVars(site)}>
-      {site.announcement && (
-        <div className="bg-[var(--accent)] px-4 py-2 text-center text-[12.5px] font-medium text-[var(--accent-fg)]">{site.announcement}</div>
+    <main className="min-h-screen bg-[var(--bg)] text-[var(--fg)]" style={themeVars(site)} data-template={site.template ?? "classic"} data-cols={site.grid_columns ?? 4} data-hero={site.hero_height ?? "normal"} data-fit={site.photo_fit ?? "cover"}>
+      {isDemoSlug(store.slug) && (
+        <div className="bg-black px-4 py-1.5 text-center text-[12px] text-white/90">Demo store — this is how the {getTemplate(site.template).name} template looks. Orders can&apos;t be placed here.</div>
       )}
+      {site.announcement && (niche ? (
+        <div className="st-ticker relative bg-[var(--accent)] py-2 text-[12.5px] font-medium text-[var(--accent-fg)]" aria-label={site.announcement}>
+          <div className="st-ticker-track" aria-hidden>{Array.from({ length: 8 }, (_, i) => <span key={i} className="px-8">{site.announcement}</span>)}</div>
+          <span className="sr-only">{site.announcement}</span>
+        </div>
+      ) : (
+        <div className="bg-[var(--accent)] px-4 py-2 text-center text-[12.5px] font-medium text-[var(--accent-fg)]">{site.announcement}</div>
+      ))}
       <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-          <Link href={base} className="flex min-w-0 items-center gap-2.5">
+        <div className={centered ? "mx-auto grid h-20 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4" : "mx-auto flex h-16 max-w-6xl items-center gap-4 px-4"}>
+          {centered && <nav className="hidden gap-6 text-[14px] text-[var(--muted)] md:flex">{navLinks}</nav>}
+          {centered && <span className="md:hidden" />}
+          <Link href={base} className={centered ? "flex min-w-0 flex-col items-center gap-1 justify-self-center text-center" : "flex min-w-0 items-center gap-2.5"}>
             {store.logo_url
               ? <img src={store.logo_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[var(--line)]" />
               : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[15px] font-bold text-[var(--accent-fg)]">{store.name.slice(0, 1)}</div>}
-            <span className="truncate text-[17px] font-bold tracking-tight">{store.name}</span>
+            <span className={centered ? "st-brand truncate text-[20px] font-semibold tracking-[0.06em]" : "st-brand truncate text-[17px] font-bold tracking-tight"}>{store.name}</span>
           </Link>
-          <nav className="ml-6 hidden gap-6 text-[14px] text-[var(--muted)] md:flex">
-            {nav.map((n) => <Link key={n.label} href={n.href} className="hover:text-[var(--fg)]">{n.label}</Link>)}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
+          {!centered && <nav className="ml-6 hidden gap-6 text-[14px] text-[var(--muted)] md:flex">{navLinks}</nav>}
+          <div className={centered ? "flex items-center gap-2 justify-self-end" : "ml-auto flex items-center gap-2"}>
             <StoreSearch slug={store.slug} />
             {store.instagram && (
               <a href={`https://instagram.com/${store.instagram}`} target="_blank" rel="noreferrer" aria-label={`@${store.instagram} on Instagram`}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--fg)] hover:bg-[var(--soft)]"><Instagram size={19} /></a>
             )}
-            <CartLink slug={store.slug} />
+            <CartLink slug={store.slug} drawer={niche} />
           </div>
         </div>
         {categories.length > 0 && (
@@ -138,6 +155,7 @@ export default function StoreShell({ store, children, home = false, categories =
         </div>
       </footer>
 
+      {niche && <CartDrawer store={store} />}
       {wa && (
         <a href={wa} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"
           className="fixed bottom-5 right-5 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/15 transition hover:scale-105">

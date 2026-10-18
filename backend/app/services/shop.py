@@ -117,7 +117,9 @@ def order_url(shop: Shop, order: ShopOrder) -> str:
 # filled from the store's own settings, so a brand-new store already looks complete.
 
 DEFAULT_ACCENT = "#e11d48"
-SITE_SECTIONS = ("categories", "best_sellers", "new_arrivals", "all_products", "instagram", "about", "faq")
+SITE_SECTIONS = ("categories", "best_sellers", "new_arrivals", "all_products", "instagram", "about", "testimonials", "faq")
+# The home-page blocks a niche template can reorder (frontend lib/store/templates.ts HOME_ORDER lists which ones each template uses).
+HOME_BLOCKS = ("lookbook", "collections", "tiles", "signature", "best", "fresh", "benefits", "steps", "custom", "story", "testimonials", "insta", "faq", "all")
 # Page colours (the accent above colours buttons and badges); the template derives muted text and lines from these.
 DEFAULT_COLORS = {"background": "#ffffff", "text": "#171717", "surface": "#f6f6f4", "button_text": "#ffffff"}
 # Every heading and button label on the website, so a store can speak in its own words (or language).
@@ -126,8 +128,19 @@ DEFAULT_TEXTS = {
     "new_arrivals_title": "New arrivals", "new_arrivals_subtitle": "Just landed in the store", "all_products_title": "Shop all",
     "instagram_title": "Shop our Instagram", "instagram_subtitle": "Seen it on our feed? Tap to buy.", "faq_title": "Questions? Answers.",
     "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "empty_store": "New products are coming soon.",
+    # Headings and copy inside the niche templates' home pages (Fashion lookbook, Bakery steps and custom-order card, reviews)
+    "lookbook_title": "Shop the look", "lookbook_subtitle": "Pieces we love, styled together", "testimonials_title": "What customers say",
+    "steps_title": "How ordering works",
+    "step1_title": "Pick what you love", "step1_text": "Browse the menu and add your favourites to the basket.",
+    "step2_title": "Tell us the details", "step2_text": "Choose delivery or pickup, and add a note for messages or allergies.",
+    "step3_title": "Enjoy it fresh", "step3_text": "We bake to order and deliver it to your door.",
+    "custom_title": "Planning something special?", "custom_text": "Custom cakes and bulk orders — tell us the occasion, flavour and date and we'll make it happen.",
+    "custom_button": "Request on Instagram",
 }
+# Layout + style presets for the storefront (the look itself lives in frontend/src/lib/store/templates.ts). `classic` is the original look.
+TEMPLATES = ("classic", "boutique", "jewellery", "bakery", "beauty", "fitness")
 DEFAULT_SITE: dict = {
+    "template": "classic",
     "accent": DEFAULT_ACCENT,
     "colors": DEFAULT_COLORS,
     "texts": DEFAULT_TEXTS,
@@ -137,6 +150,12 @@ DEFAULT_SITE: dict = {
     "faq": [],  # [{q, a}]
     "sections": {k: True for k in SITE_SECTIONS},
     "policies": {"shipping": "", "returns": ""},
+    "testimonials": [],  # [{name, text}] — written by the seller, shown on niche templates and the classic home page
+    "size_guide": "",
+    "photo_fit": "cover",  # "contain" for product shots on a plain background
+    "section_order": [],  # niche templates: HOME_BLOCKS in the seller's order (empty = the template's own order)
+    "grid_columns": 4,
+    "hero_height": "normal",
 }
 
 
@@ -147,6 +166,15 @@ def site_settings(shop: Shop) -> dict:
     for key in ("about", "sections", "policies", "colors"):
         merged[key] = {**DEFAULT_SITE[key], **(saved.get(key) or {})}
     merged["texts"] = {**DEFAULT_TEXTS, **{k: v for k, v in (saved.get("texts") or {}).items() if v}}  # an emptied field falls back to the default
+    if merged.get("template") not in TEMPLATES:
+        merged["template"] = "classic"
+    if merged.get("photo_fit") not in ("cover", "contain"):
+        merged["photo_fit"] = "cover"
+    if merged.get("grid_columns") not in (3, 4):
+        merged["grid_columns"] = 4
+    if merged.get("hero_height") not in ("compact", "normal", "tall"):
+        merged["hero_height"] = "normal"
+    merged["section_order"] = [k for k in (merged.get("section_order") or []) if k in HOME_BLOCKS]
     return merged
 
 

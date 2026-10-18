@@ -6,6 +6,7 @@ import { Banknote, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { errorMessage, itemLabel, storefront, type CheckoutInput, type PublicStore, type ShopAddress } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import { clearCart, type CartLine } from "./cart";
+import { isDemoSlug } from "@/lib/store/demos";
 
 const SAVED = "gfg_buyer"; // remembers the buyer's details on this device for their next order
 const field = "w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2.5 text-[14px] text-[var(--fg)] placeholder:text-[var(--faint)] focus:border-[var(--accent)] focus:outline-none";
@@ -60,6 +61,10 @@ export default function CheckoutForm({ store, lines, refToken }: { store: Public
       setBusy(false);
     }
   };
+
+  if (isDemoSlug(store.slug)) {
+    return <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 text-[14px] text-[var(--muted)]"><b className="text-[var(--fg)]">This is a demo store.</b> Checkout is switched off here — on your own store, customers can pay by UPI, card or cash on delivery.</div>;
+  }
 
   if (store.payment_methods.length === 0) {
     return <div className="rounded-xl border border-[var(--line)] px-4 py-3 text-[14px] text-[var(--muted)]">This store isn&apos;t taking orders right now.{store.instagram && <> DM <b>@{store.instagram}</b> to order.</>}</div>;

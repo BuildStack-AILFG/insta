@@ -11,7 +11,7 @@ import PriceBlock from "./PriceBlock";
 const MAX_QTY = 10;
 
 /** Pick size / colour and quantity, then add to the cart or go straight to checkout. */
-export default function ProductBuy({ store, product, refToken }: { store: PublicStore; product: PublicProduct; refToken?: string }) {
+export default function ProductBuy({ store, product, refToken, sizeGuide }: { store: PublicStore; product: PublicProduct; refToken?: string; sizeGuide?: string }) {
   const router = useRouter();
   const groups = product.options;
   const [picked, setPicked] = useState<Record<string, string>>(() => {
@@ -21,6 +21,7 @@ export default function ProductBuy({ store, product, refToken }: { store: Public
   });
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const variant = groups.length ? product.variants.find((v) => groups.every((g) => v.options[g.name] === picked[g.name])) ?? null : null;
   const complete = groups.every((g) => picked[g.name]);
@@ -46,7 +47,10 @@ export default function ProductBuy({ store, product, refToken }: { store: Public
       <PriceBlock price={price} from={product.price_varies && !variant} compareAt={product.price_varies ? null : product.compare_at_price} />
       {groups.map((g) => (
         <div key={g.name}>
-          <div className="mb-2 text-[13px] text-[var(--muted)]">{g.name}{picked[g.name] && <>: <b className="text-[var(--fg)]">{picked[g.name]}</b></>}</div>
+          <div className="mb-2 flex items-center justify-between text-[13px] text-[var(--muted)]">
+            <span>{g.name}{picked[g.name] && <>: <b className="text-[var(--fg)]">{picked[g.name]}</b></>}</span>
+            {sizeGuide && /size/i.test(g.name) && <button type="button" onClick={() => setGuideOpen(true)} className="text-[12.5px] font-medium text-[var(--fg)] underline underline-offset-2">Size guide</button>}
+          </div>
           <div className="flex flex-wrap gap-2">{g.values.map((value) => {
             const on = picked[g.name] === value;
             const ok = possible(g.name, value);
@@ -78,6 +82,15 @@ export default function ProductBuy({ store, product, refToken }: { store: Public
           {store.site.texts.buy_now} · {fmtMoney(price * qty)}
         </button>
       </div>
+      {guideOpen && sizeGuide && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/60 p-4" onClick={() => setGuideOpen(false)} role="dialog" aria-label="Size guide">
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl bg-[var(--bg)] p-6 text-[var(--fg)] shadow-2xl">
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-[17px] font-bold">Size guide</h2>
+              <button onClick={() => setGuideOpen(false)} className="text-[22px] leading-none text-[var(--muted)] hover:text-[var(--fg)]" aria-label="Close">×</button></div>
+            <p className="whitespace-pre-line text-[14.5px] leading-relaxed text-[var(--muted)]">{sizeGuide}</p>
+          </div>
+        </div>
+      )}
       {!complete && <p className="text-[12.5px] text-[var(--muted)]">Choose {groups.filter((g) => !picked[g.name]).map((g) => g.name.toLowerCase()).join(" and ")} to continue.</p>}
     </div>
   );
