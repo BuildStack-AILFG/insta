@@ -5,6 +5,7 @@ from __future__ import annotations
 import hmac
 import re
 import uuid
+import datetime
 from datetime import timedelta
 from typing import Literal
 
@@ -18,7 +19,7 @@ from app.core import ratelimit
 from app.models.billing import PaymentLink
 from app.models.comment_automation import CommentAutomation
 from app.models.instagram_account import InstagramAccount
-from app.models.shop import Shop, ShopCart, ShopCategory, ShopOrder, ShopProduct, ShopVariant
+from app.models.shop import Shop, ShopBooking, ShopCart, ShopCategory, ShopOrder, ShopProduct, ShopVariant
 from app.services import payment_links, shiprocket, shop_domains
 from app.services.billing import GSTIN_RE
 from app.services.entitlements import ensure_feature, has_feature, require_feature
@@ -213,6 +214,24 @@ class CheckoutIn(BaseModel):
         return self
 
 
+class BookingIn(BaseModel):
+    product_id: uuid.UUID
+    name: str = Field(min_length=2, max_length=120)
+    phone: str = Field(min_length=8, max_length=20)
+    email: EmailStr | None = None
+    guests: int = Field(default=1, ge=1, le=5000)
+    event_type: str = Field(default="", max_length=40)
+    date: datetime.date  # the event day, or check-in for a room
+    time: str = Field(default="", max_length=32)  # "18:00" or Morning / Afternoon / Evening / Night; empty for rooms
+    check_out: datetime.date | None = None
+    note: str = Field(default="", max_length=500)
+    website: str = Field(default="", max_length=200)  # honeypot: real visitors never fill this in
+
+
+class BookingPatch(BaseModel):
+    status: Literal["pending", "confirmed", "declined", "cancelled"]
+
+
 # ---- serialisers ---------------------------------------------------------------------------------------------------
 
 def shop_out(s: Shop) -> dict:
@@ -254,6 +273,13 @@ def order_out(o: ShopOrder, automation_name: str | None = None, slug: str | None
             "confirmation_sent": o.confirmation_sent, "cod_confirmation": o.cod_confirmation, "recovered": o.recovered, "courier": o.courier, "awb": o.awb,
             "tracking_url": o.tracking_url, "courier_status": o.courier_status, "shiprocket_shipment_id": o.shiprocket_shipment_id, "shipped_at": _iso(o.shipped_at),
             "delivered_at": _iso(o.delivered_at), "invoice_number": o.invoice_number, **_order_path(o, slug), "created_at": _iso(o.created_at)}
+
+
+def booking_out(b: ShopBooking) -> dict:
+    return {"id": str(b.id), "number": b.number, "product_id": str(b.product_id) if b.product_id else None, "service_name": b.service_name, "kind": b.kind,
+            "date": b.event_date.isoformat(), "time": b.event_time, "check_out": b.check_out_date.isoformat() if b.check_out_date else None, "guests": b.guests,
+            "event_type": b.event_type, "customer_name": b.customer_name, "customer_phone": b.customer_phone, "customer_email": b.customer_email,
+            "note": b.note, "status": b.status, "created_at": _iso(b.created_at)}
 
 
 def public_product(p: ShopProduct, variants: list[ShopVariant]) -> dict:
@@ -540,6 +566,30 @@ async def update_order(order_id: uuid.UUID, body: OrderPatch, ctx: Ctx = Depends
     return order_out(o, slug=s.slug if s else None)
 
 
+# ---- dashboard: bookings (hotel / venue template) ---------------------------------------------------------------------------
+
+@router.get("/bookings")
+async def list_bookings(status_: str | None = Query(None, alias="status", max_length=16), limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+                        ctx: Ctx = Depends(get_ctx), db: AsyncSession = Depends(get_db)) -> dict:
+    cond = [ShopBooking.tenant_id == ctx.tenant_id]
+    if status_:
+        cond.append(ShopBooking.status == status_)
+    total = (await db.execute(select(func.count()).select_from(ShopBooking).where(*cond))).scalar_one()
+    rows = (await db.execute(select(ShopBooking).where(*cond).order_by(ShopBooking.created_at.desc()).limit(limit).offset(offset))).scalars().all()
+    return {"total": total, "items": [booking_out(b) for b in rows]}
+
+
+@router.patch("/bookings/{booking_id}")
+async def update_booking(booking_id: uuid.UUID, body: BookingPatch, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> dict:
+    b = await db.get(ShopBooking, booking_id)
+    if b is None or b.tenant_id != ctx.tenant_id:
+        raise HTTPException(status_code=404, detail={"error": "Booking not found."})
+    b.status = body.status
+    await db.commit()
+    await db.refresh(b)
+    return booking_out(b)
+
+
 # ---- public store --------------------------------------------------------------------------------------------------------
 
 async def _public_shop(db: AsyncSession, slug: str, *, selling: bool = False) -> Shop:
@@ -621,6 +671,24 @@ async def checkout(slug: str, body: CheckoutIn, request: Request, db: AsyncSessi
     except svc.ShopError as exc:
         raise _err(exc)
     return {"order_id": str(o.id), "token": o.access_token, "number": o.number, "pay_url": o.pay_url, "order_url": svc.order_url(s, o)}
+
+
+@public.post("/{slug}/booking", status_code=status.HTTP_201_CREATED)
+async def book(slug: str, body: BookingIn, request: Request, db: AsyncSession = Depends(get_db)) -> dict:
+    """A booking request from a hotel / venue storefront; the owner confirms it from the dashboard."""
+    ratelimit.limit(request, "store-booking", 10, 600)
+    s = await _public_shop(db, slug, selling=True)
+    if svc.site_settings(s)["template"] != "hotel" or not await has_feature(db, s.tenant_id, "shop_templates"):
+        raise HTTPException(status_code=404, detail={"error": "This store doesn't take bookings."})
+    if body.website:  # a bot filled the honeypot: pretend it worked
+        return {"number": 0}
+    try:
+        b = await svc.create_booking(db, s, product_id=body.product_id, name=body.name.strip(), phone=body.phone, email=body.email, guests=body.guests,
+                                     event_type=body.event_type.strip(), event_date=body.date, event_time=body.time.strip(), check_out=body.check_out,
+                                     note=body.note.strip())
+    except svc.ShopError as exc:
+        raise _err(exc)
+    return {"number": b.number}
 
 
 @public.get("/{slug}/orders/{order_id}")

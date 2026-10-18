@@ -5,7 +5,7 @@ import type { PublicStore, ShopSite, SiteColors, SiteTextKey } from "@/lib/api";
  * `data-template` in app/s/store-templates.css and StoreShell / HeroCarousel) plus optional *starter content* for its niche.
  * `classic` is the original white storefront and renders exactly as before. Keep ids in step with backend services/shop.py TEMPLATES.
  */
-export type TemplateId = "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness";
+export type TemplateId = "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness" | "hotel";
 export type HeaderLayout = "left" | "center";
 export type HeroLayout = "overlay" | "center" | "split" | "inset" | "panel";
 
@@ -109,6 +109,21 @@ export const TEMPLATES: StoreTemplate[] = [
       ],
     },
   },
+  {
+    id: "hotel", name: "Hotel & Venues", niche: "Hotels, banquet halls & marriage lawns", blurb: "Warm ivory and gold, a full-width banner and large venue cards to enquire or book.", header: "center", hero: "overlay",
+    colors: { background: "#fffdf8", text: "#1f2a24", surface: "#f4efe4", button_text: "#ffffff" }, accent: "#9a6b1f",
+    starter: {
+      texts: { hero_button: "Plan your event", categories_title: "Venues & stays", best_sellers_title: "Our signature venues", best_sellers_subtitle: "Banquet hall, marriage lawn and more, made for your big day",
+        new_arrivals_title: "Rooms & dining", new_arrivals_subtitle: "Stay, dine and celebrate under one roof", all_products_title: "All our services", instagram_title: "Moments from our events", related_title: "Also available", add_to_cart: "Call us", buy_now: "Enquire on WhatsApp" },
+      announcement: "Weddings · Receptions · Parties · Stays · Call us to check your date",
+      about: { title: "Celebrate with us", text: "From intimate family functions to grand weddings, our banquet hall, marriage lawn and rooms are managed by a team that looks after every detail, so you can enjoy your day. Visit us and we'll show you around." },
+      faq: [
+        { q: "How many guests can the banquet hall and lawn hold?", a: "The banquet hall seats up to 400 guests and the marriage lawn up to 1,000. Tell us your guest count and we'll suggest the right space." },
+        { q: "Is catering and decoration included?", a: "We offer in-house catering and decoration packages, and you are welcome to bring your own decorator. Ask us for a custom quote." },
+        { q: "How do I book a date?", a: "Call or message us with your date and event type. We confirm availability and hold the date with a small advance." },
+      ],
+    },
+  },
 ];
 
 /** The home-page blocks each niche template shows, in order (the seller can reorder them: site.section_order). Mirrors backend HOME_BLOCKS. */
@@ -118,6 +133,7 @@ export const HOME_ORDER: Record<Exclude<TemplateId, "classic">, string[]> = {
   bakery: ["best", "steps", "fresh", "custom", "testimonials", "insta", "faq", "all"],
   beauty: ["benefits", "collections", "best", "fresh", "story", "testimonials", "faq", "all"],
   fitness: ["benefits", "collections", "best", "fresh", "testimonials", "story", "insta", "faq", "all"],
+  hotel: ["collections", "best", "benefits", "fresh", "story", "testimonials", "insta", "faq", "all"],
 };
 export const HOME_LABELS: Record<string, string> = {
   lookbook: "Shop the look (photo collage)", collections: "Collection tiles", tiles: "Shop by category", signature: "Top products grid", best: "Best sellers", fresh: "New arrivals",

@@ -9,9 +9,9 @@ account (services/payment_links.py), so the money never passes through us. Amoun
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -169,6 +169,32 @@ class ShopOrder(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     cod_confirmation: Mapped[str | None] = mapped_column(String(16), nullable=True)  # asked|confirmed|declined
     reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # unpaid-order nudge
     recovered: Mapped[bool] = mapped_column(Boolean, default=False)  # placed / paid after a reminder
+
+
+class ShopBooking(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A date-and-time booking request from a hotel / venue storefront. The owner confirms or declines it; nothing is paid online."""
+
+    __tablename__ = "shop_bookings"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "number", name="uq_shop_bookings_tenant_number"),
+        Index("ix_shop_bookings_tenant_created", "tenant_id", "created_at"),
+    )
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    product_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("shop_products.id", ondelete="SET NULL"), nullable=True)
+    service_name: Mapped[str] = mapped_column(String(120), nullable=False)  # snapshot, so renaming the service doesn't rewrite history
+    kind: Mapped[str] = mapped_column(String(8), default="event")  # event (hall, lawn, dining) | stay (room, suite)
+    event_date: Mapped[date] = mapped_column(Date, nullable=False)  # the event day, or check-in for a stay
+    event_time: Mapped[str] = mapped_column(String(32), nullable=False, default="")  # "18:00" or a slot name; empty for stays
+    check_out_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    guests: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False, default="")
+    customer_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    customer_phone: Mapped[str] = mapped_column(String(32), nullable=False)
+    customer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending|confirmed|declined|cancelled
 
 
 class ShopCart(UUIDPrimaryKeyMixin, TimestampMixin, Base):

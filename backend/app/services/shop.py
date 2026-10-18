@@ -18,6 +18,7 @@ Payment links and the Razorpay plumbing live in services/payment_links.py; this 
 from __future__ import annotations
 
 import hashlib
+import html
 import hmac
 import io
 import logging
@@ -25,7 +26,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import httpx
 from sqlalchemy import func, literal_column, select, update
@@ -39,7 +40,7 @@ from app.models.comment_automation import CommentAutomation
 from app.models.contact import Contact
 from app.models.conversation import Conversation, Message
 from app.models.instagram_account import InstagramAccount
-from app.models.shop import Shop, ShopCart, ShopOrder, ShopProduct, ShopVariant
+from app.models.shop import Shop, ShopBooking, ShopCart, ShopOrder, ShopProduct, ShopVariant
 from app.models.tenant import Tenant
 from app.services import media_library, outbound_webhooks, payment_links
 from app.services.instagram import messaging
@@ -127,7 +128,7 @@ DEFAULT_TEXTS = {
     "hero_button": "Shop now", "categories_title": "Shop by category", "best_sellers_title": "Best sellers", "best_sellers_subtitle": "What everyone's ordering",
     "new_arrivals_title": "New arrivals", "new_arrivals_subtitle": "Just landed in the store", "all_products_title": "Shop all",
     "instagram_title": "Shop our Instagram", "instagram_subtitle": "Seen it on our feed? Tap to buy.", "faq_title": "Questions? Answers.",
-    "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "empty_store": "New products are coming soon.",
+    "related_title": "You may also like", "add_to_cart": "Add to cart", "buy_now": "Buy now", "book_now": "Book now", "empty_store": "New products are coming soon.",
     # Headings and copy inside the niche templates' home pages (Fashion lookbook, Bakery steps and custom-order card, reviews)
     "lookbook_title": "Shop the look", "lookbook_subtitle": "Pieces we love, styled together", "testimonials_title": "What customers say",
     "steps_title": "How ordering works",
@@ -138,7 +139,7 @@ DEFAULT_TEXTS = {
     "custom_button": "Request on Instagram",
 }
 # Layout + style presets for the storefront (the look itself lives in frontend/src/lib/store/templates.ts). `classic` is the original look.
-TEMPLATES = ("classic", "boutique", "jewellery", "bakery", "beauty", "fitness")
+TEMPLATES = ("classic", "boutique", "jewellery", "bakery", "beauty", "fitness", "hotel")
 DEFAULT_SITE: dict = {
     "template": "classic",
     "accent": DEFAULT_ACCENT,
@@ -493,6 +494,90 @@ def order_event(order: ShopOrder) -> dict:
     return {"order_id": str(order.id), "number": order.number, "total": order.total, "currency": order.currency, "payment_method": order.payment_method,
             "payment_status": order.payment_status, "status": order.status, "customer_name": order.customer_name, "customer_phone": order.customer_phone,
             "items": order.items, "contact_id": str(order.contact_id) if order.contact_id else None, "source": order.source}
+
+
+# ---- bookings (hotel / venue storefronts) -------------------------------------------------------------------------------
+
+BOOKING_SLOTS = ("Morning", "Afternoon", "Evening", "Night")
+BOOKING_STATUSES = ("pending", "confirmed", "declined", "cancelled")
+_STAY = re.compile(r"room|suite", re.IGNORECASE)
+_CLOCK = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def is_stay(product: ShopProduct) -> bool:
+    """Rooms and suites are booked by check-in / check-out dates; halls, lawns and the rest by a day and a time."""
+    return bool(_STAY.search(product.category or ""))
+
+
+async def create_booking(db: AsyncSession, shop: Shop, *, product_id: uuid.UUID, name: str, phone: str, email: str | None, guests: int, event_type: str,
+                         event_date: date, event_time: str, check_out: date | None, note: str) -> ShopBooking:
+    """A booking request for one service, pending until the owner confirms it. `phone` is normalised here."""
+    product = await db.get(ShopProduct, product_id)
+    if product is None or product.tenant_id != shop.tenant_id or product.status != "active":
+        raise ShopError("That service isn't available.", 404)
+    try:
+        phone = normalize_phone(phone, await _country_code(db, shop.tenant_id))
+    except InvalidPhone:
+        raise ShopError("Enter a valid mobile number.")
+    today = datetime.now(IST).date()
+    if event_date < today:
+        raise ShopError("Choose a date from today onwards.")
+    if event_date > today + timedelta(days=730):
+        raise ShopError("Bookings open up to two years ahead.")
+    stay = is_stay(product)
+    if stay:
+        if check_out is None or check_out <= event_date:
+            raise ShopError("Check-out must be after check-in.")
+        if (check_out - event_date).days > 30:
+            raise ShopError("For stays longer than 30 nights, please call us.")
+        event_time = ""
+    else:
+        check_out = None
+        if event_time not in BOOKING_SLOTS and not _CLOCK.match(event_time):
+            raise ShopError("Choose a time for your event.")
+    booking = ShopBooking(
+        tenant_id=shop.tenant_id, number=await _next_number(db, shop), product_id=product.id, service_name=product.name, kind="stay" if stay else "event",
+        event_date=event_date, event_time=event_time, check_out_date=check_out, guests=guests, event_type=event_type, customer_name=name,
+        customer_phone=phone, customer_email=email, note=note,
+    )
+    db.add(booking)
+    await db.commit()
+    await _email_booking(db, shop, booking)
+    await outbound_webhooks.emit(shop.tenant_id, "booking_placed", booking_event(booking))
+    return booking
+
+
+def booking_when(b: ShopBooking) -> str:
+    if b.kind == "stay" and b.check_out_date:
+        return f"{b.event_date:%d %b %Y} to {b.check_out_date:%d %b %Y}"
+    return f"{b.event_date:%d %b %Y}" + (f", {b.event_time}" if b.event_time else "")
+
+
+def booking_event(b: ShopBooking) -> dict:
+    return {"booking_id": str(b.id), "number": b.number, "service": b.service_name, "kind": b.kind, "date": b.event_date.isoformat(), "time": b.event_time,
+            "check_out": b.check_out_date.isoformat() if b.check_out_date else None, "guests": b.guests, "event_type": b.event_type,
+            "customer_name": b.customer_name, "customer_phone": b.customer_phone, "status": b.status}
+
+
+async def _email_booking(db: AsyncSession, shop: Shop, b: ShopBooking) -> None:
+    """Tell the workspace's owners and admins about a new booking request. Skipped quietly when email isn't configured; never fails the booking."""
+    from app.services import billing, mailer  # billing pulls in a lot; only needed when a booking arrives
+    if not mailer.enabled():
+        return
+    try:
+        esc = html.escape
+        lines = [f"<b>{esc(b.service_name)}</b>", f"When: {esc(booking_when(b))}", f"Guests: {b.guests}"]
+        if b.event_type:
+            lines.append(f"Event: {esc(b.event_type)}")
+        lines += [f"Name: {esc(b.customer_name)}", f"Phone: +{esc(b.customer_phone)}"]
+        if b.note:
+            lines.append(f"Note: {esc(b.note)}")
+        page = mailer.button_html(f"New booking request #{b.number}", "<br>".join(lines), "Review in dashboard", f"{_frontend()}/dashboard/shop")
+        for to in await billing._owner_emails(db, shop.tenant_id):
+            await mailer.send(to, f"New booking request #{b.number}: {b.service_name}", page)
+    except Exception:  # noqa: BLE001 - a mail problem must not undo a saved booking
+        log.exception("booking email for tenant %s failed", shop.tenant_id)
 
 
 # ---- after payment -------------------------------------------------------------------------------------------------

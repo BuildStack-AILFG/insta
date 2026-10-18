@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Minus, Plus, ShoppingBag } from "lucide-react";
+import { CalendarCheck, Check, MessageCircle, Minus, Phone, Plus, ShoppingBag } from "lucide-react";
 import type { PublicProduct, PublicStore } from "@/lib/api";
 import { fmtMoney } from "@/lib/money";
 import { addToCart } from "./cart";
+import BookingForm from "./BookingForm";
 import PriceBlock from "./PriceBlock";
 
 const MAX_QTY = 10;
@@ -22,6 +23,7 @@ export default function ProductBuy({ store, product, refToken, sizeGuide }: { st
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   const variant = groups.length ? product.variants.find((v) => groups.every((g) => v.options[g.name] === picked[g.name])) ?? null : null;
   const complete = groups.every((g) => picked[g.name]);
@@ -39,6 +41,25 @@ export default function ProductBuy({ store, product, refToken, sizeGuide }: { st
     else { setAdded(true); setTimeout(() => setAdded(false), 2000); }
   };
 
+  // Hotels & venues take enquiries, not cart orders: call, or message on WhatsApp with the service name filled in.
+  if (store.site.template === "hotel") {
+    const digits = (store.support_phone ?? "").replace(/\D/g, "");
+    const wa = digits ? `https://wa.me/${digits.length === 10 ? "91" + digits : digits}?text=${encodeURIComponent(`Hi, I'd like to enquire about "${product.name}" at ${store.name}. My event date is: `)}` : null;
+    const btn = "flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-[15px] font-semibold transition";
+    return (
+      <div className="space-y-5">
+        <PriceBlock price={product.price} from compareAt={product.compare_at_price} />
+        <button onClick={() => setBooking(true)} className={`${btn} w-full bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-95`}><CalendarCheck size={16} /> {store.site.texts.book_now}</button>
+        {booking && <BookingForm store={store} product={product} onClose={() => setBooking(false)} />}
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {digits && <a href={`tel:+${digits.length === 10 ? "91" + digits : digits}`} className={`${btn} border border-[var(--line)] hover:border-[var(--muted)]`}><Phone size={16} /> {store.site.texts.add_to_cart}</a>}
+          {wa && <a href={wa} target="_blank" rel="noreferrer" className={`${btn} border border-[var(--line)] hover:border-[var(--muted)]`}><MessageCircle size={16} /> {store.site.texts.buy_now}</a>}
+        </div>
+        {!digits && store.instagram && <div className="rounded-xl border border-[var(--line)] px-4 py-3 text-[14px] text-[var(--muted)]">DM <b>@{store.instagram}</b> to enquire.</div>}
+        <p className="text-[12.5px] text-[var(--muted)]">Prices are indicative. Tell us your date and guest count and we&apos;ll confirm availability and a final quote.</p>
+      </div>
+    );
+  }
   if (store.payment_methods.length === 0) {
     return <div className="rounded-xl border border-[var(--line)] px-4 py-3 text-[14px] text-[var(--muted)]">This store isn&apos;t taking orders right now.{store.instagram && <> DM <b>@{store.instagram}</b> to order.</>}</div>;
   }

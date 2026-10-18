@@ -10,7 +10,7 @@ import { isDemoSlug, searchDemo } from "@/lib/store/demos";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 
 /** Navbar search: suggestions appear as you type; tapping one opens the product. On phones it starts as an icon and opens full width. */
-export default function StoreSearch({ slug }: { slug: string }) {
+export default function StoreSearch({ slug, noun = "products" }: { slug: string; noun?: string }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<PublicProduct[] | null>(null);
@@ -47,7 +47,7 @@ export default function StoreSearch({ slug }: { slug: string }) {
       <div className={`relative w-full md:w-64 lg:w-72 ${open ? "block" : "hidden md:block"}`}>
         <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]" />
         <input ref={input} value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} onKeyDown={(e) => e.key === "Escape" && close()}
-          placeholder="Search products" aria-label="Search products" maxLength={60}
+          placeholder={`Search ${noun}`} aria-label={`Search ${noun}`} maxLength={60}
           className="h-10 w-full rounded-full border border-[var(--line)] bg-[var(--soft)] pl-9 pr-9 text-[14px] outline-none placeholder:text-[var(--faint)] focus:border-[var(--muted)]" />
         {(q || open) && <button onClick={close} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--muted)] hover:text-[var(--fg)] md:hidden"><X size={16} /></button>}
         {open && shown && (

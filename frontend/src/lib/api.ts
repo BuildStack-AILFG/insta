@@ -691,12 +691,12 @@ export type HeroSlide = { image_url: string; title: string; subtitle: string; ct
 export type SiteColors = { background: string; text: string; surface: string; button_text: string };
 export type SiteTextKey =
   | "hero_button" | "categories_title" | "best_sellers_title" | "best_sellers_subtitle" | "new_arrivals_title" | "new_arrivals_subtitle" | "all_products_title"
-  | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "empty_store"
+  | "instagram_title" | "instagram_subtitle" | "faq_title" | "related_title" | "add_to_cart" | "buy_now" | "book_now" | "empty_store"
   | "lookbook_title" | "lookbook_subtitle" | "testimonials_title" | "steps_title" | "step1_title" | "step1_text" | "step2_title" | "step2_text" | "step3_title" | "step3_text"
   | "custom_title" | "custom_text" | "custom_button";
 export type ShopSite = {
   /** Storefront layout + style: classic | boutique | jewellery | bakery | beauty | fitness (non-classic templates are part of the Growth plan). */
-  template: "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness";
+  template: "classic" | "boutique" | "jewellery" | "bakery" | "beauty" | "fitness" | "hotel";
   /** Reviews the seller writes themselves (up to 6). */
   testimonials: { name: string; text: string }[];
   /** Shown as a "Size guide" link next to a Size option on product pages. */
@@ -747,6 +747,16 @@ export type ShopOrder = {
   cod_confirmation: "asked" | "confirmed" | "declined" | null; recovered: boolean; created_at: string | null;
   shiprocket_shipment_id: string | null; invoice_number: string | null; order_url: string | null; invoice_url: string | null;
 } & Tracking;
+export type BookingStatus = "pending" | "confirmed" | "declined" | "cancelled";
+/** A date-and-time booking request from a hotel / venue storefront. `kind: "stay"` uses `date` (check-in) and `check_out` instead of `time`. */
+export type ShopBooking = {
+  id: string; number: number; product_id: string | null; service_name: string; kind: "event" | "stay"; date: string; time: string; check_out: string | null;
+  guests: number; event_type: string; customer_name: string; customer_phone: string; customer_email: string | null; note: string; status: BookingStatus; created_at: string | null;
+};
+export type BookingInput = {
+  product_id: string; name: string; phone: string; email?: string; guests: number; event_type: string; date: string; time: string; check_out?: string | null;
+  note: string; website?: string;
+};
 export type Package = { weight_kg: number; length_cm: number; breadth_cm: number; height_cm: number };
 export type ShiprocketStatus =
   | { connected: false }
@@ -782,6 +792,8 @@ export const shop = {
     request<{ created: Product[]; skipped: number; errors: string[] }>("/shop/products/import", { method: "POST", body: { account_id, media_ids } }),
   orders: (p?: { status?: string; payment?: string; limit?: number; offset?: number }) => request<Page<ShopOrder>>(`/shop/orders${qs(p)}`),
   updateOrder: (id: string, b: { status?: OrderStatus; mark_paid?: boolean }) => request<ShopOrder>(`/shop/orders/${id}`, { method: "PATCH", body: b }),
+  bookings: (p?: { status?: string; limit?: number; offset?: number }) => request<Page<ShopBooking>>(`/shop/bookings${qs(p)}`),
+  updateBooking: (id: string, status: BookingStatus) => request<ShopBooking>(`/shop/bookings/${id}`, { method: "PATCH", body: { status } }),
   ship: (id: string, b: { courier: string; awb: string; tracking_url: string | null }) => request<ShopOrder>(`/shop/orders/${id}/ship`, { method: "POST", body: b }),
   shipWithShiprocket: (id: string, b: { city?: string; state?: string; package?: Package }) =>
     request<{ order: ShopOrder; shipped: boolean; message: string | null }>(`/shop/orders/${id}/shiprocket`, { method: "POST", body: b }),
@@ -838,6 +850,7 @@ export type CheckoutInput = {
 export const storefront = {
   checkout: (slug: string, b: CheckoutInput) =>
     request<{ order_id: string; token: string; number: number; pay_url: string | null; order_url: string }>(`/public/store/${encodeURIComponent(slug)}/checkout`, { method: "POST", auth: false, body: b }),
+  book: (slug: string, b: BookingInput) => request<{ number: number }>(`/public/store/${encodeURIComponent(slug)}/booking`, { method: "POST", auth: false, body: b }),
   order: (slug: string, id: string, t: string) => request<{ store: PublicStore; order: PublicOrder }>(`/public/store/${encodeURIComponent(slug)}/orders/${id}${qs({ t })}`, { auth: false }),
   invoice: (slug: string, id: string, t: string) => request<ShopInvoice>(`/public/store/${encodeURIComponent(slug)}/orders/${id}/invoice${qs({ t })}`, { auth: false }),
 };

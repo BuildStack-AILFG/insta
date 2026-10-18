@@ -1068,3 +1068,78 @@ async def test_template_section_texts_are_editable(ws, app_client):
     assert emptied["lookbook_title"] == "Shop the look"  # an emptied field falls back to the default
     assert (await ws.put("/shop/site", json={**site, "texts": {**mine, "step1_text": "x" * 201}})).status_code == 422
     assert (await ws.put("/shop/site", json={**site, "texts": {**mine, "steps_title": "x" * 81}})).status_code == 422
+
+
+# ---- hotel bookings --------------------------------------------------------------------------------------------------
+
+def _booking(product_id: str, **over) -> dict:
+    from datetime import date, timedelta
+    body = {"product_id": product_id, "name": "Rajesh Mehta", "phone": "98111 12222", "guests": 300, "event_type": "Wedding",
+            "date": (date.today() + timedelta(days=60)).isoformat(), "time": "Evening", "note": "Need parking for 80 cars"}
+    body.update(over)
+    return body
+
+
+async def test_hotel_booking_request_is_listed_and_confirmed_by_the_owner(ws, app_client):
+    from datetime import date, timedelta
+    s = await _store(ws)
+    hall = await _product(ws, name="Grand banquet hall", category="Banquet & Lawn", price=8500000, stock=None)
+    room = await _product(ws, name="Deluxe room", category="Rooms", price=349900, stock=None)
+    url = f"/api/public/store/{s['slug']}/booking"
+
+    # Only hotel-template stores take bookings
+    assert (await app_client.post(url, json=_booking(hall["id"]))).status_code == 404
+    assert (await ws.put("/shop/site", json={**s["site"], "template": "hotel"})).json()["site"]["template"] == "hotel"
+
+    r = await app_client.post(url, json=_booking(hall["id"]))
+    assert r.status_code == 201, r.text
+    first = r.json()["number"]
+
+    b = (await ws.get("/shop/bookings")).json()["items"][0]
+    assert b["number"] == first and b["service_name"] == "Grand banquet hall" and b["kind"] == "event"
+    assert b["status"] == "pending" and b["time"] == "Evening" and b["guests"] == 300 and b["customer_phone"] == "919811112222"
+
+    # A room is booked by check-in / check-out, no time
+    in_, out = date.today() + timedelta(days=30), date.today() + timedelta(days=33)
+    ok = await app_client.post(url, json=_booking(room["id"], date=in_.isoformat(), check_out=out.isoformat(), time=""))
+    assert ok.status_code == 201, ok.text
+    stay = next(x for x in (await ws.get("/shop/bookings")).json()["items"] if x["service_name"] == "Deluxe room")
+    assert stay["kind"] == "stay" and stay["check_out"] == out.isoformat() and stay["time"] == ""
+
+    done = await ws.patch(f"/shop/bookings/{b['id']}", json={"status": "confirmed"})
+    assert done.status_code == 200 and done.json()["status"] == "confirmed"
+    assert [x["status"] for x in (await ws.get("/shop/bookings?status=pending")).json()["items"]] == ["pending"]
+    assert (await ws.patch(f"/shop/bookings/{b['id']}", json={"status": "nonsense"})).status_code == 422
+
+
+async def test_hotel_booking_validation(ws, other, app_client):
+    from datetime import date, timedelta
+    s = await _store(ws)
+    await ws.put("/shop/site", json={**s["site"], "template": "hotel"})
+    hall = await _product(ws, name="Marriage lawn", category="Banquet & Lawn", price=15000000, stock=None)
+    room = await _product(ws, name="Executive suite", category="Rooms", price=599900, stock=None)
+    url = f"/api/public/store/{s['slug']}/booking"
+    today = date.today()
+
+    async def code(pid: str, **over) -> int:
+        return (await app_client.post(url, json=_booking(pid, **over))).status_code
+
+    assert await code(hall["id"], date=(today - timedelta(days=1)).isoformat()) == 422     # in the past
+    assert await code(hall["id"], time="") == 422                                          # events need a time
+    assert await code(hall["id"], time="25:99") == 422
+    assert await code(hall["id"], time="18:30") == 201                                     # an exact time is fine
+    assert await code(hall["id"], phone="123") == 422
+    assert await code(hall["id"], guests=0) == 422
+    d = (today + timedelta(days=10)).isoformat()
+    assert await code(room["id"], date=d, time="", check_out=None) == 422                  # stays need check-out
+    assert await code(room["id"], date=d, time="", check_out=d) == 422                     # ...after check-in
+    assert await code(room["id"], date=d, time="", check_out=(today + timedelta(days=50)).isoformat()) == 422  # over 30 nights
+    assert await code("00000000-0000-0000-0000-000000000000") == 404                       # not a service of this store
+    # Someone else's product can't be booked here
+    await other.put("/shop", json={"slug": f"o-{other.tenant_id[:8]}", "name": "Other", "cod_enabled": True})
+    theirs = await other.post("/shop/products", json={"name": "Theirs", "price": 10000})
+    assert await code(theirs.json()["id"]) == 404
+    # A bot that fills the hidden field gets a fake success and nothing is saved
+    before = (await ws.get("/shop/bookings")).json()["total"]
+    assert await code(hall["id"], website="http://spam.test") == 201
+    assert (await ws.get("/shop/bookings")).json()["total"] == before

@@ -62,8 +62,9 @@ export default function StoreShell({ store, children, home = false, categories =
   const { site } = store;
   const wa = store.support_phone ? whatsappUrl(store.support_phone) : null;
   const base = `/s/${store.slug}`;
+  const hotel = site.template === "hotel"; // enquiry and booking only: no cart, delivery or order tracking
   const nav = [
-    { label: "Shop", href: `${base}/shop`, on: true },
+    { label: hotel ? "Services" : "Shop", href: `${base}/shop`, on: true },
     { label: "About", href: `${base}#about`, on: site.sections.about && !!site.about.text },
     { label: "FAQ", href: `${base}#faq`, on: site.sections.faq },
   ].filter((n) => n.on);
@@ -73,7 +74,7 @@ export default function StoreShell({ store, children, home = false, categories =
   return (
     <main className="min-h-screen bg-[var(--bg)] text-[var(--fg)]" style={themeVars(site)} data-template={site.template ?? "classic"} data-cols={site.grid_columns ?? 4} data-hero={site.hero_height ?? "normal"} data-fit={site.photo_fit ?? "cover"}>
       {isDemoSlug(store.slug) && (
-        <div className="bg-black px-4 py-1.5 text-center text-[12px] text-white/90">Demo store — this is how the {getTemplate(site.template).name} template looks. Orders can&apos;t be placed here.</div>
+        <div className="bg-black px-4 py-1.5 text-center text-[12px] text-white/90">Demo store — this is how the {getTemplate(site.template).name} template looks. {site.template === "hotel" ? "Bookings can&apos;t be sent here." : "Orders can&apos;t be placed here."}</div>
       )}
       {site.announcement && (niche ? (
         <div className="st-ticker relative bg-[var(--accent)] py-2 text-[12.5px] font-medium text-[var(--accent-fg)]" aria-label={site.announcement}>
@@ -95,12 +96,12 @@ export default function StoreShell({ store, children, home = false, categories =
           </Link>
           {!centered && <nav className="ml-6 hidden gap-6 text-[14px] text-[var(--muted)] md:flex">{navLinks}</nav>}
           <div className={centered ? "flex items-center gap-2 justify-self-end" : "ml-auto flex items-center gap-2"}>
-            <StoreSearch slug={store.slug} />
+            <StoreSearch slug={store.slug} noun={hotel ? "services" : "products"} />
             {store.instagram && (
               <a href={`https://instagram.com/${store.instagram}`} target="_blank" rel="noreferrer" aria-label={`@${store.instagram} on Instagram`}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--fg)] hover:bg-[var(--soft)]"><Instagram size={19} /></a>
             )}
-            <CartLink slug={store.slug} drawer={niche} />
+            {!hotel && <CartLink slug={store.slug} drawer={niche} />}
           </div>
         </div>
         {categories.length > 0 && (
@@ -123,23 +124,23 @@ export default function StoreShell({ store, children, home = false, categories =
             {store.instagram && <a href={`https://instagram.com/${store.instagram}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 hover:text-[var(--fg)]"><Instagram size={14} /> @{store.instagram}</a>}
           </div>
           <div>
-            <div className="mb-2 font-semibold text-[var(--fg)]">Shop</div>
+            <div className="mb-2 font-semibold text-[var(--fg)]">{hotel ? "Services" : "Shop"}</div>
             <ul className="space-y-1.5">
-              <li><Link href={`${base}/shop`} className="hover:text-[var(--fg)]">All products</Link></li>
+              <li><Link href={`${base}/shop`} className="hover:text-[var(--fg)]">{hotel ? "All services" : "All products"}</Link></li>
               {categories.slice(0, 6).map((c) => <li key={c}><Link href={categoryHref(store.slug, c)} className="hover:text-[var(--fg)]">{c}</Link></li>)}
             </ul>
           </div>
           <div>
             <div className="mb-2 font-semibold text-[var(--fg)]">Help</div>
             <ul className="space-y-1.5">
-              <li><Link href={`${base}/cart`} className="hover:text-[var(--fg)]">Your cart</Link></li>
+              {!hotel && <li><Link href={`${base}/cart`} className="hover:text-[var(--fg)]">Your cart</Link></li>}
               {site.sections.faq && <li><Link href={`${base}#faq`} className="hover:text-[var(--fg)]">FAQ</Link></li>}
-              {store.instagram && <li>Track an order: DM us “track”</li>}
+              {store.instagram && !hotel && <li>Track an order: DM us “track”</li>}
             </ul>
             {(site.policies.shipping || site.policies.returns) && (
               <div className="mt-3 space-y-2">
-                {site.policies.shipping && <details><summary className="cursor-pointer hover:text-[var(--fg)]">Shipping policy</summary><p className="mt-1 whitespace-pre-line text-[12.5px]">{site.policies.shipping}</p></details>}
-                {site.policies.returns && <details><summary className="cursor-pointer hover:text-[var(--fg)]">Returns &amp; refunds</summary><p className="mt-1 whitespace-pre-line text-[12.5px]">{site.policies.returns}</p></details>}
+                {site.policies.shipping && <details><summary className="cursor-pointer hover:text-[var(--fg)]">{hotel ? "Check-in & timings" : "Shipping policy"}</summary><p className="mt-1 whitespace-pre-line text-[12.5px]">{site.policies.shipping}</p></details>}
+                {site.policies.returns && <details><summary className="cursor-pointer hover:text-[var(--fg)]">{hotel ? "Booking & cancellation" : "Returns & refunds"}</summary><p className="mt-1 whitespace-pre-line text-[12.5px]">{site.policies.returns}</p></details>}
               </div>
             )}
           </div>
@@ -155,7 +156,7 @@ export default function StoreShell({ store, children, home = false, categories =
         </div>
       </footer>
 
-      {niche && <CartDrawer store={store} />}
+      {niche && !hotel && <CartDrawer store={store} />}
       {wa && (
         <a href={wa} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"
           className="fixed bottom-5 right-5 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/15 transition hover:scale-105">

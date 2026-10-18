@@ -51,6 +51,11 @@ const SETS: Record<TemplateId, SampleSet> = {
     products: [["Whey protein 1kg", 249900, 279900], ["Plant protein 500g", 189900, null], ["Pre-workout 300g", 169900, 199900], ["Shaker bottle 700ml", 39900, null], ["Hex dumbbell pair", 129900, null], ["Resistance band kit", 59900, 79900], ["Creatine monohydrate", 99900, null], ["Gym gloves", 44900, null]],
     hero: [["Fuel your training", "Authentic supplements and gym gear, delivered fast", "Shop now"], ["New drops", "Fresh stock just landed", "Shop new"]],
   },
+  hotel: {
+    cats: ["Banquet & Lawn", "Rooms", "Dining"], pal: [["#d8c08a", "#6b4a14"], ["#c9b79c", "#4f3b22"], ["#b5c2a8", "#3f5a3a"], ["#d9b8a4", "#7a4a3a"]],
+    products: [["Grand banquet hall", 8500000, null], ["Marriage lawn", 15000000, null], ["Deluxe room", 349900, 399900], ["Executive suite", 599900, null], ["Restaurant & buffet", 89900, null], ["Poolside party area", 2500000, null], ["Mini party hall", 3500000, null], ["Mandap & stage decor", 4500000, null]],
+    hero: [["Celebrate your big day", "Banquet hall, marriage lawn and rooms in one place", "Plan your event"], ["Stay with us", "Comfortable rooms and warm hospitality", "See rooms"]],
+  },
   beauty: {
     cats: ["Skincare", "Hair care", "Wellness"], pal: [["#cfe0d2", "#6a8f76"], ["#e5d9c8", "#9a8362"], ["#d5e3e8", "#6f93a3"], ["#e8d3d3", "#a37a7a"]],
     products: [["Vitamin C serum", 79900, 99900], ["Hydrating moisturiser", 64900, null], ["Gentle foaming cleanser", 49900, null], ["SPF 50 sunscreen", 59900, null], ["Hair growth oil", 54900, 69900], ["Daily multivitamin", 89900, null], ["Aloe vera gel", 34900, null], ["Night repair cream", 99900, null]],

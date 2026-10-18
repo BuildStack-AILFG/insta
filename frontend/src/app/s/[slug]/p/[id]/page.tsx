@@ -35,7 +35,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const { store, product, related } = data;
   const buyable = !product.sold_out && store.payment_methods.length > 0;  // ProductBuy shows the live price
   const niche = store.site.template !== "classic"; // niche templates get accordions, a thumbnail side-strip and a sticky mobile buy bar
-  const perks = [
+  const hotel = store.site.template === "hotel"; // enquiry-only: no delivery, payment or returns
+  const perks = hotel ? [] : [
     store.payment_methods.includes("cod") && { icon: Banknote, text: "Cash on delivery available" },
     store.payment_methods.includes("online") && { icon: ShieldCheck, text: "Secure UPI & card payments" },
     { icon: Truck, text: !store.shipping_fee ? "Free delivery" : store.free_shipping_above !== null ? `Free delivery above ${fmtMoney(store.free_shipping_above)}` : `Delivery ${fmtMoney(store.shipping_fee)}` },
@@ -58,9 +59,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
               : <ProductBuy store={store} product={product} refToken={typeof r === "string" ? r : undefined} sizeGuide={store.site.size_guide} />}
           </div>
 
-          <ul className="mt-6 space-y-2 border-t border-[var(--line)] pt-5 text-[13.5px] text-[var(--fg)]">
+          {perks.length > 0 && <ul className="mt-6 space-y-2 border-t border-[var(--line)] pt-5 text-[13.5px] text-[var(--fg)]">
             {perks.map((p) => <li key={p.text} className="flex items-center gap-2.5"><p.icon size={16} className="text-[var(--accent)]" /> {p.text}</li>)}
-          </ul>
+          </ul>}
 
           {product.description && product.description !== product.name && !niche && (
             <div className="mt-6 border-t border-[var(--line)] pt-5">
@@ -74,12 +75,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 <details className="st-acc" open><summary><span>Details</span><span className="st-plus">+</span></summary>
                   <p className="whitespace-pre-line pb-4 text-[14.5px] leading-relaxed text-[var(--muted)]">{product.description}</p></details>
               )}
-              <details className="st-acc"><summary><span>Shipping &amp; delivery</span><span className="st-plus">+</span></summary>
+              <details className="st-acc"><summary><span>{hotel ? "Check-in & timings" : "Shipping & delivery"}</span><span className="st-plus">+</span></summary>
                 <p className="whitespace-pre-line pb-4 text-[14px] leading-relaxed text-[var(--muted)]">
                   {store.site.policies.shipping || (!store.shipping_fee ? "Delivery is free." : store.free_shipping_above !== null ? `Delivery is ${fmtMoney(store.shipping_fee)}, free above ${fmtMoney(store.free_shipping_above)}.` : `Delivery is ${fmtMoney(store.shipping_fee)}.`)}
                 </p></details>
               {store.site.policies.returns && (
-                <details className="st-acc"><summary><span>Returns &amp; refunds</span><span className="st-plus">+</span></summary>
+                <details className="st-acc"><summary><span>{hotel ? "Booking & cancellation" : "Returns & refunds"}</span><span className="st-plus">+</span></summary>
                   <p className="whitespace-pre-line pb-4 text-[14px] leading-relaxed text-[var(--muted)]">{store.site.policies.returns}</p></details>
               )}
             </div>
@@ -97,7 +98,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <Rail title={store.site.texts.related_title}>{related.map((p) => <RailItem key={p.id}><ProductCard slug={store.slug} product={p} /></RailItem>)}</Rail>
         </div>
       )}
-      {niche && buyable && <StickyBuy targetId="buy" name={product.name} price={(product.price_varies ? "From " : "") + fmtMoney(product.price)} label={store.site.texts.add_to_cart} />}
+      {niche && buyable && <StickyBuy targetId="buy" name={product.name} price={(product.price_varies ? "From " : "") + fmtMoney(product.price)} label={hotel ? store.site.texts.book_now : store.site.texts.add_to_cart} />}
     </StoreShell>
   );
 }

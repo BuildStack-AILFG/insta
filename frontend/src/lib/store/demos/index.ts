@@ -16,7 +16,7 @@ const DEFAULT_TEXTS: Record<SiteTextKey, string> = {
   hero_button: "Shop now", categories_title: "Shop by category", best_sellers_title: "Best sellers", best_sellers_subtitle: "What everyone's ordering",
   new_arrivals_title: "New arrivals", new_arrivals_subtitle: "Just landed in the store", all_products_title: "Shop all", instagram_title: "Shop our Instagram",
   instagram_subtitle: "Seen it on our feed? Tap to buy.", faq_title: "Questions? Answers.", related_title: "You may also like", add_to_cart: "Add to cart",
-  buy_now: "Buy now", empty_store: "New products are coming soon.",
+  buy_now: "Buy now", book_now: "Book now", empty_store: "New products are coming soon.",
   lookbook_title: "Shop the look", lookbook_subtitle: "Pieces we love, styled together", testimonials_title: "What customers say", steps_title: "How ordering works",
   step1_title: "Pick what you love", step1_text: "Browse the menu and add your favourites to the basket.",
   step2_title: "Tell us the details", step2_text: "Choose delivery or pickup, and add a note for messages or allergies.",
@@ -159,6 +159,31 @@ const DEFS: Def[] = [
     ],
     policies: { shipping: "Free delivery on every order. Ships within 24 hours.", returns: "Unopened supplements can be returned within 7 days of delivery." },
   },
+  {
+    id: "hotel", num: 6, name: "The Royal Orchid", tagline: "Hotel, banquet hall & marriage lawn · Jaipur", instagram: "theroyalorchidhotel", phone: "9876500006", shipping: 0, freeAbove: 0,
+    hero: [
+      { title: "Celebrate your big day", subtitle: "A grand banquet hall, a lush marriage lawn and comfortable rooms in one place", cta: "Plan your event" },
+      { title: "Weddings under the open sky", subtitle: "Our marriage lawn hosts up to 1,000 guests", cta: "See the lawn" },
+      { title: "Stay with us", subtitle: "Warm hospitality, clean rooms and a restaurant on site", cta: "See rooms" },
+    ],
+    products: [
+      { name: "Grand banquet hall", rupees: 85000, category: "Banquet & Lawn", text: "An air-conditioned hall with chandeliers and a stage, seating up to 400 guests. Ideal for receptions, engagements and corporate dinners. Price is per event; catering is extra.", second: 8 },
+      { name: "Marriage lawn", rupees: 150000, category: "Banquet & Lawn", text: "A landscaped open lawn for weddings, up to 1,000 guests, with a mandap area, bridal room and ample parking. Price is per event.", second: 8 },
+      { name: "Deluxe room", rupees: 3499, was: 3999, category: "Rooms", text: "A comfortable air-conditioned room with a king bed, work desk, TV and breakfast for two. Price is per night.", second: 4 },
+      { name: "Executive suite", rupees: 5999, category: "Rooms", text: "A spacious suite with a separate sitting area, king bed and bathtub. Perfect for the wedding family. Price is per night.", second: 3 },
+      { name: "Restaurant & buffet", rupees: 899, category: "Dining & Events", text: "Veg and non-veg buffet with live counters, served in our restaurant. Price is per person; group menus on request.", second: 7 },
+      { name: "Poolside party area", rupees: 25000, category: "Dining & Events", text: "A poolside deck for cocktails, haldi and birthday parties of up to 150 guests. Price is per event.", second: 2 },
+      { name: "Mini party hall", rupees: 35000, category: "Banquet & Lawn", text: "A cosy hall for 80 guests: roka, birthday, kitty party or a business meet. Price is per event.", second: 1 },
+      { name: "Mandap & stage decoration", rupees: 45000, was: 55000, category: "Dining & Events", text: "Floral mandap, stage and entrance decoration by our in-house team, matched to your theme. Price is per event.", second: 2 },
+    ],
+    aboutTitle: "Celebrate with us", aboutText: "The Royal Orchid has hosted weddings, receptions and family gatherings in Jaipur for over 15 years. Our banquet hall, marriage lawn and rooms are looked after by one team, so your guests are comfortable and every detail is handled. Visit us and we'll show you around.",
+    faq: [
+      { q: "How many guests can the banquet hall and lawn hold?", a: "The banquet hall seats up to 400 guests and the marriage lawn up to 1,000. Tell us your guest count and we'll suggest the right space." },
+      { q: "Is catering and decoration included?", a: "We offer in-house catering and decoration packages, and you are welcome to bring your own decorator. Ask us for a custom quote." },
+      { q: "How do I book a date?", a: "Call or message us with your date and event type. We confirm availability and hold the date with a small advance." },
+    ],
+    policies: { shipping: "Check-in from 12 pm, check-out by 11 am. Rooms for wedding guests can be blocked in advance.", returns: "Advance for events is adjustable against a new date if you tell us 30 days before the event." },
+  },
 ];
 
 // Fictional customer reviews, for the demo stores only (they are never copied into a seller's own store).
@@ -187,6 +212,11 @@ const TESTIMONIALS: Record<string, { name: string; text: string }[]> = {
     { name: "Aman S.", text: "Original whey with a sealed tub and the batch code checked out. Delivered in 2 days." },
     { name: "Vikram J.", text: "Good prices on dumbbells and the shaker doesn't leak. Solid." },
     { name: "Rhea C.", text: "They recommended the right protein for my goal. Mixes smooth with no lumps." },
+  ],
+  hotel: [
+    { name: "Rajesh & Sunita M.", text: "We held our daughter's wedding on the lawn. The team handled 700 guests smoothly and the food was excellent." },
+    { name: "Karan T.", text: "The banquet hall looked beautiful for our reception. Staff were helpful from the first visit to the last guest leaving." },
+    { name: "Meenal S.", text: "Booked six rooms for the wedding family. Clean, comfortable and the breakfast was great." },
   ],
 };
 

@@ -11,6 +11,7 @@ import ShipModal from "@/components/shop/ShipModal";
 import ShippingSettings from "@/components/shop/ShippingSettings";
 import ShopReports from "@/components/shop/ShopReports";
 import VariantsEditor, { draftFrom, toInput, type VariantDraft } from "@/components/shop/VariantsEditor";
+import BookingsTab from "@/components/shop/BookingsTab";
 import CategoriesTab from "@/components/shop/CategoriesTab";
 import CreateShopWizard from "@/components/shop/CreateShopWizard";
 import SiteEditor from "@/components/shop/SiteEditor";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/api";
 import { fmtMoney, fromMinor, toMinor } from "@/lib/money";
 
-type Tab = "orders" | "products" | "categories" | "website" | "reports" | "settings";
+type Tab = "orders" | "bookings" | "products" | "categories" | "website" | "reports" | "settings";
 
 function WebsiteTab({ shop, onSaved }: { shop: Shop; onSaved: () => void }) {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -63,9 +64,10 @@ export default function ShopPage() {
             <Stat label="To ship" value={stats.to_ship} sub={`${stats.awaiting_payment ? `${stats.awaiting_payment} awaiting payment · ` : ""}${stats.views.toLocaleString()} store visits`} />
           </div>
           <div className="mb-5"><CopyField label="Your store link — put it in your Instagram bio" value={shop.url} /></div>
-          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, { id: "products", label: "Products" }, { id: "categories", label: "Categories" }, { id: "website", label: "Website" },
+          <Tabs tabs={[{ id: "orders", label: "Orders", count: stats.to_ship || undefined }, ...(shop.site.template === "hotel" ? [{ id: "bookings" as Tab, label: "Bookings" }] : []), { id: "products", label: "Products" }, { id: "categories", label: "Categories" }, { id: "website", label: "Website" },
             { id: "reports", label: "Reports" }, { id: "settings", label: "Store settings" }]} value={tab} onChange={setTab} />
           {tab === "orders" && <Orders onChange={load} />}
+          {tab === "bookings" && <BookingsTab />}
           {tab === "products" && <Products accounts={accounts} />}
           {tab === "categories" && <CategoriesTab />}
           {tab === "website" && <WebsiteTab shop={shop} onSaved={load} />}

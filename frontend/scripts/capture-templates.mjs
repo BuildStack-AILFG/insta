@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Regenerates the template cover images used in the Website tab (public/templates/<id>/cover.jpg).
-// Run with the frontend dev server up:  node scripts/capture-templates.mjs [baseUrl]
+// Run with the frontend dev server up:  node scripts/capture-templates.mjs [baseUrl] [template ...]   (no templates = all of them)
 // It opens each demo store (/s/demo-<template>) in headless Chrome and saves the top of the home page.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
@@ -12,7 +12,8 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sharp = createRequire(import.meta.url)(path.join(root, "node_modules", "sharp"));
 const base = (process.argv[2] ?? "http://localhost:3001").replace(/\/$/, "");
-const TEMPLATES = ["boutique", "jewellery", "bakery", "beauty", "fitness"];
+const ALL = ["boutique", "jewellery", "bakery", "beauty", "fitness", "hotel"];
+const TEMPLATES = process.argv.length > 3 ? process.argv.slice(3).filter((t) => ALL.includes(t)) : ALL;
 
 const chrome = [process.env.CHROME_PATH, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
   "/usr/bin/google-chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].find((p) => p && existsSync(p));
