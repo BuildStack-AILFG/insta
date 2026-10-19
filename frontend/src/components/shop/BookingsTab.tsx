@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarCheck, MessageCircle, Phone, Users } from "lucide-react";
 import { Badge, Card, EmptyState, fmtDateTime, Select, Spinner, useUi } from "@/components/ui/kit";
 import { errorMessage, shop as api, type BookingStatus, type ShopBooking } from "@/lib/api";
@@ -19,10 +19,13 @@ export default function BookingsTab() {
   const { toast, confirm } = useUi();
   const [filter, setFilter] = useState("all");
   const [list, setList] = useState<ShopBooking[] | null>(null);
-  const load = useCallback(async () => {
-    try { setList((await api.bookings({ status: FILTERS.find((f) => f.id === filter)?.status, limit: 100 })).items); } catch (e) { toast(errorMessage(e), "error"); }
+  useEffect(() => {
+    let stale = false;
+    api.bookings({ status: FILTERS.find((f) => f.id === filter)?.status, limit: 100 })
+      .then((r) => { if (!stale) setList(r.items); })
+      .catch((e) => { if (!stale) toast(errorMessage(e), "error"); });
+    return () => { stale = true; };
   }, [filter, toast]);
-  useEffect(() => { setList(null); void load(); }, [load]);
 
   const setStatus = async (b: ShopBooking, status: BookingStatus) => {
     if (status === "declined" && !(await confirm({ title: `Decline booking #${b.number}?`, confirmLabel: "Decline", danger: true, body: "We won't message the customer. Call them to let them know." }))) return;
@@ -36,7 +39,7 @@ export default function BookingsTab() {
     <div>
       <div className="mb-4 flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
-          <button key={f.id} onClick={() => setFilter(f.id)} className={`rounded-full border px-3 py-1 text-[12.5px] ${filter === f.id ? "border-[var(--brand)] text-white" : "border-white/15 text-white/60 hover:text-white"}`}>{f.label}</button>
+          <button key={f.id} onClick={() => { setFilter(f.id); setList(null); }} className={`rounded-full border px-3 py-1 text-[12.5px] ${filter === f.id ? "border-[var(--brand)] text-white" : "border-white/15 text-white/60 hover:text-white"}`}>{f.label}</button>
         ))}
       </div>
       {!list ? <Spinner /> : list.length === 0 ? (
