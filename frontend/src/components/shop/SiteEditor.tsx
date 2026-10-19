@@ -35,7 +35,7 @@ const TEXTS: [SiteTextKey, string][] = [
   ["hero_button", "Banner button"], ["categories_title", "Categories — heading"], ["best_sellers_title", "Best sellers — heading"], ["best_sellers_subtitle", "Best sellers — line below"],
   ["new_arrivals_title", "New arrivals — heading"], ["new_arrivals_subtitle", "New arrivals — line below"], ["all_products_title", "All products — heading"],
   ["instagram_title", "Instagram — heading"], ["instagram_subtitle", "Instagram — line below"], ["faq_title", "FAQ — heading"],
-  ["related_title", "Product page — more products"], ["add_to_cart", "Add to cart button"], ["buy_now", "Buy now button"], ["empty_store", "When there are no products"],
+  ["related_title", "Product page — more products"], ["add_to_cart", "Add to cart button"], ["buy_now", "Buy now button"], ["book_now", "Book now button (hotel template)"], ["empty_store", "When there are no products"],
 ];
 /** Headings and copy inside the template home pages. `long` ones are short paragraphs. */
 const TEMPLATE_TEXTS: [SiteTextKey, string, boolean?][] = [
