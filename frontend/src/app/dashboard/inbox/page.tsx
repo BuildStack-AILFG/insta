@@ -220,7 +220,7 @@ function Thread({ id, members, userId, onBack, onChanged }: { id: string; member
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14.5px] font-semibold text-white">{c.name}</div>
             <div className="truncate text-[12px] text-white/45">
-              {c.username ? `@${c.username}` : c.phone ? `+${c.phone}` : "Instagram user"}
+              {c.username ? `@${c.username}` : "Instagram user"}
               {c.is_follower && <span className="ml-2 text-brand-bright">follows you</span>}
               {c.opted_out && <span className="ml-2 text-red-300">opted out</span>}
             </div>
@@ -477,7 +477,6 @@ function ContactPanel({ conv, onChanged, canWrite, className }: { conv: Conversa
           {c.is_follower != null && <Badge tone={c.is_follower ? "green" : undefined}>{c.is_follower ? "Follows you" : "Not following"}</Badge>}
           {c.follower_count != null && <Badge>{c.follower_count.toLocaleString()} followers</Badge>}
         </div>
-        {c.phone && <div className="mt-1 text-[12.5px] text-white/50">+{c.phone}</div>}
         {c.email && <div className="text-[12.5px] text-white/50">{c.email}</div>}
       </div>
 
