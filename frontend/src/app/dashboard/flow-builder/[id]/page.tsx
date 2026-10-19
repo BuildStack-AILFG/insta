@@ -233,7 +233,7 @@ function RunModal({ open, onClose, flowId, onStarted }: { open: boolean; onClose
       <div className="mt-2 max-h-56 space-y-1 overflow-y-auto">
         {results.map((c) => (
           <button key={c.id} onClick={() => setPicked(c)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] ${picked?.id === c.id ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/[0.05]"}`}>
-            <span className="truncate">{c.name}</span><span className="ml-2 shrink-0 text-[12px] text-white/40">{c.username ? `@${c.username}` : ""}</span>
+            <span className="truncate">{c.name}</span><span className="ml-2 shrink-0 text-[12px] text-white/40">{c.username ? `@${c.username}` : c.phone ? `+${c.phone}` : ""}</span>
           </button>
         ))}
         {results.length === 0 && <div className="py-4 text-center text-[12.5px] text-white/40">No contacts found.</div>}

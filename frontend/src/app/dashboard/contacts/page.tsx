@@ -73,7 +73,7 @@ export default function ContactsPage() {
       <Card className="mb-4 flex flex-wrap items-center gap-3 p-3">
         <div className="relative min-w-[220px] flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, @username or email" className="pl-9" aria-label="Search contacts" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone or email" className="pl-9" aria-label="Search contacts" />
         </div>
         <Select value={tag} onChange={(e) => setTag(e.target.value)} className="!w-44" aria-label="Filter by tag"><option value="">All tags</option>{tags.map((t) => <option key={t.tag} value={t.tag}>{t.tag} ({t.count})</option>)}</Select>
         {hasSegments && <Select value={segment} onChange={(e) => setSegment(e.target.value)} className="!w-44" aria-label="Filter by segment"><option value="">All segments</option>{segs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>}
@@ -101,7 +101,7 @@ export default function ContactsPage() {
             <thead className="border-b border-white/10 text-[11.5px] uppercase tracking-wide text-white/40">
               <tr>
                 <th className="w-10 px-4 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all on this page" className="accent-brand" /></th>
-                <th className="px-2 py-3">Name</th><th className="px-2 py-3">Instagram</th><th className="hidden px-2 py-3 md:table-cell">Tags</th><th className="hidden px-2 py-3 lg:table-cell">Source</th>
+                <th className="px-2 py-3">Name</th><th className="px-2 py-3">Instagram / phone</th><th className="hidden px-2 py-3 md:table-cell">Tags</th><th className="hidden px-2 py-3 lg:table-cell">Source</th>
                 <th className="hidden px-2 py-3 lg:table-cell">Last contacted</th><th className="px-2 py-3">Consent</th>
               </tr>
             </thead>
@@ -110,7 +110,7 @@ export default function ContactsPage() {
                 <tr key={c.id} onClick={() => setDetail(c.id)} className="cursor-pointer border-b border-white/5 hover:bg-white/[0.04]">
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.has(c.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Select ${c.name}`} className="accent-brand" /></td>
                   <td className="px-2 py-3 font-medium text-white">{c.name}{c.email && <div className="text-[11.5px] font-normal text-white/40">{c.email}</div>}</td>
-                  <td className="px-2 py-3 text-white/70">{c.username ? `@${c.username}` : "—"}</td>
+                  <td className="px-2 py-3 text-white/70">{c.username ? `@${c.username}` : c.phone ? `+${c.phone}` : "—"}</td>
                   <td className="hidden px-2 py-3 md:table-cell"><div className="flex flex-wrap gap-1">{c.tags.slice(0, 3).map((t) => <Badge key={t}>{t}</Badge>)}{c.tags.length > 3 && <Badge>+{c.tags.length - 3}</Badge>}</div></td>
                   <td className="hidden px-2 py-3 text-white/55 lg:table-cell">{c.source}</td>
                   <td className="hidden px-2 py-3 text-white/55 lg:table-cell">{timeAgo(c.last_contacted_at)}</td>
@@ -134,19 +134,19 @@ export default function ContactsPage() {
 }
 
 function AddModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
-  const [f, setF] = useState({ name: "", username: "", email: "", tags: "" });
+  const [f, setF] = useState({ name: "", phone: "", email: "", tags: "" });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
     <Modal open={open} onClose={onClose} title="Add contact"
-      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button loading={busy} disabled={!f.name.trim() || !f.username.trim()} onClick={async () => {
+      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button loading={busy} disabled={!f.name.trim() || !f.phone.trim()} onClick={async () => {
         setBusy(true); setErr(null);
-        try { await api.create({ name: f.name.trim(), username: f.username.trim(), email: f.email.trim() || undefined, tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean) }); setF({ name: "", username: "", email: "", tags: "" }); onDone(); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
+        try { await api.create({ name: f.name.trim(), phone: f.phone.trim(), email: f.email.trim() || undefined, tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean) }); setF({ name: "", phone: "", email: "", tags: "" }); onDone(); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
       }}>Add</Button></>}>
       {err && <Alert>{err}</Alert>}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Name"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} autoFocus /></Field>
-        <Field label="Instagram username"><Input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value })} placeholder="@username" /></Field>
+        <Field label="Phone (with country code)"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="+91 98765 43210" /></Field>
         <Field label="Email (optional)"><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
         <Field label="Tags (comma separated)"><Input value={f.tags} onChange={(e) => setF({ ...f, tags: e.target.value })} placeholder="vip, lead" /></Field>
       </div>
@@ -193,7 +193,7 @@ function ImportModal({ open, onClose, onDone }: { open: boolean; onClose: () => 
             <div className="mt-2 text-[13.5px] text-white">{file ? file.name : "Choose a CSV file"}</div>
             <Button variant="ghost" size="sm" className="mt-3" onClick={() => fileRef.current?.click()}>{file ? "Change file" : "Browse"}</Button>
           </div>
-          <p className="text-[12.5px] text-white/50">Needs a <b>username</b> column (also: instagram, handle). Imported leads are linked to their Instagram profile once they DM or comment. Optional: <b>name, email, phone, tags</b> (separate with ;). Every other column is saved as a custom detail you can use in messages, e.g. <code>{"{{trait.city}}"}</code>. Up to 20,000 rows / 5 MB.</p>
+          <p className="text-[12.5px] text-white/50">Needs a <b>phone</b> column (also: mobile, number). Imported leads show up on their Instagram profile once they DM you. Optional: <b>name, email, tags</b> (separate with ;). Every other column is saved as a custom detail you can use in messages, e.g. <code>{"{{trait.city}}"}</code>. Up to 20,000 rows / 5 MB.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Default country code" hint="For numbers written without +country"><Input value={cc} onChange={(e) => setCc(e.target.value.replace(/\D/g, ""))} placeholder="91" /></Field>
             <Field label="Add tag to everyone (optional)"><Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="webinar-sept" /></Field>

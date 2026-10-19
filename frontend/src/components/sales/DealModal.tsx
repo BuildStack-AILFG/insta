@@ -44,7 +44,7 @@ function ContactPicker({ value, onChange }: { value: { id: string; name: string 
         <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-white/10 bg-surface shadow-xl">
           {results.map((c) => (
             <button key={c.id} type="button" onClick={() => onChange({ id: c.id, name: c.name })} className="flex w-full items-center justify-between px-3 py-2 text-left text-[13px] hover:bg-white/[0.06]">
-              <span className="truncate text-white">{c.name}</span><span className="text-white/40">{c.username ? `@${c.username}` : ""}</span>
+              <span className="truncate text-white">{c.name}</span><span className="text-white/40">{c.username ? `@${c.username}` : c.phone ? `+${c.phone}` : ""}</span>
             </button>
           ))}
         </div>
