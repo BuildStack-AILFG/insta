@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import csv
 import io
-import re
 import uuid
 from datetime import datetime, timezone
 from typing import Literal
@@ -28,10 +27,8 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
 MAX_IMPORT_ROWS = 20_000
-KNOWN_COLUMNS = {"username", "phone", "name", "email", "tags", "opted_out"}
-USERNAME_RE = re.compile(r"^[a-z0-9._]{1,30}$")
-COLUMN_ALIASES = {"instagram": "username", "instagram_username": "username", "ig_username": "username", "handle": "username", "instagram_handle": "username",
-                  "mobile": "phone", "phone_number": "phone", "phonenumber": "phone", "whatsapp": "phone", "number": "phone", "full_name": "name", "fullname": "name",
+KNOWN_COLUMNS = {"phone", "name", "email", "tags", "opted_out"}
+COLUMN_ALIASES = {"mobile": "phone", "phone_number": "phone", "phonenumber": "phone", "whatsapp": "phone", "number": "phone", "full_name": "name", "fullname": "name",
                   "email_address": "email", "tag": "tags", "labels": "tags"}
 
 
@@ -47,16 +44,6 @@ def _out(c: Contact) -> dict:
 async def _default_cc(db: AsyncSession, tenant_id: uuid.UUID) -> str:
     tenant = await db.get(Tenant, tenant_id)
     return str((tenant.settings or {}).get("default_country_code", "")) if tenant else ""
-
-
-def _clean_username(raw: str | None) -> str | None:
-    """'@Some.Name ' -> 'some.name'; None when blank; ValueError when it can't be an Instagram handle."""
-    u = (raw or "").strip().lstrip("@").lower()
-    if not u:
-        return None
-    if not USERNAME_RE.match(u):
-        raise ValueError("That doesn't look like an Instagram username (letters, numbers, . and _ only).")
-    return u
 
 
 async def _owned(db: AsyncSession, ctx: Ctx, contact_id: uuid.UUID) -> Contact:
@@ -77,8 +64,7 @@ def _clean_tags(tags: list[str]) -> list[str]:
 
 class ContactCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
-    username: str | None = Field(default=None, max_length=40)
-    phone: str | None = Field(default=None, max_length=32)
+    phone: str = Field(min_length=3, max_length=32)
     email: str | None = Field(default=None, max_length=320)
     tags: list[str] = Field(default_factory=list)
     traits: dict = Field(default_factory=dict)
@@ -146,23 +132,12 @@ async def list_traits(ctx: Ctx = Depends(get_ctx), db: AsyncSession = Depends(ge
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_contact(body: ContactCreate, ctx: Ctx = Depends(require_writer), db: AsyncSession = Depends(get_db)) -> dict:
     try:
-        username = _clean_username(body.username)
-    except ValueError as exc:
+        phone = normalize_phone(body.phone, await _default_cc(db, ctx.tenant_id))
+    except InvalidPhone as exc:
         raise HTTPException(status_code=422, detail={"error": str(exc)})
-    phone = None
-    if (body.phone or "").strip():
-        try:
-            phone = normalize_phone(body.phone, await _default_cc(db, ctx.tenant_id))
-        except InvalidPhone as exc:
-            raise HTTPException(status_code=422, detail={"error": str(exc)})
-    if not username and not phone:
-        raise HTTPException(status_code=422, detail={"error": "Enter an Instagram username."})
-    if username and (await db.execute(select(Contact.id).where(Contact.tenant_id == ctx.tenant_id, func.lower(Contact.ig_username) == username).limit(1))).first():
-        raise HTTPException(status_code=409, detail={"error": "A contact with this Instagram username already exists."})
     total = (await db.execute(select(func.count()).select_from(Contact).where(Contact.tenant_id == ctx.tenant_id))).scalar_one()
     await quotas.enforce(db, ctx.tenant_id, "max_contacts", total, label="contacts")
-    contact = Contact(tenant_id=ctx.tenant_id, name=body.name.strip(), ig_username=username, phone=phone, email=(body.email or None), tags=_clean_tags(body.tags),
-                      custom_fields=body.traits, source="manual")
+    contact = Contact(tenant_id=ctx.tenant_id, name=body.name.strip(), phone=phone, email=(body.email or None), tags=_clean_tags(body.tags), custom_fields=body.traits, source="manual")
     db.add(contact)
     try:
         await db.commit()
@@ -170,7 +145,7 @@ async def create_contact(body: ContactCreate, ctx: Ctx = Depends(require_writer)
         await db.rollback()
         raise HTTPException(status_code=409, detail={"error": "A contact with this phone number already exists."})
     await db.refresh(contact)
-    await outbound_webhooks.emit(ctx.tenant_id, "contact_created", {"contact_id": str(contact.id), "username": contact.ig_username, "phone": contact.phone, "source": "manual"})
+    await outbound_webhooks.emit(ctx.tenant_id, "contact_created", {"contact_id": str(contact.id), "phone": contact.phone, "source": "manual"})
     return _out(contact)
 
 
@@ -250,8 +225,8 @@ def _parse_csv(raw: bytes) -> tuple[list[str], list[dict]]:
     for h in reader.fieldnames:
         key = (h or "").strip().lower().replace(" ", "_")
         headers.append(COLUMN_ALIASES.get(key, key))
-    if "username" not in headers and "phone" not in headers:
-        raise HTTPException(status_code=422, detail={"error": "The file needs a 'username' column (also accepted: instagram, handle, ig_username)."})
+    if "phone" not in headers:
+        raise HTTPException(status_code=422, detail={"error": "The file needs a 'phone' column (also accepted: mobile, phone_number, whatsapp, number)."})
     rows = []
     for raw_row in reader:
         row = {headers[i]: (v or "").strip() for i, v in enumerate(raw_row.values()) if i < len(headers) and headers[i]}
@@ -279,58 +254,42 @@ async def import_contacts(file: UploadFile = File(...), default_country_code: st
     errors: list[dict] = []
     seen: set[str] = set()
     existing: dict[str, Contact] = {}
-    existing_by_user: dict[str, Contact] = {}
     for i in range(0, len(rows), 1000):  # look up existing contacts in chunks
-        phones, handles = [], []
+        phones = []
         for r in rows[i:i + 1000]:
             try:
-                if r.get("phone"):
-                    phones.append(normalize_phone(r["phone"], cc))
-                if (u := _clean_username(r.get("username"))):
-                    handles.append(u)
-            except (InvalidPhone, ValueError):
+                phones.append(normalize_phone(r.get("phone", ""), cc))
+            except InvalidPhone:
                 pass
         if phones:
             existing.update({c.phone: c for c in (await db.execute(select(Contact).where(Contact.tenant_id == ctx.tenant_id, Contact.phone.in_(phones)))).scalars()})
-        if handles:
-            existing_by_user.update({c.ig_username.lower(): c for c in (await db.execute(select(Contact).where(Contact.tenant_id == ctx.tenant_id, func.lower(Contact.ig_username).in_(handles)))).scalars()})
     tag_to_add = add_tag.strip()
 
     for line, r in enumerate(rows, start=2):  # line 1 is the header
         try:
-            username = _clean_username(r.get("username"))
-            phone = normalize_phone(r["phone"], cc) if r.get("phone") else None
-        except (InvalidPhone, ValueError) as exc:
+            phone = normalize_phone(r.get("phone", ""), cc)
+        except InvalidPhone as exc:
             skipped += 1
             errors.append({"row": line, "error": str(exc)})
             continue
-        if not username and not phone:
+        if phone in seen:
             skipped += 1
-            errors.append({"row": line, "error": "No Instagram username on this row."})
+            errors.append({"row": line, "error": "Duplicate phone number in this file."})
             continue
-        key = f"u:{username}" if username else f"p:{phone}"
-        if key in seen:
-            skipped += 1
-            errors.append({"row": line, "error": "Duplicate username in this file."})
-            continue
-        seen.add(key)
+        seen.add(phone)
         tags = _clean_tags([t for t in r.get("tags", "").replace(";", ",").replace("|", ",").split(",")] + ([tag_to_add] if tag_to_add else []))
         traits = {k: v for k, v in r.items() if k not in KNOWN_COLUMNS and v}
         opted_out = str(r.get("opted_out", "")).lower() in {"true", "yes", "1", "y"}
-        contact = existing_by_user.get(username) if username else None
-        if contact is None and phone:
-            contact = existing.get(phone)
+        contact = existing.get(phone)
         if contact is None:
             if room is not None and created >= room:
                 skipped += 1
                 errors.append({"row": line, "error": f"Plan limit of {limit} contacts reached."})
                 continue
-            db.add(Contact(tenant_id=ctx.tenant_id, name=r.get("name") or (f"@{username}" if username else f"+{phone}"), ig_username=username, phone=phone, email=r.get("email") or None, tags=tags, custom_fields=traits, source="import",
+            db.add(Contact(tenant_id=ctx.tenant_id, name=r.get("name") or f"+{phone}", phone=phone, email=r.get("email") or None, tags=tags, custom_fields=traits, source="import",
                            opted_out=opted_out, opted_out_at=datetime.now(timezone.utc) if opted_out else None))
             created += 1
         elif update_existing:
-            if phone and not contact.phone and phone not in existing:
-                contact.phone = phone
             if r.get("name"):
                 contact.name = r["name"]
             if r.get("email"):
