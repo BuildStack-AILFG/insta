@@ -39,11 +39,26 @@ async def test_csv_import_maps_columns_normalises_phones_and_reports_errors(wsa)
     assert (await wsa.get(f"/contacts/{asha['id']}")).json()["name"] == "Asha Updated"
 
 
-async def test_csv_import_rejects_missing_phone_column_and_oversize(wsa):
+async def test_csv_import_rejects_missing_username_column_and_oversize(wsa):
     r = await wsa.post("/contacts/import", files={"file": ("c.csv", b"name,email\nA,a@x.io\n", "text/csv")})
-    assert r.status_code == 422 and "phone" in r.json()["detail"]["error"]
+    assert r.status_code == 422 and "username" in r.json()["detail"]["error"]
     r = await wsa.post("/contacts/import", files={"file": ("big.csv", b"phone\n" + b"1" * (6 * 1024 * 1024), "text/csv")})
     assert r.status_code == 413
+
+
+async def test_create_contact_by_username_only(wsa):
+    r = await wsa.post("/contacts", json={"name": "Riya", "username": "@Riya.Sharma"})
+    assert r.status_code == 201 and r.json()["username"] == "riya.sharma" and r.json()["phone"] is None
+    r = await wsa.post("/contacts", json={"name": "Riya again", "username": "riya.sharma"})
+    assert r.status_code == 409
+
+
+async def test_csv_import_by_username_skips_duplicates_in_file(wsa):
+    body = b"username,name\n@aman_fit,Aman\npriya.styles,Priya\naman_fit,Aman again\n"
+    r = await wsa.post("/contacts/import", files={"file": ("u.csv", body, "text/csv")})
+    assert r.status_code == 200
+    j = r.json()
+    assert j["created"] == 2 and j["skipped"] == 1 and "Duplicate" in j["errors"][0]["error"]
 
 
 async def test_export_neutralises_spreadsheet_formulas(wsa):
