@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,6 +73,12 @@ def display_name(username: str | None, name: str | None, igsid: str) -> str:
 async def upsert_contact(db: AsyncSession, tenant_id: uuid.UUID, igsid: str, *, username: str | None = None, name: str | None = None,
                          source: str = "instagram") -> tuple[Contact, bool]:
     """Race-safe get-or-create by (tenant, Instagram user id). Returns (contact, created)."""
+    if username:  # adopt a contact that was added by username before this person ever messaged us
+        pending = (await db.execute(select(Contact).where(Contact.tenant_id == tenant_id, Contact.ig_user_id.is_(None), func.lower(Contact.ig_username) == username.lower())
+                                    .limit(1))).scalar_one_or_none()
+        if pending is not None and (await db.execute(select(Contact.id).where(Contact.tenant_id == tenant_id, Contact.ig_user_id == igsid))).first() is None:
+            pending.ig_user_id = igsid
+            return pending, False
     stmt = (
         pg_insert(Contact)
         .values(id=uuid.uuid4(), tenant_id=tenant_id, ig_user_id=igsid, ig_username=username, name=display_name(username, name, igsid), source=source,
