@@ -1,11 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { SITE } from "@/lib/site/config";
-
-let logoData: Promise<string> | undefined;
-const logoMark = () => (logoData ??= readFile(join(process.cwd(), "public/logo-mark.png")).then((b) => `data:image/png;base64,${b.toString("base64")}`));
+import { LOGO_MARK_DATA_URL } from "@/lib/site/logoMarkData";
 
 /** Share image for any page: /og?title=…&kind=… . Text is clamped so a crafted URL can't produce an unreadable or oversized card. */
 export async function GET(req: NextRequest) {
@@ -19,7 +15,7 @@ export async function GET(req: NextRequest) {
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "linear-gradient(135deg, #2a0616 0%, #000000 55%, #3d0a22 100%)", color: "#ffffff" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={await logoMark()} width={60} height={60} alt="" />
+          <img src={LOGO_MARK_DATA_URL} width={60} height={60} alt="" />
           <div style={{ display: "flex", fontSize: 34, fontWeight: 700, letterSpacing: -1 }}><span>DMFor</span><span style={{ color: "#e91e78", marginLeft: -8 }}>Grow</span></div>
           {kind && <div style={{ marginLeft: 12, padding: "6px 16px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.25)", fontSize: 22, color: "#ff8fbf" }}>{kind}</div>}
         </div>
