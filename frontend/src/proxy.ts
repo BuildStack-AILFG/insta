@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 const EXTRA_HOSTS = (process.env.NEXT_PUBLIC_APP_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
-const OWN = /(^|\.)(dmforgrow\.in|vercel\.app)$|^(localhost|127\.0\.0\.1|\[::1\])$/;
+const OWN = /(^|\.)(dmforgrow\.in|vercel\.app|workers\.dev)$|^(localhost|127\.0\.0\.1|\[::1\])$/;
 const TTL_MS = 60_000;
 const cache = new Map<string, { slug: string | null; at: number }>();
 

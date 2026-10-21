@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dmforgrow-frontend",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "routes": [{ "pattern": "www.dmforgrow.in", "custom_domain": true }],
+  "vars": {
+    "NEXT_PUBLIC_API_URL": "https://insta-production-b43e.up.railway.app/api",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "958542494955-mlqtdel558lgptfac6as991j3k8pvb4c.apps.googleusercontent.com"
+  },
+  "observability": { "enabled": true }
+}
