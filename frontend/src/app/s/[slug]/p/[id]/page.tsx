@@ -47,8 +47,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
       <Breadcrumb items={[{ label: "Home", href: `/s/${store.slug}` },
         ...(product.category ? [{ label: product.category, href: categoryHref(store.slug, product.category) }] : [{ label: "Shop", href: `/s/${store.slug}/shop` }]),
         { label: product.name }]} />
-      <div className="mt-4 grid gap-10 md:grid-cols-2">
-        <Gallery images={product.images} alt={product.name} side={store.site.template === "boutique" || store.site.template === "jewellery"} zoom={niche} />
+      <div className={`mt-4 grid gap-10 ${product.images.length ? "md:grid-cols-2" : "mx-auto max-w-xl"}`}>
+        {product.images.length > 0 && <Gallery images={product.images} alt={product.name} side={store.site.template === "boutique" || store.site.template === "jewellery"} zoom={niche} />}
         <div className="md:pt-2">
           <h1 className="text-[26px] font-bold leading-tight tracking-tight sm:text-[30px]">{product.name}</h1>
           {!buyable && <PriceBlock price={product.price} from={product.price_varies} compareAt={product.price_varies ? null : product.compare_at_price} />}

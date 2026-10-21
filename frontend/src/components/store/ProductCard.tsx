@@ -8,6 +8,24 @@ import QuickAdd from "./QuickAdd";
 export default function ProductCard({ slug, product: p, className = "" }: { slug: string; product: PublicProduct; className?: string }) {
   const off = !p.price_varies && p.compare_at_price && p.compare_at_price > p.price ? Math.round(100 - (100 * p.price) / p.compare_at_price) : 0;
   const second = p.images[1];
+  // No photo at all (e.g. a restaurant menu): a compact text card instead of an empty grey box.
+  if (!p.image_url && !second) {
+    return (
+      <Link href={isSample(p.id) ? "#" : `/s/${slug}/p/${p.id}`} className={`pc group relative flex min-h-[112px] flex-col justify-between rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-4 pr-16 ${className}`}>
+        <div>
+          <div className="pc-name line-clamp-2 text-[14px] font-medium leading-snug text-[var(--fg)]">{p.name}</div>
+          {p.options.length > 0 && <div className="mt-0.5 text-[11.5px] text-[var(--muted)]">{p.options.map((o) => `${o.values.length} ${o.name.toLowerCase()}s`).join(" · ")}</div>}
+        </div>
+        <div className="pc-price mt-3 flex items-baseline gap-1.5">
+          {p.price_varies && <span className="text-[12px] text-[var(--muted)]">From</span>}
+          <span className="text-[15px] font-bold text-[var(--fg)]">{fmtMoney(p.price)}</span>
+          {off > 0 && <span className="text-[12.5px] text-[var(--faint)] line-through">{fmtMoney(p.compare_at_price!)}</span>}
+        </div>
+        {p.sold_out && <span className="absolute right-3 top-3 rounded-full bg-neutral-900/85 px-2.5 py-1 text-[11px] font-semibold text-white">Sold out</span>}
+        <QuickAdd slug={slug} product={p} />
+      </Link>
+    );
+  }
   return (
     <Link href={isSample(p.id) ? "#" : `/s/${slug}/p/${p.id}`} className={`pc group block ${className}`}>
       <div className="pc-media relative aspect-[4/5] overflow-hidden rounded-2xl bg-[var(--soft)]">
