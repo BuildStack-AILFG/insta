@@ -203,6 +203,7 @@ async def process(db: AsyncSession, account: InstagramAccount, row: InstagramCom
     if automation.public_reply_enabled and replies:
         try:
             row.public_reply_id = await client.reply_to_comment(row.comment_id, render(random.choice(replies), row.from_username)) or None
+            row.public_reply_id = row.public_reply_id[:64] if row.public_reply_id else None
             public_sent = True
         except GraphError as exc:
             errors.append(f"Public reply failed: {exc}")
@@ -287,7 +288,8 @@ async def _send_private_reply(db: AsyncSession, account: InstagramAccount, autom
     # Record the DM on the commenter's conversation so it shows in the inbox.
     await messaging.record_outbound(db, account, conv, kind="buttons" if graph_buttons else "text", body=text, external_id=mid, sender_type="comment",
                                     payload=payload, error=error)
-    row.dm_message_id = mid
+    # Instagram's message id for a comment private reply is ~190 chars; the column is VARCHAR(128) and we only ever test it for presence.
+    row.dm_message_id = mid[:128] if mid else mid
     contact.tags = sorted({*(contact.tags or []), f"commented:{automation.name[:40]}"})
     return error is None
 
