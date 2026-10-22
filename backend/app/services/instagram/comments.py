@@ -113,7 +113,15 @@ async def process_comment(comment_row_id: uuid.UUID) -> None:
         # Only ever handle a comment once: a re-run job must not send a second public reply / DM.
         if row is None or account is None or account.status == "disconnected" or row.outcome != "pending":
             return
-        await process(db, account, row)
+        try:
+            await process(db, account, row)
+        except Exception as exc:  # noqa: BLE001
+            # Don't leave the comment on "Processing" forever: record what broke so it shows in the Activity tab.
+            await db.rollback()
+            await db.execute(update(InstagramComment).where(InstagramComment.id == comment_row_id, InstagramComment.outcome == "pending")
+                             .values(outcome="failed", error=f"{exc.__class__.__name__}: {exc}"[:1000]))
+            await db.commit()
+            raise
 
 
 async def run_comment(comment_row_id: uuid.UUID) -> None:
@@ -244,6 +252,8 @@ async def _send_private_reply(db: AsyncSession, account: InstagramAccount, autom
     if automation.gate in DEFAULTS:
         prompt, button, _ = _gate_texts(automation, account, row.from_username)
         gate = await _open_gate(db, automation, contact, conv)
+        # Persisted before the button goes out: if anything after the send fails, the tap must still find its gate.
+        await db.commit()
         payload["gate"] = automation.gate
         text, graph_buttons = prompt, (_unlock_button(button, gate.id) if automation.gate == "follow" else [])
         if graph_buttons:
