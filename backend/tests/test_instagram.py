@@ -237,12 +237,12 @@ async def test_comment_dm_failure_is_logged(wsa, meta):
     assert act["outcome"] == "matched" and not act["public_reply"] and act["dm_sent"] and "Public reply failed" in act["error"]  # …the DM still goes
 
 
-async def test_opted_out_contacts_get_no_comment_dm(wsa, meta):
+async def test_opted_out_contacts_still_get_comment_dm(wsa, meta):
     await wsa.inbound("STOP", from_="900000000271")
     meta.sent.clear()
     await _create(wsa)
     await wsa.comment("price", from_="900000000271")
-    assert not meta.sent and len(meta.comment_replies) == 1  # public reply only
+    assert meta.sent and len(meta.comment_replies) == 1  # commenting is a request: the DM goes despite an earlier STOP
 
 
 async def test_reply_to_comment_dm_starts_the_follow_up_flow(wsa, meta):
