@@ -209,11 +209,7 @@ async def process(db: AsyncSession, account: InstagramAccount, row: InstagramCom
             errors.append(f"Public reply failed: {exc}")
 
     if automation.dm_enabled and automation.dm_text.strip() and row.from_ig_id:
-        opted_out = (await db.execute(select(Contact.opted_out).where(Contact.tenant_id == account.tenant_id, Contact.ig_user_id == row.from_ig_id))).scalar_one_or_none()
-        if opted_out:
-            row.details = {**(row.details or {}), "dm_skipped": "opted_out"}
-        else:
-            dm_sent = await _send_private_reply(db, account, automation, row, errors)
+        dm_sent = await _send_private_reply(db, account, automation, row, errors)  # commenting is a request: a past STOP doesn't block it
 
     row.outcome = "matched" if (public_sent or dm_sent or not errors) else "failed"
     row.error = "; ".join(errors)[:1000] or None
