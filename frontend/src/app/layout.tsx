@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { JsonLd } from "@/components/site/blocks";
 import { SITE } from "@/lib/site/config";
 import { organizationLd, websiteLd } from "@/lib/site/seo";
 import { THEME_INIT_SCRIPT } from "@/lib/themeConfig";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
+// Self-hosted (SIL Open Font License) so builds don't fetch from Google Fonts.
+const plusJakarta = localFont({
+  src: "../fonts/PlusJakartaSans-Variable.woff2",
   variable: "--font-plus-jakarta",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "200 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {

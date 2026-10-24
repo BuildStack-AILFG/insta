@@ -1,11 +1,11 @@
 "use client";
 
-import { Anton } from "next/font/google";
+import localFont from "next/font/local";
 import { ArrowUpRight, AtSign, MessageCircle, MousePointer2, Zap, Heart, Send } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { ZapierIcon, ShopifyIcon, SlackColorIcon } from "@/components/icons/IntegrationBrandIcons";
 
-const anton = Anton({ subsets: ["latin"], weight: "400" });
+const anton = localFont({ src: "../../fonts/Anton-400.woff2", weight: "400", display: "swap" });
 
 type CardSpec = {
   key: string;
