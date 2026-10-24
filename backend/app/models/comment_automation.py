@@ -44,6 +44,9 @@ class CommentAutomation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     dm_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
     # Optional A/B test: when set, each person consistently gets variant A (dm_text) or B (this), and results are compared.
     dm_text_b: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    # Optional image sent with the DM. Instagram's first reply to a comment can only be text + buttons, so the image goes out as soon as
+    # the conversation opens: with the unlocked DM when there's a gate, otherwise when the person replies or taps a reply button.
+    dm_image_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
     # Up to 3 link buttons shown under the DM: [{title, url}]
     dm_buttons: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     # Optionally continue the conversation in a published flow once the person replies.

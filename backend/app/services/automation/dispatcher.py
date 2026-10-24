@@ -148,7 +148,7 @@ async def run(db: AsyncSession, tenant: Tenant, account: InstagramAccount, conv:
         return "human"
 
     # 3b — they answered a comment-automation DM: continue in that automation's flow
-    if await _comment_follow_up(db, conv, contact, msg, text):
+    if await _comment_follow_up(db, account, conv, contact, msg, text):
         return "comment_follow_up"
 
     inbound_count = (await db.execute(select(func.count()).select_from(Message).where(Message.conversation_id == conv.id, Message.direction == "in", Message.type != "reaction"))).scalar_one()
@@ -227,22 +227,36 @@ async def _try_flows(db: AsyncSession, flows: list[AutomationFlow], conv: Conver
     return False
 
 
-async def _comment_follow_up(db: AsyncSession, conv: Conversation, contact: Contact, msg: Message, text: str) -> bool:
-    """If the last thing we sent was a comment-automation DM that names a follow-up flow, start it now that the window is open."""
+async def _comment_follow_up(db: AsyncSession, account, conv: Conversation, contact: Contact, msg: Message, text: str) -> bool:
+    """They answered a comment-automation DM, so the window is open: send the automation's image (a private reply can't carry one)
+    and start its follow-up flow, each at most once."""
     last_out = (await db.execute(select(Message).where(Message.conversation_id == conv.id, Message.direction == "out", Message.is_internal.is_(False),
                                                        Message.created_at < msg.created_at).order_by(Message.created_at.desc()).limit(1))).scalar_one_or_none()
-    flow_id = (last_out.payload or {}).get("follow_up_flow_id") if last_out and last_out.sender_type == "comment" else None
-    if not flow_id or (last_out.payload or {}).get("follow_up_started"):
+    if last_out is None or last_out.sender_type != "comment":
         return False
-    last_out.payload = {**(last_out.payload or {}), "follow_up_started": True}
+    payload = last_out.payload or {}
+    image = None if payload.get("follow_up_image_sent") else payload.get("follow_up_image")
+    flow_id = None if payload.get("follow_up_started") else payload.get("follow_up_flow_id")
+    if not image and not flow_id:
+        return False
+    last_out.payload = {**payload, **({"follow_up_image_sent": True} if image else {}), **({"follow_up_started": True} if flow_id else {})}
     await db.flush()
-    flow = await db.get(AutomationFlow, uuid.UUID(flow_id))
+
+    handled = False
+    if image:
+        try:
+            await messaging.send_message(db, account, conv, contact, kind="image", media_url=image, sender_type="comment",
+                                         extra_payload={"auto": "comment", "automation_id": payload.get("automation_id"), "image": True}, strict=False)
+            handled = True
+        except messaging.SendBlocked as exc:
+            log.info("comment image blocked for %s: %s", contact.id, exc.message)
+    flow = await db.get(AutomationFlow, uuid.UUID(flow_id)) if flow_id else None
     if flow is None or flow.tenant_id != conv.tenant_id or flow.status != "published":
         await db.commit()
-        return False
-    started = await flow_engine.start_flow(db, flow, contact, conv, context={"trigger_text": text, "comment_text": (last_out.payload or {}).get("comment_text")})
+        return handled
+    started = await flow_engine.start_flow(db, flow, contact, conv, context={"trigger_text": text, "comment_text": payload.get("comment_text")})
     await db.commit()
-    return started is not None
+    return handled or started is not None
 
 
 async def _story_reply(db: AsyncSession, account, conv: Conversation, contact: Contact, msg: Message, auto: dict) -> bool:

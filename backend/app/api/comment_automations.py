@@ -61,6 +61,7 @@ class AutomationIn(BaseModel):
     dm_text: str = Field(default="", max_length=1000)
     dm_text_b: str = Field(default="", max_length=1000)  # optional A/B variant
     dm_buttons: list[DmButton] = Field(default_factory=list, max_length=3)
+    dm_image_url: str = Field(default="", max_length=2000, pattern=r"^(https://[^\s]+)?$")  # public https image sent once the chat opens
     flow_id: uuid.UUID | None = None
     product_id: uuid.UUID | None = None  # comment-to-checkout: adds a "Buy now" button to the DM
     buy_button: str = Field(default="", max_length=20)
@@ -117,7 +118,7 @@ def _out(a: CommentAutomation, username: str | None = None) -> dict:
         "media_scope": a.media_scope, "media_ids": a.media_ids or [], "media_preview": a.media_preview or [],
         "match_type": a.match_type, "keywords": a.keywords or [], "exclude_keywords": a.exclude_keywords or [],
         "public_reply_enabled": a.public_reply_enabled, "public_replies": a.public_replies or [],
-        "dm_enabled": a.dm_enabled, "dm_text": a.dm_text, "dm_text_b": a.dm_text_b, "dm_buttons": a.dm_buttons or [], "flow_id": str(a.flow_id) if a.flow_id else None,
+        "dm_enabled": a.dm_enabled, "dm_text": a.dm_text, "dm_text_b": a.dm_text_b, "dm_buttons": a.dm_buttons or [], "dm_image_url": a.dm_image_url or "", "flow_id": str(a.flow_id) if a.flow_id else None,
         "product_id": str(a.product_id) if a.product_id else None, "buy_button": a.buy_button,
         "once_per_user": a.once_per_user, "gate": a.gate, "gate_prompt": a.gate_prompt, "gate_button": a.gate_button, "gate_retry_text": a.gate_retry_text,
         "track_clicks": a.track_clicks, "reminder_enabled": a.reminder_enabled, "reminder_after_minutes": a.reminder_after_minutes, "reminder_text": a.reminder_text,
@@ -161,6 +162,7 @@ def _apply(a: CommentAutomation, body: AutomationIn) -> None:
     a.media_ids = body.media_ids if body.media_scope == "specific" else []
     a.media_preview = [p for p in data["media_preview"] if p["id"] in a.media_ids] if body.media_scope == "specific" else []
     a.dm_buttons = data["dm_buttons"]
+    a.dm_image_url = body.dm_image_url.strip() if body.dm_enabled else ""
     a.flow_id = body.flow_id
     a.product_id, a.buy_button = body.product_id, body.buy_button.strip()
 

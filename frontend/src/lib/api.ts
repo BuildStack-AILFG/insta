@@ -228,7 +228,9 @@ export type MediaPreview = { id: string; caption?: string | null; thumbnail_url?
 export type CommentAutomationInput = {
   account_id: string; name: string; status: "active" | "paused"; media_scope: "all" | "specific" | "next" | "live"; media_ids: string[]; media_preview: MediaPreview[];
   match_type: "any" | "contains" | "exact"; keywords: string[]; exclude_keywords: string[]; public_reply_enabled: boolean; public_replies: string[];
-  dm_enabled: boolean; dm_text: string; dm_text_b: string; dm_buttons: { title: string; url: string }[]; flow_id: string | null; once_per_user: boolean;
+  dm_enabled: boolean; dm_text: string; dm_text_b: string; dm_buttons: { title: string; url: string }[];
+  /** Optional image: sent with the unlocked DM, or (no unlock step) as soon as they reply — Instagram's first reply to a comment is text + buttons only. */
+  dm_image_url: string; flow_id: string | null; once_per_user: boolean;
   gate: "none" | "follow" | "email" | "phone"; gate_prompt: string; gate_button: string; gate_retry_text: string; track_clicks: boolean;
   reminder_enabled: boolean; reminder_after_minutes: number; reminder_text: string;
   /** Comment-to-checkout: a Shop product whose "Buy now" button goes in the DM. */

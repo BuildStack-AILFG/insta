@@ -272,6 +272,8 @@ async def _send_private_reply(db: AsyncSession, account: InstagramAccount, autom
             payload["buttons"] = logged[:messaging.MAX_BUTTONS]
         if automation.flow_id:
             payload["follow_up_flow_id"] = str(automation.flow_id)  # started by the dispatcher when they reply
+        if automation.dm_image_url:
+            payload["follow_up_image"] = automation.dm_image_url  # a private reply can't carry an image: sent when they reply
     try:
         if graph_buttons:
             mid = await client.send_buttons(None, text, graph_buttons, comment_id=row.comment_id)
@@ -341,6 +343,9 @@ async def deliver(db: AsyncSession, account: InstagramAccount, automation: Comme
     if automation.flow_id:
         extra["follow_up_flow_id"] = str(automation.flow_id)
     try:
+        if automation.dm_image_url:
+            await messaging.send_message(db, account, conv, contact, kind="image", media_url=automation.dm_image_url, sender_type="comment",
+                                         extra_payload={"auto": "comment", "automation_id": str(automation.id), "image": True}, strict=False)
         return await messaging.send_message(db, account, conv, contact, kind="buttons" if buttons else "text", text=render(dm_text_for(automation, variant), contact.ig_username),
                                             buttons=buttons or None, sender_type="comment", extra_payload=extra, strict=False)
     except messaging.SendBlocked as exc:

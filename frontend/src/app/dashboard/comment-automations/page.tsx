@@ -12,6 +12,7 @@ import {
 import { fmtMoney } from "@/lib/money";
 import MediaPicker from "@/components/dashboard/MediaPicker";
 import AiWriteButton from "@/components/dashboard/AiWriteButton";
+import { MediaLibraryPicker } from "@/components/dashboard/MediaLibrary";
 import { useHasFeature } from "@/components/dashboard/UpgradeGate";
 
 const OUTCOME: Record<CommentActivity["outcome"], { label: string; tone: "green" | "yellow" | "red" | "gray" | "blue" }> = {
@@ -147,7 +148,7 @@ const EMPTY = (accountId: string): CommentAutomationInput => ({
   account_id: accountId, name: "", status: "active", media_scope: "specific", media_ids: [], media_preview: [], match_type: "contains", keywords: [], exclude_keywords: [],
   public_reply_enabled: true, public_replies: ["Sent you a DM {{username}}! 💌", "Check your DMs {{username}} ✨"], dm_enabled: true,
   dm_text: "Hey {{username}}! Here's the link you asked for 👇", dm_buttons: [{ title: "Open link", url: "" }], flow_id: null, once_per_user: true,
-  gate: "none", gate_prompt: "", gate_button: "", gate_retry_text: "", track_clicks: true, dm_text_b: "",
+  gate: "none", gate_prompt: "", gate_button: "", gate_retry_text: "", track_clicks: true, dm_text_b: "", dm_image_url: "",
   reminder_enabled: false, reminder_after_minutes: 120, reminder_text: "", product_id: null, buy_button: "",
 });
 const BUY_BUTTON = "🛒 Buy now";
@@ -192,6 +193,7 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
     if (!f.public_reply_enabled && !f.dm_enabled) out.push("Turn on the public reply, the DM, or both.");
     if (f.public_reply_enabled && f.public_replies.filter((r) => r.trim()).length === 0) out.push("Add a public reply.");
     if (f.dm_enabled && !f.dm_text.trim()) out.push("Write the DM.");
+    if (f.dm_enabled && f.dm_image_url && !/^https:\/\/\S+$/.test(f.dm_image_url)) out.push("The DM image link must start with https://");
     if (f.dm_enabled && f.dm_buttons.some((b) => (b.title.trim() || b.url.trim()) && (!b.title.trim() || !/^https?:\/\/\S+$/.test(b.url.trim())))) out.push("Every DM button needs a title and a link starting with https://");
     if (f.gate !== "none" && !f.dm_enabled) out.push("Turn the DM on — it's what gets sent once they unlock it.");
     if (f.product_id && f.dm_buttons.filter((b) => b.title.trim()).length > 2) out.push("With a product, the DM has room for 2 more link buttons.");
@@ -300,6 +302,7 @@ function Editor({ automation, accounts, flows, onClose, onSaved }: { automation:
                     <p className="text-[11.5px] text-white/40">Half of the people get A, half get B (always the same one per person). Compare clicks on the automation card. Leave empty to turn the test off.</p>
                   </div>
                 </details>
+                <DmImage url={f.dm_image_url ?? ""} gated={f.gate !== "none"} onChange={(dm_image_url) => set({ dm_image_url })} />
                 <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
                   <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-white/80"><ShoppingBag size={13} /> Sell a product from your Shop</div>
                   {!hasShop ? (
@@ -469,15 +472,54 @@ function Preview({ f, username, avatar }: { f: CommentAutomationInput; username:
                 </div>
               </div>
             )}
+            {f.gate !== "none" && f.dm_image_url && <PreviewImage url={f.dm_image_url} />}
             <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-white/[0.1] px-3 py-2 text-[12.5px] text-white">
               <div className="whitespace-pre-wrap">{render(f.dm_text)}</div>
               {buttons.map((b, i) => <div key={i} className="mt-1.5 rounded-lg bg-black/30 py-1.5 text-center text-[12px] font-medium">{b.title}</div>)}
             </div>
+            {f.gate === "none" && f.dm_image_url && (
+              <>
+                <div className="ml-auto mt-2 max-w-[70%] rounded-2xl rounded-br-md bg-[#9d174d] px-3 py-2 text-[12.5px] text-white">replies “Thanks!”</div>
+                <PreviewImage url={f.dm_image_url} />
+              </>
+            )}
           </>
         )}
       </div>
     </div>
   );
+}
+
+/** Optional DM image, uploaded to or picked from the media library (or any public https link). */
+function DmImage({ url, gated, onChange }: { url: string; gated: boolean; onChange: (url: string) => void }) {
+  const [picking, setPicking] = useState(false);
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+      <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-white/80"><ImageIcon size={13} /> Image (optional)</div>
+      <div className="mt-2 flex items-start gap-3">
+        {url && (
+          <div className="relative shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30">
+            <img src={url} alt="" className="h-20 w-20 object-cover" />
+            <button onClick={() => onChange("")} className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white/80 hover:text-white" aria-label="Remove image"><X size={12} /></button>
+          </div>
+        )}
+        <div className="min-w-0 flex-1 space-y-2">
+          <Button size="sm" variant="ghost" onClick={() => setPicking(true)}><Plus size={13} /> {url ? "Change image" : "Upload or choose image"}</Button>
+          <Input value={url} placeholder="…or paste a public https:// image link" onChange={(e) => onChange(e.target.value.trim())} />
+        </div>
+      </div>
+      <p className="mt-1.5 text-[11.5px] text-white/45">
+        {gated
+          ? "Sent right before your message once they unlock it."
+          : "Instagram only allows text and buttons in the first DM after a comment, so the image is sent the moment they reply or tap a reply button. Add an unlock step above to send it together with the message."}
+      </p>
+      {picking && <MediaLibraryPicker kind="image" max={1} onClose={() => setPicking(false)} onDone={([a]) => { if (a) onChange(a.url); setPicking(false); }} />}
+    </div>
+  );
+}
+
+function PreviewImage({ url }: { url: string }) {
+  return <img src={url} alt="" className="mb-2 mt-2 max-h-40 max-w-[60%] rounded-2xl rounded-bl-md border border-white/10 object-cover" />;
 }
 
 // ---- activity -----------------------------------------------------------------------------------------------------------------------------
