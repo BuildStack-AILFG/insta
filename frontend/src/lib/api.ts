@@ -1,3 +1,5 @@
+import { SITE } from "./site/config";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api";
 
 export const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
@@ -176,11 +178,11 @@ const qs = (p?: Record<string, string | number | boolean | undefined | null>) =>
 
 export const getMe = () => request<MeResponse>("/auth/me");
 export const register = (i: { companyName: string; fullName?: string; email: string; password: string }) =>
-  request<AuthResponse>("/auth/register", { method: "POST", auth: false, body: { company_name: i.companyName, full_name: i.fullName || undefined, email: i.email, password: i.password } });
-export const login = (i: { email: string; password: string }) => request<AuthResponse>("/auth/login", { method: "POST", auth: false, body: i });
+  request<AuthResponse>("/auth/register", { method: "POST", auth: false, body: { company_name: i.companyName, full_name: i.fullName || undefined, email: i.email, password: i.password, terms_version: SITE.legalUpdated } });
+export const login = (i: { email: string; password: string }) => request<AuthResponse>("/auth/login", { method: "POST", auth: false, body: { ...i, terms_version: SITE.legalUpdated } });
 /** Exchanges a Google Identity Services ID token for a session; creates the account (and workspace) on first use. */
 export const googleSignIn = (i: { credential: string; companyName?: string }) =>
-  request<AuthResponse>("/auth/google", { method: "POST", auth: false, body: { credential: i.credential, company_name: i.companyName?.trim() || undefined } });
+  request<AuthResponse>("/auth/google", { method: "POST", auth: false, body: { credential: i.credential, company_name: i.companyName?.trim() || undefined, terms_version: SITE.legalUpdated } });
 export const logout = (refresh_token: string) => request<void>("/auth/logout", { method: "POST", auth: false, body: { refresh_token } });
 export const forgotPassword = (email: string) => request<{ success: boolean; message: string }>("/auth/forgot-password", { method: "POST", auth: false, body: { email } });
 export const resetPassword = (token: string, new_password: string) => request<void>("/auth/reset-password", { method: "POST", auth: false, body: { token, new_password } });

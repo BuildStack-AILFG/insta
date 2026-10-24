@@ -10,16 +10,19 @@ class RegisterRequest(BaseModel):
     full_name: str | None = Field(default=None, max_length=200)
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+    terms_version: str | None = Field(default=None, max_length=32)  # the Terms version the user ticked "I agree" to
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    terms_version: str | None = Field(default=None, max_length=32)  # the Terms version the user ticked "I agree" to
 
 
 class GoogleAuthRequest(BaseModel):
     credential: str = Field(min_length=1, max_length=4096)  # the ID token Google Identity Services hands the browser
     company_name: str | None = Field(default=None, max_length=200)  # used only when this creates a new account
+    terms_version: str | None = Field(default=None, max_length=32)  # the Terms version the user ticked "I agree" to
 
 
 class RefreshRequest(BaseModel):

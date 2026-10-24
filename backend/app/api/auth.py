@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
@@ -36,6 +37,18 @@ def _client_meta(request: Request) -> tuple[str | None, str | None]:
     return user_agent, ip_address
 
 
+async def _record_terms(db: AsyncSession, user: User, version: str | None, user_agent: str | None, ip_address: str | None) -> None:
+    """Keeps evidence of clickwrap acceptance. Only rewritten when the accepted version changes, so the first acceptance of each version is kept."""
+    version = (version or "").strip()[:32]
+    if not version or user.terms_version == version:
+        return
+    user.terms_version = version
+    user.terms_accepted_at = datetime.now(timezone.utc)
+    user.terms_accepted_ip = (ip_address or "")[:64] or None
+    user.terms_accepted_user_agent = (user_agent or "")[:512] or None
+    await db.commit()
+
+
 def _set_access_cookie(response: Response, access_token: str, expires_in_minutes: int) -> None:
     response.set_cookie(
         key="access_token",
@@ -61,6 +74,7 @@ async def register(payload: RegisterRequest, request: Request, response: Respons
         user_agent=user_agent,
         ip_address=ip_address,
     )
+    await _record_terms(db, user, payload.terms_version, user_agent, ip_address)
     _set_access_cookie(response, tokens.access_token, tokens.expires_in_minutes)
     return AuthResponse(
         user_id=user.id,
@@ -88,6 +102,7 @@ async def login(payload: LoginRequest, request: Request, response: Response, db:
     user, tenant, membership, tokens, must_rotate = await auth_service.login_user(
         db, email=payload.email, password=payload.password, user_agent=user_agent, ip_address=ip_address
     )
+    await _record_terms(db, user, payload.terms_version, user_agent, ip_address)
     _set_access_cookie(response, tokens.access_token, tokens.expires_in_minutes)
     return AuthResponse(
         user_id=user.id,
@@ -114,6 +129,7 @@ async def google(payload: GoogleAuthRequest, request: Request, response: Respons
     user, tenant, membership, tokens, created = await auth_service.google_sign_in(
         db, credential=payload.credential, company_name=payload.company_name, user_agent=user_agent, ip_address=ip_address
     )
+    await _record_terms(db, user, payload.terms_version, user_agent, ip_address)
     if created:
         response.status_code = status.HTTP_201_CREATED
     _set_access_cookie(response, tokens.access_token, tokens.expires_in_minutes)

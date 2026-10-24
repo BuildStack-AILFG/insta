@@ -196,7 +196,7 @@ export default function SignupForm() {
         {submitting ? "Creating account…" : "Register"}
       </button>
 
-      <GoogleSignInButton mode="signup" companyName={companyName} />
+      <GoogleSignInButton mode="signup" companyName={companyName} blockedReason={errors.agreed} />
     </form>
   );
 }

@@ -49,6 +49,11 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     reset_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Proof of clickwrap acceptance: which Terms/Privacy version (its "last updated" date) was accepted, when and from where.
+    terms_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    terms_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    terms_accepted_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    terms_accepted_user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     memberships: Mapped[list["TenantMembership"]] = relationship(back_populates="user", cascade="all, delete-orphan")

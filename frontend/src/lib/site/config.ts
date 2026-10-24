@@ -26,7 +26,7 @@ export const SITE = {
     facebook: "https://www.facebook.com/dmforgrow",
   },
   /** ISO date the legal texts were last revised. Bump it whenever they change. */
-  legalUpdated: "2026-10-01",
+  legalUpdated: "2026-10-24",
 } as const;
 
 export const whatsappLink = (text?: string) => `https://wa.me/${SITE.whatsappNumber}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
