@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button, Toggle, Field, Input, Select, Textarea } from "@/components/ui/kit";
 import { pipeline, type Member, type PipelineStage } from "@/lib/api";
+import { MediaLibraryPicker } from "@/components/dashboard/MediaLibrary";
 import { STEP_META, uid } from "./model";
 
 type D = Record<string, unknown>;
@@ -43,11 +44,7 @@ export default function Inspector({ type, data, onChange, onDelete, members, tri
 
       {type === "send_message" && <Field label="Message" hint={HINT}><Textarea value={str(data.text)} onChange={(e) => set({ text: e.target.value })} maxLength={4096} /></Field>}
 
-      {type === "send_media" && <>
-        <Field label="Type"><Select value={str(data.media_type) || "image"} onChange={(e) => set({ media_type: e.target.value })}><option value="image">Image</option><option value="video">Video</option><option value="audio">Audio</option><option value="file">File (PDF)</option></Select></Field>
-        <Field label="Public file URL" hint="An https link Instagram can download"><Input value={str(data.url)} onChange={(e) => set({ url: e.target.value })} placeholder="https://…" /></Field>
-        <Field label="Follow-up text (optional)" hint="Instagram attachments have no caption, so this is sent as a separate message right after."><Input value={str(data.caption)} onChange={(e) => set({ caption: e.target.value })} /></Field>
-      </>}
+      {type === "send_media" && <MediaFields data={data} set={set} />}
 
       {type === "send_buttons" && (() => {
         const buttons = (data.buttons as { id: string; title: string }[]) ?? [];
@@ -153,4 +150,32 @@ export default function Inspector({ type, data, onChange, onDelete, members, tri
       {type === "end" && <p className="text-[12.5px] text-white/50">The flow finishes here.</p>}
     </div>
   );
+}
+
+/** Send-media step: upload or pick an image/video from the media library, or paste any public link. */
+function MediaFields({ data, set }: { data: D; set: (patch: D) => void }) {
+  const [picking, setPicking] = useState(false);
+  const mediaType = str(data.media_type) || "image";
+  const url = str(data.url);
+  const fromLibrary = mediaType === "image" || mediaType === "video";
+  return <>
+    <Field label="Type"><Select value={mediaType} onChange={(e) => set({ media_type: e.target.value })}><option value="image">Image</option><option value="video">Video</option><option value="audio">Audio</option><option value="file">File (PDF)</option></Select></Field>
+    {fromLibrary && (
+      <div>
+        {url && (
+          <div className="relative mb-2 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+            {mediaType === "image"
+              ? <img src={url} alt="" className="max-h-48 w-full object-contain" />
+              : <video src={url} className="max-h-48 w-full" muted controls preload="metadata" />}
+            <button onClick={() => set({ url: "", filename: "" })} className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white/80 hover:text-white" aria-label="Remove"><X size={14} /></button>
+          </div>
+        )}
+        <Button size="sm" variant="ghost" onClick={() => setPicking(true)}><ImagePlus size={13} /> {url ? "Change" : "Upload or choose"} {mediaType}</Button>
+        {picking && <MediaLibraryPicker kind={mediaType as "image" | "video"} max={1} onClose={() => setPicking(false)}
+          onDone={([a]) => { if (a) set({ url: a.url, filename: a.name }); setPicking(false); }} />}
+      </div>
+    )}
+    <Field label={fromLibrary ? "…or paste a public link" : "Public file URL"} hint="An https link Instagram can download"><Input value={url} onChange={(e) => set({ url: e.target.value })} placeholder="https://…" /></Field>
+    <Field label="Follow-up text (optional)" hint="Instagram attachments have no caption, so this is sent as a separate message right after."><Input value={str(data.caption)} onChange={(e) => set({ caption: e.target.value })} /></Field>
+  </>;
 }

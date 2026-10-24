@@ -17,7 +17,7 @@ export type StepType =
 export const STEP_META: Record<string, { label: string; group: "Messages" | "Logic" | "Contact" | "Sales" | "Advanced"; color: string; description: string }> = {
   start: { label: "Start", group: "Logic", color: "#ec4899", description: "Where the flow begins" },
   send_message: { label: "Send message", group: "Messages", color: "#2563EB", description: "A text message" },
-  send_media: { label: "Send media", group: "Messages", color: "#2563EB", description: "Image, video, audio or file" },
+  send_media: { label: "Send image / media", group: "Messages", color: "#2563EB", description: "Upload an image or video, or send audio or a file" },
   send_link_buttons: { label: "Link buttons", group: "Messages", color: "#2563EB", description: "Text with up to 3 buttons that open a link" },
   send_buttons: { label: "Quick replies", group: "Messages", color: "#7C3AED", description: "Up to 13 tappable replies; branch on the tap" },
   send_list: { label: "Options menu", group: "Messages", color: "#7C3AED", description: "Up to 13 options sent as quick replies" },
@@ -141,7 +141,7 @@ export function summarize(node: { type: string; data: Record<string, unknown> })
   switch (node.type) {
     case "start": return d.keywords ? `Keywords: ${(d.keywords as string[]).join(", ")}` : d.event ? `Event: ${s(d.event)}` : "Flow begins here";
     case "send_message": return s(d.text) || "Empty message";
-    case "send_media": return `${s(d.media_type)}: ${s(d.url) || "no URL yet"}`;
+    case "send_media": return `${s(d.media_type)}: ${s(d.filename) || s(d.url) || "nothing chosen yet"}`;
     case "send_buttons": case "send_list": return s(d.body) || "No text yet";
     case "send_link_buttons": return s(d.body) || "No text yet";
     case "ask_question": return `${s(d.question) || "No question yet"} → ${s(d.key) || "?"}`;
