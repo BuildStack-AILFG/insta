@@ -9,7 +9,7 @@ export const SITE = {
   tagline: "Instagram comment & DM automation for growing brands",
   description:
     "Turn Instagram comments into customers: comment-to-DM automation, story reply automation, a shared DM inbox, no-code DM flows, an AI agent trained on your knowledge base, a sales pipeline and payment links — on Meta's official Instagram API.",
-  supportEmail: env(process.env.NEXT_PUBLIC_SUPPORT_EMAIL, "support@dmforgrow.in"),
+  supportEmail: env(process.env.NEXT_PUBLIC_SUPPORT_EMAIL, "contact@scaledesktechnology.com"),
   /** Our own support line (customers can reach the DMForGrow team on WhatsApp). */
   whatsappNumber: "918810873052",
   /** Registered office. Shown on the contact, legal and invoice pages when set. */
